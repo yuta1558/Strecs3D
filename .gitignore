@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Directries for developping
+
+.vscode/
+build/
+resources/
+
+.DS_Store
