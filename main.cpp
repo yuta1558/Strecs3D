@@ -21,8 +21,6 @@
 #include <vtkClipDataSet.h>
 #include <vtkGeometryFilter.h>
 #include <vtkAppendFilter.h>
-
-
 #include <vtkThreshold.h>
 #include <vtkDoubleArray.h>
 #include <vtkDataSetAttributes.h>
@@ -35,15 +33,26 @@
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkReverseSense.h>
+#include <vtkPolyDataConnectivityFilter.h>
+#include <vtkSmoothPolyDataFilter.h>
+#include <vtkFillHolesFilter.h>
+
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/Polygon_mesh_processing/corefinement.h>
+#include <CGAL/IO/STL.h>
 
 #include <algorithm>
 #include <vector>
 #include <string>
 #include <sstream>
 #include <limits> // for std::numeric_limits
-
-
 #include <iostream>
+
+
+namespace PMP = CGAL::Polygon_mesh_processing;
+using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+using Mesh   = CGAL::Surface_mesh<Kernel::Point_3>;
 
 // 関数宣言
 bool LoadAndPrepareData(const char* filename, vtkSmartPointer<vtkUnstructuredGrid>& data, vtkSmartPointer<vtkLookupTable>& lookupTable, double scalarRange[2]);
@@ -59,6 +68,9 @@ vtkSmartPointer<vtkPolyData> ScalePolyData(
 vtkSmartPointer<vtkPolyData> ReversePolyDataOrientation(vtkSmartPointer<vtkPolyData> inputPolyData);
 vtkSmartPointer<vtkPolyData> getDifferenceData(
     vtkSmartPointer<vtkPolyData> minuend, vtkSmartPointer<vtkPolyData> subtrahend);
+std::array<double, 3> ComputeMeshCenter(vtkSmartPointer<vtkPolyData> polyData);
+bool read_stl(const std::string& filename, Mesh& mesh);
+bool write_stl(const std::string& filename, const Mesh& mesh);
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
@@ -73,7 +85,6 @@ int main(int argc, char* argv[]) {
     renderWindowInteractor->SetRenderWindow(renderWindow);
 
     auto stldata = ReadSTL(argv[2]);
-    //StlDisplay(stldata, renderer);
 
     vtkSmartPointer<vtkUnstructuredGrid> data;
     vtkSmartPointer<vtkLookupTable> lookupTable;
@@ -83,31 +94,126 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
-
     auto contourFilter = vtkSmartPointer<vtkContourFilter>::New();
     contourFilter->SetInputData(data);
-    int numContours = 3; // 等値面の数を増加
-    contourFilter->GenerateValues(numContours, scalarRange);
+    int isoSurfaceNum =  3; // 等値面の数
+    float minStress = scalarRange[0];
+    float maxStress = scalarRange[1];
+    std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
 
-    contourFilter->SetInputData(data);
-    contourFilter->Update();
-    auto isoSurface = contourFilter->GetOutput();
+    for (int i = 1; i < isoSurfaceNum+1; ++i) {
+        // 等値面の生成
+        double isoValue = minStress + i*(maxStress - minStress)/(isoSurfaceNum+1);
+        std::cout<<isoValue<<std::endl;
+        auto singleContourFilter = vtkSmartPointer<vtkContourFilter>::New();
+        singleContourFilter->SetInputData(data);
+        singleContourFilter->SetValue(0, isoValue);
+        singleContourFilter->Update();
+        auto singleIsoSurface = vtkSmartPointer<vtkPolyData>::New();
+        singleIsoSurface->DeepCopy(singleContourFilter->GetOutput());
+        isoSurfaces.push_back(singleIsoSurface);
+    }
     
-    auto expandedSurface = ScalePolyData(isoSurface, 1.2);
-    auto expandedSurfaceRev = ReversePolyDataOrientation(expandedSurface);
+    for (int i = 0; i < isoSurfaceNum; ++i) {
+        std::array<double, 3> center = ComputeMeshCenter(isoSurfaces[i]);
+        std::cout << "Center: " << center[0] << ", " << center[1] << ", " << center[2] << std::endl;
 
-    StressDisplay(data, lookupTable, scalarRange, renderer);
-    StlDisplay(isoSurface, renderer);
+        auto transformToOrigin = vtkSmartPointer<vtkTransform>::New();
+        transformToOrigin->Translate(-center[0], -center[1], -center[2]); // x, y, z軸方向に移動
+        // vtkTransformPolyDataFilterを使用して変換を適用
+        auto transformFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        transformFilter->SetInputData(isoSurfaces[i]);
+        transformFilter->SetTransform(transformToOrigin);
+        transformFilter->Update();
 
-    auto resultPolyData = getDifferenceData(stldata, expandedSurface);
-    auto resultPolyData2 = getDifferenceData(stldata, expandedSurfaceRev);
+        auto originPolyData = transformFilter->GetOutput();
 
-    std::string fileName = "result.stl";
-    std::string fileName2 ="result_rev.stl";
+        //原点中心で少し拡大
+        auto expandedSurfaceOrigin = ScalePolyData(originPolyData, 1.01);
+        //元の位置に戻す
+        auto transformBack = vtkSmartPointer<vtkTransform>::New();
+        transformBack->Translate(center[0], center[1], center[2]); // x, y, z軸方向に移動
 
-    SavePolyDataAsSTL(resultPolyData, fileName);
-    SavePolyDataAsSTL(resultPolyData2, fileName2);
-    StartRnederAndInteraction(renderWindow, renderWindowInteractor);
+        // vtkTransformPolyDataFilterを使用して変換を適用
+        auto transformFilterBack = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        transformFilterBack->SetInputData(expandedSurfaceOrigin);
+        transformFilterBack->SetTransform(transformBack);
+        transformFilterBack->Update();
+        auto expandedSurfaceCombined = transformFilterBack->GetOutput();
+
+        // スムージング処理
+        auto smoother = vtkSmartPointer<vtkSmoothPolyDataFilter>::New();
+        smoother->SetInputData(expandedSurfaceCombined);
+        smoother->SetNumberOfIterations(20); // スムージングの繰り返し回数
+        smoother->SetRelaxationFactor(0.1);
+        smoother->FeatureEdgeSmoothingOff();
+        smoother->BoundarySmoothingOn();
+        smoother->Update();
+
+        auto expandedSurface = smoother->GetOutput();
+        auto expandedSurfaceRev = ReversePolyDataOrientation(expandedSurface);
+        
+        std::string fileName = "isoSurface" + std::to_string(i) + ".stl";
+        SavePolyDataAsSTL(expandedSurfaceRev, fileName);
+    }
+    StlDisplay(isoSurfaces[0], renderer);
+
+    std::vector<Mesh> isoMeshes;
+    std::vector<Mesh> isoMeshesRev;
+    for (int i = 0; i < isoSurfaceNum; ++i) {
+        Mesh isoMesh;
+        if(!read_stl("isoSurface" + std::to_string(i) + ".stl", isoMesh)) return 1;
+        isoMeshes.push_back(isoMesh);
+        PMP::reverse_face_orientations(isoMesh); 
+        isoMeshesRev.push_back(isoMesh);  //反転したmeshをベクトルに追加
+    }
+
+    Mesh outlineMesh;
+    if(!read_stl(argv[2], outlineMesh)) return 1;
+    for (int i = 0; i < isoSurfaceNum+1; ++i) {
+        //差分演算
+        Mesh diff_mesh;
+        Mesh outlineMeshCopy = outlineMesh;
+        bool success;
+        if(i==0){
+            success = PMP::corefine_and_compute_difference(outlineMeshCopy, isoMeshesRev[i], diff_mesh);
+        } 
+        else if(i==isoSurfaceNum){
+            success = PMP::corefine_and_compute_difference(outlineMeshCopy,isoMeshes[i-1], diff_mesh);
+        }
+        else{
+            Mesh diffMesh1;
+            PMP::corefine_and_compute_difference(outlineMeshCopy, isoMeshes[i-1], diffMesh1);
+            success = PMP::corefine_and_compute_difference(diffMesh1, isoMeshesRev[i], diff_mesh);
+        }
+
+        if(!success) {
+            std::cerr << "Error: corefine_and_compute_difference failed." << std::endl;
+            return 1;
+        }
+        std::string output_file = "diff_result" + std::to_string(i) + ".stl";
+        // 書き出し
+        if(!write_stl(output_file, diff_mesh)) {
+            std::cerr << "Error: failed to write STL to " << output_file << std::endl;
+            return 1;
+        }
+    }
+    // StressDisplay(data, lookupTable, scalarRange, renderer);
+    // StlDisplay(isoSurfaces[1], renderer);
+
+    // auto expandedSurface = smoother->GetOutput();
+    // auto expandedSurfaceRev = ReversePolyDataOrientation(expandedSurface);
+
+    // auto resultPolyData = getDifferenceData(stldata, expandedSurface);
+    // auto resultPolyData2 = getDifferenceData(stldata, expandedSurfaceRev);
+
+    // std::string fileName = "result.stl";
+    // std::string fileName2 ="result_rev.stl";
+
+    // SavePolyDataAsSTL(resultPolyData, fileName);
+    // SavePolyDataAsSTL(resultPolyData2, fileName2);
+    // SavePolyDataAsSTL(expandedSurfaceRev, "isoSurface.stl");
+    // StartRnederAndInteraction(renderWindow, renderWindowInteractor);
 
 }
 
@@ -270,4 +376,78 @@ vtkSmartPointer<vtkPolyData> getDifferenceData(
     auto outputData = vtkSmartPointer<vtkPolyData>::New();
     outputData->DeepCopy(booleanFilter1->GetOutput());
     return outputData;
+}
+
+
+
+// vtkPolyDataの中心点を計算する関数
+std::array<double, 3> ComputeMeshCenter(vtkSmartPointer<vtkPolyData> polyData)
+{
+    // 結果を格納する中心点
+    std::array<double, 3> center = {0.0, 0.0, 0.0};
+
+    // メッシュのポイントを取得
+    vtkSmartPointer<vtkPoints> points = polyData->GetPoints();
+    if (!points)
+    {
+        throw std::runtime_error("No points in the input mesh.");
+    }
+
+    // ポイントの個数を取得
+    vtkIdType numberOfPoints = points->GetNumberOfPoints();
+    if (numberOfPoints == 0)
+    {
+        throw std::runtime_error("Mesh has no points.");
+    }
+
+    // 中心点を計算
+    for (vtkIdType i = 0; i < numberOfPoints; ++i)
+    {
+        double point[3];
+        points->GetPoint(i, point);
+        center[0] += point[0];
+        center[1] += point[1];
+        center[2] += point[2];
+    }
+
+    // 平均を計算
+    center[0] /= numberOfPoints;
+    center[1] /= numberOfPoints;
+    center[2] /= numberOfPoints;
+
+    return center;
+}
+
+bool read_stl(const std::string& filename, Mesh& mesh)
+{
+    std::ifstream fin(filename, std::ios::binary);
+    if(!fin) {
+        std::cerr << "Error: could not open file " << filename << std::endl;
+        return false;
+    }
+
+    // CGAL::IO::read_STL が使用可能
+    if(!CGAL::IO::read_STL(fin, mesh)) {
+        std::cerr << "Error: failed to read STL file " << filename << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+// STL ファイル書き出し用の簡単なラッパ
+bool write_stl(const std::string& filename, const Mesh& mesh)
+{
+    std::ofstream fout(filename, std::ios::binary);
+    if(!fout) {
+        std::cerr << "Error: could not open file " << filename << " for writing." << std::endl;
+        return false;
+    }
+
+    if(!CGAL::IO::write_STL(fout, mesh)) {
+        std::cerr << "Error: failed to write STL file " << filename << std::endl;
+        return false;
+    }
+
+    return true;
 }
