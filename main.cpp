@@ -42,6 +42,10 @@
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/IO/STL.h>
 
+
+#include "lib3mf_implicit.hpp"
+using namespace Lib3MF;
+
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -438,13 +442,7 @@ bool read_stl(const std::string& filename, Mesh& mesh)
 // STL ファイル書き出し用の簡単なラッパ
 bool write_stl(const std::string& filename, const Mesh& mesh)
 {
-    std::ofstream fout(filename, std::ios::binary);
-    if(!fout) {
-        std::cerr << "Error: could not open file " << filename << " for writing." << std::endl;
-        return false;
-    }
-
-    if(!CGAL::IO::write_STL(fout, mesh)) {
+    if(!CGAL::IO::write_STL(filename, mesh)) {
         std::cerr << "Error: failed to write STL file " << filename << std::endl;
         return false;
     }
