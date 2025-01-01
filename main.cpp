@@ -195,29 +195,92 @@ int main(int argc, char* argv[]) {
             std::cerr << "Error: corefine_and_compute_difference failed." << std::endl;
             return 1;
         }
-        std::string output_file = "diff_result" + std::to_string(i) + ".stl";
+        std::string stl_output_file = std::to_string(i) + ".stl";
         // 書き出し
-        if(!write_stl(output_file, diff_mesh)) {
-            std::cerr << "Error: failed to write STL to " << output_file << std::endl;
+        if(!write_stl(stl_output_file, diff_mesh)) {
+            std::cerr << "Error: failed to write STL to " << stl_output_file << std::endl;
             return 1;
         }
     }
-    // StressDisplay(data, lookupTable, scalarRange, renderer);
-    // StlDisplay(isoSurfaces[1], renderer);
+    std::string sReaderName = "stl";
+    std::string sWriterName = "3mf";
+    PWrapper wrapper = CWrapper::loadLibrary();
+    PModel model = wrapper->CreateModel();
+    PReader reader = model->QueryReader(sReaderName);
 
-    // auto expandedSurface = smoother->GetOutput();
-    // auto expandedSurfaceRev = ReversePolyDataOrientation(expandedSurface);
 
-    // auto resultPolyData = getDifferenceData(stldata, expandedSurface);
-    // auto resultPolyData2 = getDifferenceData(stldata, expandedSurfaceRev);
+    for (int i = 0; i < isoSurfaceNum+1; ++i) {
 
-    // std::string fileName = "result.stl";
-    // std::string fileName2 ="result_rev.stl";
+        std::string stl_output_file = std::to_string(i) + ".stl";
+        std::string output_file = "diff_result" + std::to_string(i) + ".3mf";
 
-    // SavePolyDataAsSTL(resultPolyData, fileName);
-    // SavePolyDataAsSTL(resultPolyData2, fileName2);
-    // SavePolyDataAsSTL(expandedSurfaceRev, "isoSurface.stl");
-    // StartRnederAndInteraction(renderWindow, renderWindowInteractor);
+        // Import Model from File
+        std::cout << "reading " << stl_output_file << "..." << std::endl;
+        reader->ReadFromFile(stl_output_file);
+
+        auto meshIterator = model->GetMeshObjects();
+        // メッシュの総数を取得
+        size_t meshCount = meshIterator->Count();
+        // メッシュが存在しない場合はエラーメッセージを出力して終了
+        if (meshCount == 0) {
+            std::cerr << "No mesh objects found in the model." << std::endl;
+        }
+        // 最後のメッシュのインデックスを計算
+        size_t lastIndex = meshCount - 1;
+        size_t currentIndex = 0;      // 現在のインデックスを初期化
+        Lib3MF_uint32 lastMeshID = 0; // 最後のメッシュのIDを格納する変数を初期化
+
+        // イテレータを使用してメッシュを順に処理
+        while (meshIterator->MoveNext()) {
+            // 現在のインデックスが最後のインデックスに達したら
+            if (currentIndex == lastIndex) {
+                auto currentMesh = meshIterator->GetCurrent();      // 現在のメッシュを取得
+                lastMeshID = currentMesh->GetResourceID();          // メッシュのリソースIDを取得
+                break;                                              // ループを抜ける
+            }
+            currentIndex++; // インデックスをインクリメント
+        }
+
+        // 有効なメッシュIDが取得できた場合
+        if (lastMeshID != 0) {
+            // メッシュIDを使用してメッシュオブジェクトを取得
+            auto lastMesh = model->GetMeshObjectByID(lastMeshID);
+            std::__fs::filesystem::path pathObj(stl_output_file);
+            std::string fileName = pathObj.filename().string();
+            lastMesh->SetName(fileName); // メッシュの名前を設定
+        } else {
+            // メッシュIDの取得に失敗した場合はエラーメッセージを出力
+            std::cerr << "Failed to set name for the last mesh from file: " << stl_output_file << std::endl;
+        } 
+    }
+
+
+     // 各メッシュオブジェクトにメタデータを追加
+    auto meshIterator = model->GetMeshObjects();
+    for (; meshIterator->MoveNext(); ) {
+        Lib3MF::PMeshObject currentMesh = meshIterator->GetCurrentMeshObject();
+        PMetaDataGroup metadataGroup = currentMesh->GetMetaDataGroup();
+        auto name = currentMesh->GetName();
+        size_t dot_pos = name.find_last_of('.');
+        // ドットの前の部分を抽出
+        std::string number_str = name.substr(0, dot_pos);
+        int density = (std::stoi(number_str)+1)*10;
+        std::string density_str = std::to_string(density);
+        std::cout << "Object name: " << name << std::endl; // ファイル名が出力される
+        std::cout<<"density: "<<density_str<<std::endl;
+        std::string cura_uri = "http://software.ultimaker.com/xml/cura/3mf/2015/10";
+        // メタデータの追加
+        metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "True", "xs:boolean", false);
+        metadataGroup->AddMetaData(cura_uri, "infill_sparse_density", density_str, "xs:integer", false);
+
+        // メッシュオブジェクトに対する追加処理
+        std::cout << "Mesh Object UUID: " << currentMesh->GetResourceID() << std::endl;
+    }
+    std::string outputFilename = "merged_data.3mf";
+    PWriter writer = model->QueryWriter("3mf");
+    std::cout << "Writing " << outputFilename << "..." << std::endl;
+    writer->WriteToFile(outputFilename);
+    std::cout << "Done" << std::endl;
 
 }
 
