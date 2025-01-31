@@ -220,7 +220,7 @@ void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& f
     // カレントディレクトリを取得
     std::filesystem::path currentPath = std::filesystem::current_path();
     // カレントディレクトリ/.temp のパスを生成
-    std::filesystem::path tempDirPath = currentPath / ".temp";
+    std::filesystem::path tempDirPath = currentPath / ".temp/iso";
     // .tempディレクトリが存在しなければ作成
     if (!std::filesystem::exists(tempDirPath)) {
         try {

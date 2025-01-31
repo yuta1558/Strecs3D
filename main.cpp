@@ -1,8 +1,6 @@
 #include "VtkProcessor.h"
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Surface_mesh.h>
-#include <CGAL/Polygon_mesh_processing/corefinement.h>
-#include <CGAL/IO/STL.h>
+#include "cgalProcessor.h"
+
 
 
 #include "lib3mf_implicit.hpp"
@@ -49,6 +47,10 @@ int main(int argc, char* argv[]) {
         vtkProcessor.polyDataDisplay(smoothedSurface, vtkProcessor.renderer);
         vtkProcessor.savePolyDataAsSTL(smoothedSurface, std::to_string(i) + ".stl");
     }
+    CGALProcessor cgalProcessor;
+    cgalProcessor.getFileNames();
+    cgalProcessor.prepareMeshes(argv[2]);
+    cgalProcessor.divideMeshes();
 
-    vtkProcessor.startRnederAndInteraction(vtkProcessor.renderWindow, vtkProcessor.renderWindowInteractor);
+    return EXIT_SUCCESS;
 } 

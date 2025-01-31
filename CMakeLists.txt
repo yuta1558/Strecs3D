@@ -24,10 +24,10 @@ else()
     message(STATUS "Found lib3mf library: ${LIB3MF_LIB}")
 endif()
 
-# ここで VtkProcessor.cpp を一緒にコンパイルする
 add_executable(VTK_Diff
     main.cpp
     VtkProcessor.cpp
+    cgalProcessor.cpp
 )
 
 # インクルードパス
