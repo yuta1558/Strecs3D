@@ -18,6 +18,7 @@ class CGALProcessor{
         std::vector<Mesh> isoMeshes;
         std::vector<Mesh> isoMeshesRev;
         int isoSurfaceNum;
+        int divideMeshNum = 0;
         Mesh outlineMesh;
 
     public:
@@ -27,6 +28,7 @@ class CGALProcessor{
         bool prepareMeshes(const std::string& outlineFileName);
         bool divideMeshes();
         void printMeshInfo(const Mesh& mesh);
+        int getDivideMeshNum();
 
 };
 

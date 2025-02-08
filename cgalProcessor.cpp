@@ -92,6 +92,7 @@ bool CGALProcessor::divideMeshes(){
             std::cerr << "Error: failed to write STL to " << stl_output_file << std::endl;
             return 1;
         }
+        divideMeshNum += 1;
     }
     return 0;
 }
@@ -131,3 +132,7 @@ void CGALProcessor::printMeshInfo(const Mesh& mesh)
     std::cout << "Number of halfedges  : " << mesh.number_of_halfedges()  << std::endl;
     std::cout << "Number of faces      : " << mesh.number_of_faces()      << std::endl;
 }
+
+int CGALProcessor::getDivideMeshNum(){
+    return divideMeshNum;
+}   

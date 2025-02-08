@@ -28,6 +28,7 @@ add_executable(VTK_Diff
     main.cpp
     VtkProcessor.cpp
     cgalProcessor.cpp
+    lib3mfProcessor.cpp
 )
 
 # インクルードパス

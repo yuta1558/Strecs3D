@@ -1,10 +1,8 @@
 #include "VtkProcessor.h"
 #include "cgalProcessor.h"
+#include "lib3mfProcessor.h"
 
 
-
-#include "lib3mf_implicit.hpp"
-using namespace Lib3MF;
 
 #include <algorithm>
 #include <vector>
@@ -47,10 +45,20 @@ int main(int argc, char* argv[]) {
         vtkProcessor.polyDataDisplay(smoothedSurface, vtkProcessor.renderer);
         vtkProcessor.savePolyDataAsSTL(smoothedSurface, std::to_string(i) + ".stl");
     }
+
     CGALProcessor cgalProcessor;
     cgalProcessor.getFileNames();
     cgalProcessor.prepareMeshes(argv[2]);
     cgalProcessor.divideMeshes();
+    
+    int dividedMeshNum = cgalProcessor.getDivideMeshNum();
+
+    Lib3mfProcessor lib3mfProcessor;
+    
+    lib3mfProcessor.getMeshes(dividedMeshNum);
+    lib3mfProcessor.setMetaData();
+    lib3mfProcessor.save3mf("merged_data.3mf");
+
 
     return EXIT_SUCCESS;
 } 
