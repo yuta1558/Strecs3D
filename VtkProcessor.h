@@ -44,45 +44,47 @@
 #include <string>
 
 class VtkProcessor{
+
 private:
-
-    vtkSmartPointer<vtkPolyData> ScalePolyData(vtkSmartPointer<vtkPolyData> inputPolyData, double scaleFactor);
-    vtkSmartPointer<vtkPolyData> ReversePolyDataOrientation(vtkSmartPointer<vtkPolyData> inputPolyData);
-    vtkSmartPointer<vtkPolyData> getDifferenceData(vtkSmartPointer<vtkPolyData> minuend, vtkSmartPointer<vtkPolyData> subtrahend);
-    std::array<double, 3>  ComputeMeshCenter(vtkSmartPointer<vtkPolyData> polyData);
-
-public:
-    
     std::string vtuFileName;
-    VtkProcessor(const std::string& vtuFileName);
-    void showInfo();
     vtkSmartPointer<vtkUnstructuredGrid> vtuData;
     vtkSmartPointer<vtkLookupTable> lookupTable;
     double stressRange[2];
-    bool LoadAndPrepareData(const char* filename, vtkSmartPointer<vtkUnstructuredGrid>& data, vtkSmartPointer<vtkLookupTable>& lookupTable, double scalarRange[2]);
-    void setRenderer(vtkSmartPointer<vtkRenderer> renderer);
+    float minStress;
+    float maxStress;
+    std::vector<float> stressValues;
     vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
     vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
     vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    
-    float minStress;
-    float maxStress;
+    std::array<double, 3>  ComputeMeshCenter(vtkSmartPointer<vtkPolyData> polyData);
     int isoSurfaceNum;
-    std::vector<float> stressValues;
-    void prepareStressValues(float minSterss,float maxStress);
-    
     std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
-    bool generateIsoSurface(vtkSmartPointer<vtkUnstructuredGrid> data, std::vector<float> stressValues);
 
+
+public:
+    VtkProcessor(const std::string& vtuFileName);
+    void showInfo();
+    bool LoadAndPrepareData();
+    void stressDisplay(vtkSmartPointer<vtkRenderer> renderer);
+    void prepareStressValues();
+    bool generateIsoSurface();
+
+    vtkSmartPointer<vtkRenderer> getRenderer() const { return renderer; }
+    vtkSmartPointer<vtkRenderWindow> getRenderWindow() const { return renderWindow; }
+    vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor() const { return renderWindowInteractor; }
+    
     void deleteSmallIsosurface(std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces, double threshold);
+    
+    int getIsoSurfaceNum() const { return isoSurfaceNum; }
+    const std::vector<vtkSmartPointer<vtkPolyData>>& getIsoSurfaces() const {
+        return isoSurfaces;
+    }
+
     vtkSmartPointer<vtkPolyData> scalePolyData(vtkSmartPointer<vtkPolyData> polyData, double scaleFactor);
     vtkSmartPointer<vtkPolyData> makePolyDataSmooth(vtkSmartPointer<vtkPolyData> polyData);
     vtkSmartPointer<vtkPolyData> reversePolyDataOrientation(vtkSmartPointer<vtkPolyData> polyData);
-
-    
     void polyDataDisplay(vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkRenderer> renderer);
 
-    void stressDisplay(vtkSmartPointer<vtkUnstructuredGrid> data, vtkSmartPointer<vtkLookupTable> lookupTable, double scalarRange[2], vtkSmartPointer<vtkRenderer> renderer);
     void startRnederAndInteraction(vtkSmartPointer<vtkRenderWindow> renderWindow, vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor);
     vtkSmartPointer<vtkPolyData> ReadSTL(const std::string& file_path);
     void stlDisplay(vtkSmartPointer<vtkPolyData> polyData);

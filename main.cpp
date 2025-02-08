@@ -2,21 +2,12 @@
 #include "cgalProcessor.h"
 #include "lib3mfProcessor.h"
 
-
-
 #include <algorithm>
 #include <vector>
 #include <string>
 #include <sstream>
-#include <limits> // for std::numeric_limits
+#include <limits> 
 #include <iostream>
-
-
-namespace PMP = CGAL::Polygon_mesh_processing;
-using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
-using Mesh   = CGAL::Surface_mesh<Kernel::Point_3>;
-
-
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
@@ -26,23 +17,25 @@ int main(int argc, char* argv[]) {
     VtkProcessor vtkProcessor(argv[1]);
     vtkProcessor.showInfo();
 
-    if(!vtkProcessor.LoadAndPrepareData(argv[1], vtkProcessor.vtuData, vtkProcessor.lookupTable, vtkProcessor.stressRange)){
+    if(!vtkProcessor.LoadAndPrepareData()){
         std::cerr << "Error: LoadAndPrepareData failed." << std::endl;
         return EXIT_FAILURE;
     }
 
-    vtkProcessor.stressDisplay(vtkProcessor.vtuData, vtkProcessor.lookupTable, vtkProcessor.stressRange, vtkProcessor.renderer);
-    vtkProcessor.prepareStressValues(vtkProcessor.minStress, vtkProcessor.maxStress);
-    vtkProcessor.generateIsoSurface(vtkProcessor.vtuData, vtkProcessor.stressValues);
+    vtkProcessor.stressDisplay(vtkProcessor.getRenderer());
+    vtkProcessor.prepareStressValues();
+    vtkProcessor.generateIsoSurface();
 
     //vtkProcessor.deleteSmallIsosurface(vtkProcessor.isoSurfaces, 5000); // 面積が5000未満の等値面を削除
 
     //TODO:isoSurface[0]にはメッシュデータがないので、１からにしている。deleteSmallIsosurfaceを修正して、これも省くようにする。
-    for (int i = 1; i < vtkProcessor.isoSurfaceNum; ++i) {
-        auto expandedSurface = vtkProcessor.scalePolyData(vtkProcessor.isoSurfaces[i], 1.01);
+    std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces= vtkProcessor.getIsoSurfaces();
+    int isoSurfaceNum = vtkProcessor.getIsoSurfaceNum();
+    for (int i = 1; i < isoSurfaceNum; ++i) {
+        auto expandedSurface = vtkProcessor.scalePolyData(isoSurfaces[i], 1.01);
         auto smoothedSurface = vtkProcessor.makePolyDataSmooth(expandedSurface);
         auto reversedSurface = vtkProcessor.reversePolyDataOrientation(smoothedSurface);
-        vtkProcessor.polyDataDisplay(smoothedSurface, vtkProcessor.renderer);
+        vtkProcessor.polyDataDisplay(smoothedSurface, vtkProcessor.getRenderer());
         vtkProcessor.savePolyDataAsSTL(smoothedSurface, std::to_string(i) + ".stl");
     }
 
@@ -54,11 +47,9 @@ int main(int argc, char* argv[]) {
     int dividedMeshNum = cgalProcessor.getDivideMeshNum();
 
     Lib3mfProcessor lib3mfProcessor;
-    
     lib3mfProcessor.getMeshes(dividedMeshNum);
     lib3mfProcessor.setMetaData();
     lib3mfProcessor.save3mf("merged_data.3mf");
-
 
     return EXIT_SUCCESS;
 } 

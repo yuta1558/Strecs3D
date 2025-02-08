@@ -11,22 +11,21 @@ void VtkProcessor::showInfo(){
     std::cout << "VTK file: " << vtuFileName << std::endl;
 }
 
-
-bool VtkProcessor:: LoadAndPrepareData(const char* filename, vtkSmartPointer<vtkUnstructuredGrid>& data, vtkSmartPointer<vtkLookupTable>& lookupTable, double stressRange[2]) {
+bool VtkProcessor:: LoadAndPrepareData() {
     // VTKファイルの読み込み
     vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    reader->SetFileName(filename);
+    reader->SetFileName(vtuFileName.c_str());
     reader->Update();
     // データセットを取得
-    data = reader->GetOutput();
-    if (!data) {
+    vtuData = reader->GetOutput();
+    if (!vtuData) {
         std::cerr << "Error: Unable to read the VTK file." << std::endl;
         return false;
     }
 
-    vtkPointData* pointData = data->GetPointData();
+    vtkPointData* pointData = vtuData->GetPointData();
     pointData->SetActiveScalars("von Mises Stress");
-    data->GetScalarRange(stressRange);
+    vtuData->GetScalarRange(stressRange);
     // LookupTableの作成
     lookupTable = vtkSmartPointer<vtkLookupTable>::New();
     lookupTable->SetNumberOfTableValues(256);
@@ -39,8 +38,7 @@ bool VtkProcessor:: LoadAndPrepareData(const char* filename, vtkSmartPointer<vtk
     return true;
 }
 
-
-void VtkProcessor::prepareStressValues(float minStress,float maxStress){
+void VtkProcessor::prepareStressValues(){
     // 20000: 応力の刻み幅
     for (float v = minStress; v <= maxStress; v += 20000.0f) {
         stressValues.push_back(v);
@@ -48,12 +46,12 @@ void VtkProcessor::prepareStressValues(float minStress,float maxStress){
     isoSurfaceNum = stressValues.size();
 }
 
-bool VtkProcessor::generateIsoSurface(vtkSmartPointer<vtkUnstructuredGrid> data, std::vector<float> stressValues){
+bool VtkProcessor::generateIsoSurface(){
     for (int i = 0; i < isoSurfaceNum; ++i) {
         // 等値面の生成
         double isoValue = stressValues[i];
         auto singleContourFilter = vtkSmartPointer<vtkContourFilter>::New();
-        singleContourFilter->SetInputData(data);
+        singleContourFilter->SetInputData(vtuData);
         singleContourFilter->SetValue(0, isoValue);
         singleContourFilter->Update();
         auto singleIsoSurface = vtkSmartPointer<vtkPolyData>::New();
@@ -62,7 +60,6 @@ bool VtkProcessor::generateIsoSurface(vtkSmartPointer<vtkUnstructuredGrid> data,
     }
     return true;
 }
-
 
 void VtkProcessor::deleteSmallIsosurface(std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces, double threshold){
     isoSurfaces.erase(
@@ -183,11 +180,11 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::reversePolyDataOrientation(vtkSmartPo
 }
 
 
-void VtkProcessor:: stressDisplay(vtkSmartPointer<vtkUnstructuredGrid> data, vtkSmartPointer<vtkLookupTable> lookupTable, double scalarRange[2], vtkSmartPointer<vtkRenderer> renderer){
+void VtkProcessor:: stressDisplay(vtkSmartPointer<vtkRenderer> renderer){
     vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-    mapper->SetInputData(data);
+    mapper->SetInputData(vtuData);
     mapper->SetLookupTable(lookupTable);
-    mapper->SetScalarRange(scalarRange);
+    mapper->SetScalarRange(stressRange);
     mapper->ScalarVisibilityOn();
     // データアクターの作成
     vtkSmartPointer<vtkActor> dataActor = vtkSmartPointer<vtkActor>::New();
