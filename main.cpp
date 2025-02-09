@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    vtkProcessor.stressDisplay(vtkProcessor.getRenderer());
+    vtkProcessor.stressDisplay();
     vtkProcessor.prepareStressValues();
     vtkProcessor.generateIsoSurface();
 
@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
         vtkProcessor.polyDataDisplay(smoothedSurface, vtkProcessor.getRenderer());
         vtkProcessor.savePolyDataAsSTL(smoothedSurface, std::to_string(i) + ".stl");
     }
+    //vtkProcessor.startRnederAndInteraction();
 
     CGALProcessor cgalProcessor;
     cgalProcessor.getFileNames();

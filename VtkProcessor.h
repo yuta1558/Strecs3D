@@ -65,7 +65,7 @@ public:
     VtkProcessor(const std::string& vtuFileName);
     void showInfo();
     bool LoadAndPrepareData();
-    void stressDisplay(vtkSmartPointer<vtkRenderer> renderer);
+    void stressDisplay();
     void prepareStressValues();
     bool generateIsoSurface();
 
@@ -85,7 +85,7 @@ public:
     vtkSmartPointer<vtkPolyData> reversePolyDataOrientation(vtkSmartPointer<vtkPolyData> polyData);
     void polyDataDisplay(vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkRenderer> renderer);
 
-    void startRnederAndInteraction(vtkSmartPointer<vtkRenderWindow> renderWindow, vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor);
+    void startRnederAndInteraction();
     vtkSmartPointer<vtkPolyData> ReadSTL(const std::string& file_path);
     void stlDisplay(vtkSmartPointer<vtkPolyData> polyData);
     void savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName);

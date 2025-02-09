@@ -180,7 +180,7 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::reversePolyDataOrientation(vtkSmartPo
 }
 
 
-void VtkProcessor:: stressDisplay(vtkSmartPointer<vtkRenderer> renderer){
+void VtkProcessor:: stressDisplay(){
     vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
     mapper->SetInputData(vtuData);
     mapper->SetLookupTable(lookupTable);
@@ -207,7 +207,7 @@ void VtkProcessor::polyDataDisplay(vtkSmartPointer<vtkPolyData> polyData, vtkSma
     renderer->SetBackground(0.1, 0.2, 0.4); // 背景色を設定（RGB）
 }
 
-void VtkProcessor:: startRnederAndInteraction(vtkSmartPointer<vtkRenderWindow> renderWindow, vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor){
+void VtkProcessor:: startRnederAndInteraction(){
     // レンダリングとインタラクションの開始
     renderWindow->Render();
     renderWindowInteractor->Start();
