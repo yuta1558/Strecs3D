@@ -40,6 +40,11 @@
 #include <vtkSmoothPolyDataFilter.h>
 #include <vtkFillHolesFilter.h>
 #include <vtkMassProperties.h>
+#include <vtkCellData.h>  
+#include <vtkThreshold.h>
+#include <vtkDataSetSurfaceFilter.h>
+#include <vtkDataObject.h>
+
 
 #include <string>
 
@@ -59,14 +64,19 @@ private:
     std::array<double, 3>  ComputeMeshCenter(vtkSmartPointer<vtkPolyData> polyData);
     int isoSurfaceNum;
     std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
+    std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
 
 
 public:
     VtkProcessor(const std::string& vtuFileName);
     void showInfo();
     bool LoadAndPrepareData();
+    bool calcAverageStress();
+    vtkSmartPointer<vtkPolyData> extractCellsInRegion(double lowerBound, double upperBound);
+    std::vector<vtkSmartPointer<vtkPolyData>> divideMesh();
     void stressDisplay();
     void prepareStressValues();
+    std::vector<float> getStressValues() const { return stressValues; }
     bool generateIsoSurface();
 
     vtkSmartPointer<vtkRenderer> getRenderer() const { return renderer; }

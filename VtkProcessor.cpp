@@ -38,12 +38,111 @@ bool VtkProcessor:: LoadAndPrepareData() {
     return true;
 }
 
+bool VtkProcessor::calcAverageStress() {
+    // (1) まず、PointDataから"von Mises Stress"を読み込む
+    std::string arrayName = "von Mises Stress";
+    vtkDataArray* pointDataArray = vtuData->GetPointData()->GetArray(arrayName.c_str());
+    if(!pointDataArray) {
+        std::cerr << "PointData array not found: " << arrayName << std::endl;
+        return false;
+    }
+
+    vtkIdType numCells = vtuData->GetNumberOfCells();
+    // (2) Cellの数だけ要素数を持つ新しい配列を作成 (Cell Data 用)
+    auto avgStressArray = vtkSmartPointer<vtkDoubleArray>::New();
+    avgStressArray->SetName("AverageVonMisesStress");        // 新しい配列の名前
+    avgStressArray->SetNumberOfComponents(1);               // スカラーなので1成分
+    avgStressArray->SetNumberOfTuples(numCells);            // セル数だけタプルを用意
+
+    // (3) 各セルごとに平均値を計算し、新配列に書き込む
+    for(vtkIdType cid = 0; cid < numCells; ++cid) {
+        vtkCell* cell = vtuData->GetCell(cid);
+        vtkIdList* pidList = cell->GetPointIds();
+        vtkIdType npts = pidList->GetNumberOfIds();
+
+        double sum = 0.0;
+        for(vtkIdType i = 0; i < npts; ++i) {
+            vtkIdType pid = pidList->GetId(i);
+            double val = pointDataArray->GetComponent(pid, 0);
+            sum += val;
+        }
+        double avgCell = (npts > 0) ? sum / static_cast<double>(npts) : 0.0;
+
+        // (4) 新しい配列(avgStressArray)の cid 番目にセット
+        avgStressArray->SetValue(cid, avgCell);
+
+        // 確認用の出力
+        // std::cout << "[PointData] Cell " << cid
+        //           << " average von Mises stress: " << avgCell << std::endl;
+    }
+
+    // (5) 生成した配列を CellData に追加
+    vtuData->GetCellData()->AddArray(avgStressArray);
+
+    return true;
+}
+
+
+vtkSmartPointer<vtkPolyData> VtkProcessor::extractCellsInRegion(double lowerBound, double upperBound){
+
+    // --- vtkThresholdフィルタの設定 ---
+    vtkSmartPointer<vtkThreshold> thresholdFilter = vtkSmartPointer<vtkThreshold>::New();
+    thresholdFilter->SetInputData(vtuData);
+    // "AverageVonMisesStress"がセルデータとして登録されていることを指定する
+    thresholdFilter->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_CELLS, "AverageVonMisesStress");
+    
+    // --- ThresholdFunctionの設定 ---
+    // vtkThreshold::THRESHOLD_BETWEEN を指定して、下限と上限の両方でフィルタリングする
+    thresholdFilter->SetThresholdFunction(vtkThreshold::THRESHOLD_BETWEEN);
+    thresholdFilter->SetLowerThreshold(lowerBound);
+    thresholdFilter->SetUpperThreshold(upperBound);
+    
+    thresholdFilter->Update();
+
+    // --- 抽出されたセルはvtkThresholdの出力（vtkUnstructuredGrid）に格納される ---
+    vtkSmartPointer<vtkUnstructuredGrid> extractedCells = thresholdFilter->GetOutput();
+
+    // --- 必要に応じて、vtkDataSetSurfaceFilterを用いてvtkPolyDataに変換（例：可視化用） ---
+    vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+    surfaceFilter->SetInputData(extractedCells);
+    surfaceFilter->Update();
+
+    vtkSmartPointer<vtkPolyData> combinedMesh = surfaceFilter->GetOutput();
+    return combinedMesh;
+}
+
+std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
+    // 結果を格納する vector を用意
+    std::vector<vtkSmartPointer<vtkPolyData>> dividedPolyData;
+
+    // stressValues[i] ～ stressValues[i+1] の各範囲ごとにフィルターを適用
+    for (int i = 0; i < isoSurfaceNum - 1; ++i) {
+        double minValue = stressValues[i];
+        double maxValue = stressValues[i + 1];
+        std::cout << "Extracting cells in range: " << minValue << " -> " << maxValue << std::endl;
+
+        // 指定範囲のセルを抽出する（この関数は事前に実装済みとする）
+        vtkSmartPointer<vtkPolyData> polyData = this->extractCellsInRegion(minValue, maxValue);
+
+        // もし抽出結果が有効でセル数が0でない場合、vector に追加する
+        if (polyData && polyData->GetNumberOfCells() > 0) {
+            dividedPolyData.push_back(polyData);
+        }
+        else {
+            std::cout << "No cells extracted for range: " << minValue << " -> " << maxValue << std::endl;
+        }
+    }
+
+    return dividedPolyData;
+}
+
 void VtkProcessor::prepareStressValues(){
     // 20000: 応力の刻み幅
     for (float v = minStress; v <= maxStress; v += 20000.0f) {
         stressValues.push_back(v);
     }
     isoSurfaceNum = stressValues.size();
+    std::cout<< "isoSurfaceNum: " << isoSurfaceNum << std::endl;
 }
 
 bool VtkProcessor::generateIsoSurface(){
