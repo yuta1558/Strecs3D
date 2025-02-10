@@ -312,10 +312,10 @@ void VtkProcessor:: startRnederAndInteraction(){
     renderWindowInteractor->Start();
 }
 
-void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName){
+void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName) {
     // カレントディレクトリを取得
     std::filesystem::path currentPath = std::filesystem::current_path();
-    // カレントディレクトリ/.temp のパスを生成
+    // カレントディレクトリ/.temp/iso のパスを生成
     std::filesystem::path tempDirPath = currentPath / ".temp/iso";
     // .tempディレクトリが存在しなければ作成
     if (!std::filesystem::exists(tempDirPath)) {
@@ -323,11 +323,13 @@ void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& f
             std::filesystem::create_directories(tempDirPath);
         } catch (const std::filesystem::filesystem_error& e) {
             std::cerr << "Failed to create directory: " << e.what() << std::endl;
-            return; // 作成に失敗したら処理を中断するなどのハンドリングをする
+            return; // 作成に失敗した場合は処理を中断
         }
     }
+    
     // 出力ファイルのフルパスを組み立てる
     std::filesystem::path outputFilePath = tempDirPath / fileName;
+    
     // vtkSTLWriter のインスタンス生成
     vtkSmartPointer<vtkSTLWriter> writer = vtkSmartPointer<vtkSTLWriter>::New();
 
@@ -335,9 +337,11 @@ void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& f
     writer->SetFileName(outputFilePath.string().c_str());
     // 書き込むvtkPolyDataを設定
     writer->SetInputData(polyData);
+    // STLファイルをバイナリ形式で出力するように設定
+    writer->SetFileTypeToBinary();
 
     // 書き出し実行
-    if (!writer->Write()){
+    if (!writer->Write()) {
         // 書き込みに失敗した場合のエラーハンドリング
         std::cerr << "Error: Failed to write STL file: " << outputFilePath << std::endl;
     }

@@ -11,10 +11,15 @@ class Lib3mfProcessor{
         PModel model = wrapper->CreateModel();
         PReader reader = model->QueryReader("stl"); 
     public:
-        bool getMeshes(int divideSurfaceNum);
+        bool getMeshes();
         bool getStl(const std::string stlFileName);
         bool setMetaData();
         bool save3mf(const std::string outputFilename);
+};
+struct FileInfo {
+    int id;
+    double minStress;
+    double maxStress;
 };
 
 

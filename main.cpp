@@ -36,6 +36,14 @@ int main(int argc, char* argv[]) {
         std::string fileName = "dividedMesh" + std::to_string(i) + "_" + std::to_string(minValue) + "_" + std::to_string(maxValue) + ".stl";
         vtkProcessor.savePolyDataAsSTL(dividedMeshes[i], fileName);
     }
+    int dividedMeshNum = dividedMeshes.size();
+    Lib3mfProcessor lib3mfProcessor;
+    lib3mfProcessor.getMeshes();
+    lib3mfProcessor.setMetaData();
+    //std::string stlName = "./.temp/iso/dividedMesh0_15.183294_20015.183594.stl";
+    // std::string stlName = "surface.stl";
+    //lib3mfProcessor.getStl(stlName);
+    
 
     // vtkProcessor.stressDisplay();
     // vtkProcessor.generateIsoSurface();
@@ -64,7 +72,7 @@ int main(int argc, char* argv[]) {
     // Lib3mfProcessor lib3mfProcessor;
     // lib3mfProcessor.getMeshes(dividedMeshNum);
     // lib3mfProcessor.setMetaData();
-    // lib3mfProcessor.save3mf("merged_data.3mf");
+    lib3mfProcessor.save3mf("merged_data.3mf");
 
     return EXIT_SUCCESS;
 } 
