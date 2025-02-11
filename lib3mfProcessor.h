@@ -4,6 +4,12 @@
 #include "lib3mf_implicit.hpp"
 using namespace Lib3MF;
 
+struct FileInfo {
+    int id;
+    std::string name;
+    double minStress;
+    double maxStress;
+};
 
 class Lib3mfProcessor{
     private:
@@ -12,14 +18,11 @@ class Lib3mfProcessor{
         PReader reader = model->QueryReader("stl"); 
     public:
         bool getMeshes();
-        bool getStl(const std::string stlFileName);
+        bool setStl(const std::string stlFileName);
         bool setMetaData();
         bool save3mf(const std::string outputFilename);
-};
-struct FileInfo {
-    int id;
-    double minStress;
-    double maxStress;
+        bool setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo);
+        bool setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh);
 };
 
 
