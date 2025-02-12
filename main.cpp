@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
     lib3mfProcessor.getMeshes();
     lib3mfProcessor.setStl(argv[2]);
     lib3mfProcessor.setMetaData();
-
-    lib3mfProcessor.save3mf("merged_data.3mf");
+    lib3mfProcessor.assembleObjects();
+    lib3mfProcessor.save3mf("result/merged_data.3mf");
 
     return EXIT_SUCCESS;
 } 

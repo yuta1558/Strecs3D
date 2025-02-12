@@ -132,7 +132,7 @@ bool Lib3mfProcessor::setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInf
     double aveStress = (fileInfo.minStress + fileInfo.maxStress) / 2;
     int density = aveStress / 300000 * 100;
     std::string density_str = std::to_string(density);
-    metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "True", "xs:boolean", false);
+    metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "False", "xs:boolean", false);
     metadataGroup->AddMetaData(cura_uri, "infill_mesh", "True", "xs:boolean", false);
     metadataGroup->AddMetaData(cura_uri, "infill_sparse_density", density_str, "xs:integer", false);
     metadataGroup->AddMetaData(cura_uri, "wall_line_count", "0","xs:integer", false );
@@ -151,6 +151,36 @@ bool Lib3mfProcessor::setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh){
     metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "True", "xs:boolean", false);
     return 0;
 }
+
+bool Lib3mfProcessor::assembleObjects(){
+    sTransform identityTransform;
+    auto transform = lib3mf_getidentitytransform(&identityTransform);
+    auto mergedObject = model->AddComponentsObject();
+    auto meshIterator = model->GetMeshObjects();
+    int meshCount = meshIterator->Count();
+    for (int i = 0; i < meshCount; i++) {
+        meshIterator->MoveNext();
+        auto currentMesh = meshIterator->GetCurrentMeshObject();
+        mergedObject->AddComponent(currentMesh.get(), identityTransform);
+    }
+    auto metadataGroup = mergedObject->GetMetaDataGroup();
+    mergedObject->SetName("Group #1");
+    std::string cura_uri = "http://software.ultimaker.com/xml/cura/3mf/2015/10";
+    metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "True", "xs:boolean", false);
+    metadataGroup->AddMetaData(cura_uri, "print_order", "1", "xs:integer", false);
+
+    //buildオブジェクトのすべてのメッシュを削除して、mergedオブジェクトを追加
+    auto buildItemIterator = model->GetBuildItems();
+    for (int i = 0; i < buildItemIterator->Count(); i++) {
+        buildItemIterator->MoveNext();
+        auto buildItem = buildItemIterator->GetCurrent();
+        model->RemoveBuildItem(buildItem);
+    }
+    
+    model->AddBuildItem(mergedObject.get(), identityTransform);
+    return 0;
+}
+
 
 bool Lib3mfProcessor::save3mf(const std::string outputFilename){
     PWriter writer = model->QueryWriter("3mf");

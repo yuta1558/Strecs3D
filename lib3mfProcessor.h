@@ -23,6 +23,7 @@ class Lib3mfProcessor{
         bool save3mf(const std::string outputFilename);
         bool setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo);
         bool setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh);
+        bool assembleObjects();
 };
 
 
