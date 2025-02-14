@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 
 
 bool Lib3mfProcessor::getMeshes(){
-    std::string directoryPath = "./.temp/iso";
+    std::string directoryPath = "./.temp/div";
     try {
         std::vector<fs::directory_entry> files;
 

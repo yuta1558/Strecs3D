@@ -13,6 +13,8 @@
 
 
 int main(int argc, char* argv[]) {
+    //std::string exportMode = "cura";
+    std::string exportMode = "bambu";
     if (argc < 3) {
         std::cerr << "Usage: " << argv[0] << " <filename.vtu> <outer_boundary.stl>" << std::endl;
         return EXIT_FAILURE;
@@ -45,26 +47,33 @@ int main(int argc, char* argv[]) {
     lib3mfProcessor.setStl(argv[2]);
     lib3mfProcessor.setMetaData();
     lib3mfProcessor.assembleObjects();
-    lib3mfProcessor.save3mf(".temp/3mf/result.3mf");
-
-    std::string extractDirectory = ".temp/3mf"; // 解凍先のディレクトリ
-    std::string zipFile = ".temp/3mf/result.3mf"; // 解凍するZIPファイルのパス            
-
-    std::string directoryToZip = ".temp/3mf"; // 圧縮するディレクトリのパス
-    std::string outputZip = "result/test.3mf";
     
-    // ZIPファイルを解凍
-    if (ZipUtility::unzipFile(zipFile, extractDirectory)) {
-        std::cout << "Zip extraction successed" << std::endl;
-    } else {
-        std::cerr << "Zip extraction failed" << std::endl;
+    if (exportMode =="cura"){
+        lib3mfProcessor.save3mf("result/result.3mf");
     }
-    // ディレクトリをZIP化
-    if (ZipUtility::zipDirectory(directoryToZip, outputZip)) {
-        std::cout << "Zip compression successed " << std::endl;
-    } else {
-        std::cerr << "Zip compression failed" << std::endl;
+    else if (exportMode == "bambu"){ 
+        lib3mfProcessor.save3mf(".temp/result.3mf");
     }
 
+    if (exportMode == "bambu"){
+        std::string extractDirectory = ".temp/3mf"; // 解凍先のディレクトリ
+        std::string zipFile = ".temp/result.3mf"; // 解凍するZIPファイルのパス            
+
+        std::string directoryToZip = ".temp/3mf"; // 圧縮するディレクトリのパス
+        std::string outputZip = "result/test.3mf";
+        
+        // ZIPファイルを解凍
+        if (ZipUtility::unzipFile(zipFile, extractDirectory)) {
+            std::cout << "Zip extraction successed" << std::endl;
+        } else {
+            std::cerr << "Zip extraction failed" << std::endl;
+        }
+        // ディレクトリをZIP化
+        if (ZipUtility::zipDirectory(directoryToZip, outputZip)) {
+            std::cout << "Zip compression successed " << std::endl;
+        } else {
+            std::cerr << "Zip compression failed" << std::endl;
+        }
+    }
     return EXIT_SUCCESS;
 } 
