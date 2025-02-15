@@ -52,6 +52,7 @@ add_executable(Strectus
   cgalProcessor.cpp
   lib3mfProcessor.cpp
   utils/zipUtility.cpp
+  utils/xmlConverter.cpp
 )
 
 # --- インクルードパスの設定 ---
