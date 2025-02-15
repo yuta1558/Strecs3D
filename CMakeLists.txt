@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # プロジェクト宣言 (C++ プロジェクト)
-project(Strectus LANGUAGES CXX)
+project(Strecs3D LANGUAGES CXX)
 
 # --- ポリシー設定 ---
 if(POLICY CMP0167)
@@ -46,7 +46,7 @@ if(LIBZIP_LIBRARY_DIRS)
 endif()
 
 # --- 実行可能ファイルの生成 ---
-add_executable(Strectus
+add_executable(Strecs3D
   main.cpp
   VtkProcessor.cpp
   cgalProcessor.cpp
@@ -56,14 +56,14 @@ add_executable(Strectus
 )
 
 # --- インクルードパスの設定 ---
-target_include_directories(Strectus PRIVATE
+target_include_directories(Strecs3D PRIVATE
   "${LIB3MF_ROOT}/include"
   "${LIB3MF_ROOT}/include/Bindings/Cpp"
   ${LIBZIP_INCLUDE_DIRS}
 )
 
 # --- リンクするライブラリの設定 ---
-target_link_libraries(Strectus PRIVATE
+target_link_libraries(Strecs3D PRIVATE
   ${VTK_LIBRARIES}
   CGAL::CGAL
   "${LIB3MF_LIB}"
@@ -73,7 +73,7 @@ target_link_libraries(Strectus PRIVATE
 # --- VTK 自動初期化設定 ---
 if(VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
   vtk_module_autoinit(
-    TARGETS Strectus
+    TARGETS Strecs3D
     MODULES ${VTK_LIBRARIES}
   )
 endif()
