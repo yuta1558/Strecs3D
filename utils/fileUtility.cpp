@@ -169,3 +169,22 @@ bool FileUtility::unzipFile(const std::string& zipFilePath, const std::string& e
     }
     return true;
 }
+
+
+
+bool FileUtility::clearDirectoryContents(const std::filesystem::path& dir) {
+    for (const auto& entry : fs::directory_iterator(dir)) {
+        try {
+            if (fs::is_directory(entry)) {
+                // サブディレクトリの場合は再帰的に中身を削除
+                clearDirectoryContents(entry.path());
+            } else {
+                // ファイルやシンボリックリンクの場合は削除
+                fs::remove(entry);
+            }
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "エラー: " << entry.path() << " の削除に失敗しました: " << e.what() << "\n";
+        }
+    }
+    return true;
+}

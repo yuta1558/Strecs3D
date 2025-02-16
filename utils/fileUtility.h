@@ -2,6 +2,7 @@
 #define ZIPUTILITY_H
 
 #include <string>
+#include <filesystem>
 
 class FileUtility {
 public:
@@ -16,6 +17,8 @@ public:
     /// @param extractToDirectory 展開先のディレクトリパス
     /// @return 解凍に成功した場合は true、失敗した場合は false
     static bool unzipFile(const std::string& zipFilePath, const std::string& extractToDirectory);
+    static bool clearDirectoryContents(const std::filesystem::path& dir);
+
 };
 
 #endif // ZIPUTILITY_H

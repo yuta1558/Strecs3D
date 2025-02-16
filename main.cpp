@@ -74,5 +74,8 @@ int main(int argc, char* argv[]) {
             std::cerr << "Zip compression failed" << std::endl;
         }
     }
+    std::filesystem::path tempFiledir= ".temp";
+    FileUtility::clearDirectoryContents(tempFiledir);
+
     return EXIT_SUCCESS;
 } 
