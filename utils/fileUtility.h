@@ -3,7 +3,7 @@
 
 #include <string>
 
-class ZipUtility {
+class FileUtility {
 public:
     /// @brief 指定されたディレクトリをZIPファイルに圧縮します。
     /// @param directoryPath 圧縮するディレクトリのパス

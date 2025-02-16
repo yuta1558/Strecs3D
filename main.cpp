@@ -1,7 +1,7 @@
 #include "VtkProcessor.h"
 #include "cgalProcessor.h"
 #include "lib3mfProcessor.h"
-#include "utils/zipUtility.h"
+#include "utils/fileUtility.h"
 
 
 #include <algorithm>
@@ -62,13 +62,13 @@ int main(int argc, char* argv[]) {
         std::string outputZip = "result/test.3mf";
         
         // ZIPファイルを解凍
-        if (ZipUtility::unzipFile(zipFile, extractDirectory)) {
+        if (FileUtility::unzipFile(zipFile, extractDirectory)) {
             std::cout << "Zip extraction successed" << std::endl;
         } else {
             std::cerr << "Zip extraction failed" << std::endl;
         }
         // ディレクトリをZIP化
-        if (ZipUtility::zipDirectory(directoryToZip, outputZip)) {
+        if (FileUtility::zipDirectory(directoryToZip, outputZip)) {
             std::cout << "Zip compression successed " << std::endl;
         } else {
             std::cerr << "Zip compression failed" << std::endl;

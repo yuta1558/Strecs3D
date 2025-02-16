@@ -1,4 +1,4 @@
-#include "zipUtility.h"
+#include "fileUtility.h"
 
 #include <zip.h>
 #include <iostream>
@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-bool ZipUtility::zipDirectory(const std::string& directoryPath, const std::string& zipFilePath) {
+bool FileUtility::zipDirectory(const std::string& directoryPath, const std::string& zipFilePath) {
     int errorp;
     // ZIPファイル作成（既存の場合は上書き）
     zip_t *archive = zip_open(zipFilePath.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &errorp);
@@ -77,7 +77,7 @@ bool ZipUtility::zipDirectory(const std::string& directoryPath, const std::strin
     return true;
 }
 
-bool ZipUtility::unzipFile(const std::string& zipFilePath, const std::string& extractToDirectory) {
+bool FileUtility::unzipFile(const std::string& zipFilePath, const std::string& extractToDirectory) {
     int errorp;
     zip_t* archive = zip_open(zipFilePath.c_str(), 0, &errorp);
     if (!archive) {

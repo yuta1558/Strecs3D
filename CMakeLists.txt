@@ -51,7 +51,7 @@ add_executable(Strecs3D
   VtkProcessor.cpp
   cgalProcessor.cpp
   lib3mfProcessor.cpp
-  utils/zipUtility.cpp
+  utils/fileUtility.cpp
   utils/xmlConverter.cpp
 )
 
