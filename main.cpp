@@ -1,81 +1,131 @@
-#include "VtkProcessor.h"
-#include "cgalProcessor.h"
-#include "lib3mfProcessor.h"
-#include "utils/fileUtility.h"
-
-
-#include <algorithm>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <limits> 
 #include <iostream>
+#include <QApplication>
+#include <QMainWindow>
+#include <QFileDialog>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QSurfaceFormat>
+#include <QVTKOpenGLNativeWidget.h>
 
+#include <vtkSmartPointer.h>
+#include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkRenderer.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkLookupTable.h>
+#include <vtkDataSetMapper.h>
+#include <vtkActor.h>
+#include <vtkPointData.h>
+#include <vtkProperty.h>
+#include <vtkUnstructuredGrid.h>
 
-int main(int argc, char* argv[]) {
-    //std::string exportMode = "cura";
-    std::string exportMode = "bambu";
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <filename.vtu> <outer_boundary.stl>" << std::endl;
-        return EXIT_FAILURE;
-    }
-    VtkProcessor vtkProcessor(argv[1]);
-    vtkProcessor.showInfo();
+int main(int argc, char *argv[])
+{
+    int a = 0;
+    QApplication app(argc, argv);
 
-    if(!vtkProcessor.LoadAndPrepareData()){
-        std::cerr << "Error: LoadAndPrepareData failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    // QVTKOpenGLNativeWidgetで使用するデフォルトのSurfaceFormatを設定
+    QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
-    if(!vtkProcessor.calcAverageStress()){
-        std::cerr << "Error: CalcAverageStress failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    // メインウィンドウの作成
+    QMainWindow mainWindow;
+    mainWindow.setWindowTitle("von Mises Stress Viewer");
 
-    vtkProcessor.prepareStressValues();
-    auto dividedMeshes =  vtkProcessor.divideMesh();
+    // セントラルウィジェットとレイアウトの作成
+    QWidget* centralWidget = new QWidget;
+    QVBoxLayout* layout = new QVBoxLayout(centralWidget);
 
-    for (int i = 0; i < dividedMeshes.size(); ++i) {
-        float minValue = vtkProcessor.getStressValues()[i];
-        float maxValue = vtkProcessor.getStressValues()[i + 1];
-        std::string fileName = "dividedMesh" + std::to_string(i+1) + "_" + std::to_string(minValue) + "_" + std::to_string(maxValue) + ".stl";
-        vtkProcessor.savePolyDataAsSTL(dividedMeshes[i], fileName);
-    }
-    int dividedMeshNum = dividedMeshes.size();
-    Lib3mfProcessor lib3mfProcessor;
-    lib3mfProcessor.getMeshes();
-    lib3mfProcessor.setStl(argv[2]);
-    
-    if (exportMode =="cura"){
-        lib3mfProcessor.setMetaData();
-        lib3mfProcessor.assembleObjects();
-        lib3mfProcessor.save3mf("result/result.3mf");
-    }
-    else if (exportMode == "bambu"){ 
-        lib3mfProcessor.setMetaDataBambu();
-        lib3mfProcessor.save3mf(".temp/result.3mf");
+    // 「Open VTK File」ボタンの作成
+    QPushButton* openButton = new QPushButton("Open VTK File");
+    layout->addWidget(openButton);
 
-        std::string extractDirectory = ".temp/3mf"; // 解凍先のディレクトリ
-        std::string zipFile = ".temp/result.3mf"; // 解凍するZIPファイルのパス            
+    // QVTKOpenGLNativeWidgetの作成
+    QVTKOpenGLNativeWidget* vtkWidget = new QVTKOpenGLNativeWidget;
+    layout->addWidget(vtkWidget);
 
-        std::string directoryToZip = ".temp/3mf"; // 圧縮するディレクトリのパス
-        std::string outputZip = "result/test.3mf";
-        
-        // ZIPファイルを解凍
-        if (FileUtility::unzipFile(zipFile, extractDirectory)) {
-            std::cout << "Zip extraction successed" << std::endl;
-        } else {
-            std::cerr << "Zip extraction failed" << std::endl;
+    mainWindow.setCentralWidget(centralWidget);
+
+    // VTKのレンダリングウィンドウとレンダラーの作成
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow =
+        vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    vtkWidget->setRenderWindow(renderWindow);
+
+    vtkSmartPointer<vtkRenderer> renderer =
+        vtkSmartPointer<vtkRenderer>::New();
+    renderWindow->AddRenderer(renderer);
+
+    // ボタンがクリックされたときの処理
+    QObject::connect(openButton, &QPushButton::clicked, [&]() {
+        // ファイルダイアログの表示
+        QString fileName = QFileDialog::getOpenFileName(&mainWindow,
+                                                        "Open VTK File",
+                                                        "",
+                                                        "VTK Files (*.vtu)");
+        if (fileName.isEmpty())
+            return; // ファイルが選択されなかった場合は何もしない
+
+        // 既存の描画オブジェクトをクリア
+        renderer->RemoveAllViewProps();
+
+        // VTKファイルの読み込み
+        vtkSmartPointer<vtkXMLUnstructuredGridReader> reader =
+            vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+        reader->SetFileName(fileName.toStdString().c_str());
+        reader->Update();
+
+        // 読み込んだデータセットを取得
+        vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid =
+            reader->GetOutput();
+        if (!unstructuredGrid)
+        {
+            std::cerr << "Error: Unable to read the VTK file." << std::endl;
+            return;
         }
-        // ディレクトリをZIP化
-        if (FileUtility::zipDirectory(directoryToZip, outputZip)) {
-            std::cout << "Zip compression successed " << std::endl;
-        } else {
-            std::cerr << "Zip compression failed" << std::endl;
-        }
-    }
-    std::filesystem::path tempFiledir= ".temp";
-    FileUtility::clearDirectoryContents(tempFiledir);
 
-    return EXIT_SUCCESS;
-} 
+        // "von Mises Stress" をアクティブスカラーとして設定
+        vtkPointData* pointData = unstructuredGrid->GetPointData();
+        if (!pointData)
+        {
+            std::cerr << "Error: No point data found in the file." << std::endl;
+            return;
+        }
+        pointData->SetActiveScalars("von Mises Stress");
+
+        // ストレスのレンジを取得
+        double stressRange[2];
+        unstructuredGrid->GetScalarRange(stressRange);
+
+        // LookupTableの作成（青から赤へのグラデーション）
+        vtkSmartPointer<vtkLookupTable> lookupTable =
+            vtkSmartPointer<vtkLookupTable>::New();
+        lookupTable->SetNumberOfTableValues(256);
+        lookupTable->SetRange(stressRange);
+        lookupTable->SetHueRange(0.6667, 0.0); // 青から赤へ
+        lookupTable->Build();
+
+        // Mapperの作成
+        vtkSmartPointer<vtkDataSetMapper> mapper =
+            vtkSmartPointer<vtkDataSetMapper>::New();
+        mapper->SetInputData(unstructuredGrid);
+        mapper->SetLookupTable(lookupTable);
+        mapper->SetScalarRange(stressRange);
+        mapper->ScalarVisibilityOn();
+
+        // Actorの作成
+        vtkSmartPointer<vtkActor> actor =
+            vtkSmartPointer<vtkActor>::New();
+        actor->SetMapper(mapper);
+        actor->GetProperty()->SetOpacity(0.8); // 透明度50%
+
+        // Actorをレンダラーに追加し、カメラをリセット
+        renderer->AddActor(actor);
+        renderer->ResetCamera();
+
+        // レンダリングの更新
+        vtkWidget->renderWindow()->Render();
+    });
+
+    mainWindow.resize(800, 600);
+    mainWindow.show();
+
+    return app.exec();
+}

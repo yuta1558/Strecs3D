@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # プロジェクト宣言 (C++ プロジェクト)
 project(Strecs3D LANGUAGES CXX)
