@@ -9,6 +9,9 @@
 #include <vtkPointData.h>
 #include <vtkProperty.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkPolyData.h>
+#include <vtkSTLReader.h>
+#include <vtkPolyDataMapper.h>
 #include <iostream>
 
 MainWindow::MainWindow(QWidget* parent)
@@ -21,8 +24,11 @@ MainWindow::MainWindow(QWidget* parent)
     QVBoxLayout* layout = new QVBoxLayout(centralWidget);
 
     // 「Open VTK File」ボタンの作成
-    QPushButton* openButton = new QPushButton("Open VTK File", centralWidget);
-    layout->addWidget(openButton);
+    QPushButton* openVtkButton = new QPushButton("Open VTK File", centralWidget);
+    layout->addWidget(openVtkButton);
+    
+    QPushButton* openStlButton = new QPushButton("Open STL File", centralWidget);
+    layout->addWidget(openStlButton);
 
     // QVTKOpenGLNativeWidgetの作成
     vtkWidget = new QVTKOpenGLNativeWidget(centralWidget);
@@ -38,7 +44,8 @@ MainWindow::MainWindow(QWidget* parent)
     renderWindow->AddRenderer(renderer);
 
     // ボタンのシグナルとスロットの接続
-    connect(openButton, &QPushButton::clicked, this, &MainWindow::openVTKFile);
+    connect(openVtkButton, &QPushButton::clicked, this, &MainWindow::openVTKFile);
+    connect(openStlButton, &QPushButton::clicked, this, &MainWindow::openSTLFile);
 
     resize(800, 600);
 }
@@ -117,3 +124,52 @@ void MainWindow::openVTKFile()
     // レンダリングの更新
     vtkWidget->renderWindow()->Render();
 }
+
+
+void MainWindow::openSTLFile()
+{
+    // ファイルダイアログの表示
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    "Open STL File",
+                                                    "",
+                                                    "STL Files (*.stl)");
+    if (fileName.isEmpty())
+        return; // ファイルが選択されなかった場合は何もしない
+
+    // 既存の描画オブジェクトをクリア
+    renderer->RemoveAllViewProps();
+
+    // STLファイルの読み込み
+    vtkSmartPointer<vtkSTLReader> reader =
+        vtkSmartPointer<vtkSTLReader>::New();
+    reader->SetFileName(fileName.toStdString().c_str());
+    reader->Update();
+
+    // 読み込んだデータセットを取得
+    vtkSmartPointer<vtkPolyData> polyData = reader->GetOutput();
+    if (!polyData)
+    {
+        std::cerr << "Error: Unable to read the STL file." << std::endl;
+        return;
+    }
+
+    // Mapperの作成
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(polyData);
+    mapper->ScalarVisibilityOff(); // STLファイルは通常スカラー値を持たないため
+
+    // Actorの作成
+    vtkSmartPointer<vtkActor> actor =
+        vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+
+    // Actorをレンダラーに追加し、カメラをリセット
+    renderer->AddActor(actor);
+    renderer->ResetCamera();
+
+    // レンダリングの更新
+    vtkWidget->renderWindow()->Render();
+}
+

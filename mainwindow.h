@@ -16,6 +16,7 @@ public:
 
 private slots:
     void openVTKFile();
+    void openSTLFile();
 
 private:
     QVTKOpenGLNativeWidget* vtkWidget;
