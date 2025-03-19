@@ -26,7 +26,6 @@ endif()
 
 # 必要なパッケージの検索
 find_package(VTK REQUIRED)
-find_package(CGAL REQUIRED COMPONENTS Core)
 
 if(VTK_VERSION VERSION_LESS "8.90.0")
   include(${VTK_USE_FILE})
@@ -55,7 +54,6 @@ add_executable(Strecs3D
   main.cpp
   mainwindow.cpp
   VtkProcessor.cpp
-  cgalProcessor.cpp
   lib3mfProcessor.cpp
   utils/fileUtility.cpp
   utils/xmlConverter.cpp
@@ -71,7 +69,6 @@ target_include_directories(Strecs3D PRIVATE
 # リンクするライブラリの設定
 target_link_libraries(Strecs3D PRIVATE
   ${VTK_LIBRARIES}
-  CGAL::CGAL
   "${LIB3MF_LIB}"
   ${LIBZIP_LIBRARIES}
 )
