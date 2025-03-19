@@ -1,7 +1,9 @@
 #include "mainwindow.h"
+#include "VtkProcessor.h"
 #include <QPushButton>
 #include <QFileDialog>
 #include <QVBoxLayout>
+#include <QMessageBox>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkLookupTable.h>
 #include <vtkDataSetMapper.h>
@@ -34,6 +36,9 @@ MainWindow::MainWindow(QWidget* parent)
     vtkWidget = new QVTKOpenGLNativeWidget(centralWidget);
     layout->addWidget(vtkWidget);
 
+    QPushButton* processButton = new QPushButton("Process", centralWidget);
+    layout->addWidget(processButton);
+
     setCentralWidget(centralWidget);
 
     // VTKのレンダリングウィンドウとレンダラーの作成
@@ -46,6 +51,7 @@ MainWindow::MainWindow(QWidget* parent)
     // ボタンのシグナルとスロットの接続
     connect(openVtkButton, &QPushButton::clicked, this, &MainWindow::openVTKFile);
     connect(openStlButton, &QPushButton::clicked, this, &MainWindow::openSTLFile);
+    connect(processButton, &QPushButton::clicked, this, &MainWindow::processFiles);
 
     resize(800, 600);
 }
@@ -63,7 +69,7 @@ void MainWindow::openVTKFile()
                                                     "VTK Files (*.vtu)");
     if (fileName.isEmpty())
         return; // ファイルが選択されなかった場合は何もしない
-
+    vtkFile = fileName.toStdString();
     // 既存の描画オブジェクトをクリア
     renderer->RemoveAllViewProps();
 
@@ -135,7 +141,7 @@ void MainWindow::openSTLFile()
                                                     "STL Files (*.stl)");
     if (fileName.isEmpty())
         return; // ファイルが選択されなかった場合は何もしない
-
+    stlFile = fileName.toStdString();
     // 既存の描画オブジェクトをクリア
     renderer->RemoveAllViewProps();
 
@@ -173,3 +179,74 @@ void MainWindow::openSTLFile()
     vtkWidget->renderWindow()->Render();
 }
 
+void MainWindow::processFiles()
+{
+    try {
+        // VTKファイルの処理
+        if (!initializeVtkProcessor()) {
+            return;
+        }
+
+        // メッシュ分割処理
+        auto dividedMeshes = processMeshDivision();
+        if (dividedMeshes.empty()) {
+            throw std::runtime_error("Failed to divide mesh");
+        }
+
+        // 分割メッシュの保存
+        saveDividedMeshes(dividedMeshes);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error processing files: " << e.what() << std::endl;
+        QMessageBox::critical(this, "Error", QString("Failed to process files: ") + e.what());
+    }
+}
+
+bool MainWindow::initializeVtkProcessor()
+{
+    if (vtkFile.empty()) {
+        QMessageBox::warning(this, "Warning", "No VTK file selected");
+        return false;
+    }
+
+    vtkProcessor = std::make_unique<VtkProcessor>(vtkFile);
+    vtkProcessor->showInfo();
+    vtkProcessor->LoadAndPrepareData();
+    vtkProcessor->calcAverageStress();
+    vtkProcessor->prepareStressValues();
+    
+    return true;
+}
+
+std::vector<vtkSmartPointer<vtkPolyData>> MainWindow::processMeshDivision()
+{
+    if (!vtkProcessor) {
+        throw std::runtime_error("VtkProcessor not initialized");
+    }
+
+    auto dividedMeshes = vtkProcessor->divideMesh();
+    if (dividedMeshes.empty()) {
+        throw std::runtime_error("No meshes generated");
+    }
+
+    return dividedMeshes;
+}
+
+void MainWindow::saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes)
+{
+    const auto& stressValues = vtkProcessor->getStressValues();
+    
+    for (size_t i = 0; i < dividedMeshes.size(); ++i) {
+        float minValue = stressValues[i];
+        float maxValue = stressValues[i + 1];
+        std::string fileName = generateMeshFileName(i + 1, minValue, maxValue);
+        vtkProcessor->savePolyDataAsSTL(dividedMeshes[i], fileName);
+    }
+}
+
+std::string MainWindow::generateMeshFileName(int index, float minValue, float maxValue) const
+{
+    return "dividedMesh" + std::to_string(index) + "_" + 
+           std::to_string(minValue) + "_" + 
+           std::to_string(maxValue) + ".stl";
+}

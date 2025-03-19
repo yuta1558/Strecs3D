@@ -36,5 +36,7 @@
 .vscode/
 build/
 resources/
+.temp/
+result/
 
 .DS_Store

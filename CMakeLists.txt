@@ -10,13 +10,19 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
 
+# 未指定の場合はDebugビルドにする（デバッグ情報が付加される）
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "No build type selected, defaulting to Release")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+  message(STATUS "No build type selected, defaulting to Debug")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Debugモードの場合、デバッグ情報を追加する
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+endif()
 
 # 必要なパッケージの検索
 find_package(VTK REQUIRED)
