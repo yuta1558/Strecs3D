@@ -65,6 +65,7 @@ private:
     int isoSurfaceNum;
     std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
     std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
+    double volumeThreshold = 10000.0; // 体積の閾値（デフォルト値）
 
 
 public:

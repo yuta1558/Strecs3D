@@ -112,7 +112,6 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::extractCellsInRegion(double lowerBoun
 }
 
 std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
-    // 結果を格納する vector を用意
     std::vector<vtkSmartPointer<vtkPolyData>> dividedPolyData;
 
     // stressValues[i] ～ stressValues[i+1] の各範囲ごとにフィルターを適用
@@ -121,15 +120,59 @@ std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
         double maxValue = stressValues[i + 1];
         std::cout << "Extracting cells in range: " << minValue << " -> " << maxValue << std::endl;
 
-        // 指定範囲のセルを抽出する（この関数は事前に実装済みとする）
-        vtkSmartPointer<vtkPolyData> polyData = this->extractCellsInRegion(minValue, maxValue);
-
-        // もし抽出結果が有効でセル数が0でない場合、vector に追加する
-        if (polyData && polyData->GetNumberOfCells() > 0) {
-            dividedPolyData.push_back(polyData);
-        }
-        else {
+        // 指定範囲のセルを抽出
+        vtkSmartPointer<vtkPolyData> currentPolyData = this->extractCellsInRegion(minValue, maxValue);
+        
+        if (!currentPolyData || currentPolyData->GetNumberOfCells() == 0) {
             std::cout << "No cells extracted for range: " << minValue << " -> " << maxValue << std::endl;
+            continue;
+        }
+
+        // 体積計算用のフィルター
+        auto massProperties = vtkSmartPointer<vtkMassProperties>::New();
+        massProperties->SetInputData(currentPolyData);
+        massProperties->Update();
+        
+        double currentVolume = massProperties->GetVolume();
+        
+        // 体積が基準を超えるまで次の範囲と結合
+        while (currentVolume < volumeThreshold && i < isoSurfaceNum - 2) {
+            i++;
+            double nextMin = stressValues[i];
+            double nextMax = stressValues[i + 1];
+            
+            std::cout << "Combining with next range: " << nextMin << " -> " << nextMax << std::endl;
+            
+            // 次の範囲のセルを抽出
+            auto nextPolyData = this->extractCellsInRegion(nextMin, nextMax);
+            
+            if (!nextPolyData || nextPolyData->GetNumberOfCells() == 0) {
+                std::cout << "No cells in next range to combine" << std::endl;
+                continue;
+            }
+
+            // セルを結合
+            auto appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
+            appendFilter->AddInputData(currentPolyData);
+            appendFilter->AddInputData(nextPolyData);
+            appendFilter->Update();
+
+            // 結合結果をPolyDataに変換
+            auto surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+            surfaceFilter->SetInputConnection(appendFilter->GetOutputPort());
+            surfaceFilter->Update();
+            
+            currentPolyData = surfaceFilter->GetOutput();
+            
+            // 新しい体積を計算
+            massProperties->SetInputData(currentPolyData);
+            massProperties->Update();
+            currentVolume = massProperties->GetVolume();
+        }
+
+        if (currentPolyData && currentPolyData->GetNumberOfCells() > 0) {
+            dividedPolyData.push_back(currentPolyData);
+            std::cout << "Added polyData with volume: " << currentVolume << std::endl;
         }
     }
 
@@ -138,7 +181,7 @@ std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
 
 void VtkProcessor::prepareStressValues(){
     // 20000: 応力の刻み幅
-    for (float v = minStress; v <= maxStress; v += 20000.0f) {
+    for (float v = minStress; v <= maxStress; v +=20000.0f) {
         stressValues.push_back(v);
     }
     isoSurfaceNum = stressValues.size();
