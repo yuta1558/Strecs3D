@@ -25,6 +25,7 @@ private slots:
     void openVTKFile();
     void openSTLFile();
     void processFiles();
+    bool process3mfFile();
 
 private:
     QVTKOpenGLNativeWidget* vtkWidget;

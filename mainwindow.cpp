@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "VtkProcessor.h"
+#include "lib3mfProcessor.h"
 #include <QPushButton>
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -182,23 +183,77 @@ void MainWindow::openSTLFile()
 void MainWindow::processFiles()
 {
     try {
-        // VTKファイルの処理
+        // 1. VTKファイルの初期化とデータ準備
         if (!initializeVtkProcessor()) {
-            return;
+            throw std::runtime_error("VTK processor initialization failed");
         }
 
-        // メッシュ分割処理
+        // 2. メッシュ分割処理
         auto dividedMeshes = processMeshDivision();
         if (dividedMeshes.empty()) {
-            throw std::runtime_error("Failed to divide mesh");
+            throw std::runtime_error("No meshes generated during division");
         }
 
-        // 分割メッシュの保存
+        // 3. 分割メッシュの保存
         saveDividedMeshes(dividedMeshes);
+
+        // 4. 3MFファイルの生成
+        if (!process3mfFile()) {
+            throw std::runtime_error("3MF file processing failed");
+        }
+
+        QMessageBox::information(this, "Success", "Files processed successfully");
     }
     catch (const std::exception& e) {
         std::cerr << "Error processing files: " << e.what() << std::endl;
         QMessageBox::critical(this, "Error", QString("Failed to process files: ") + e.what());
+    }
+}
+
+bool MainWindow::process3mfFile()
+{
+    try {
+        // 1. 3MFプロセッサの初期化
+        Lib3mfProcessor lib3mfProcessor;
+
+        // 2. 分割メッシュの読み込み
+        if (!lib3mfProcessor.getMeshes()) {
+            throw std::runtime_error("Failed to load divided meshes. Check if meshes exist and are valid.");
+        }
+
+        // 3. 元のSTLファイルの読み込み
+        if (!lib3mfProcessor.setStl(stlFile)) {
+            throw std::runtime_error("Failed to load STL file: " + stlFile);
+        }
+
+        // 4. メタデータの設定
+        if (!lib3mfProcessor.setMetaData()) {
+            throw std::runtime_error("Failed to set required metadata");
+        }
+
+        // 5. 3Dオブジェクトの構築
+        if (!lib3mfProcessor.assembleObjects()) {
+            throw std::runtime_error("Failed to assemble 3D objects");
+        }
+
+        // 6. 出力ディレクトリの準備
+        const std::string outputDir = "result";
+        const std::string outputPath = outputDir + "/result.3mf";
+        
+        // 7. 3MFファイルの保存
+        if (!lib3mfProcessor.save3mf(outputPath)) {
+            throw std::runtime_error("Failed to save 3MF file to: " + outputPath);
+        }
+
+        std::cout << "Successfully saved 3MF file: " << outputPath << std::endl;
+        return true;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "3MF Processing Error: " << e.what() << std::endl;
+        QMessageBox::critical(this, 
+                            "3MF Processing Error", 
+                            QString::fromStdString("Failed to process 3MF file:\n" + std::string(e.what())));
+        return false;
     }
 }
 

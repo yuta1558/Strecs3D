@@ -40,7 +40,7 @@ bool Lib3mfProcessor::getMeshes(){
     } catch (const std::filesystem::filesystem_error& e) {
         std::cerr << "file system error: " << e.what() << "\n";
     }
-    return 0;
+    return true;
 }
 
 
@@ -90,7 +90,7 @@ bool Lib3mfProcessor::setStl(const std::string stlFileName){
         // メッシュIDの取得に失敗した場合はエラーメッセージを出力
         std::cerr << "Failed to set name for the last mesh from file: " << stlFileName << std::endl;
     } 
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setMetaData(){
@@ -123,7 +123,7 @@ bool Lib3mfProcessor::setMetaData(){
             setMetaDataForOutlineMesh(currentMesh);
         }
     }
-    return 0;
+    return true;
 }
 
 
@@ -143,14 +143,14 @@ bool Lib3mfProcessor::setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInf
     metadataGroup->AddMetaData(cura_uri, "top_bottom_thickness", "0", "xs:integer", false);
     metadataGroup->AddMetaData(cura_uri, "top_layers", "0", "xs:integer", false);
     metadataGroup->AddMetaData(cura_uri, "top_thickness", "0", "xs:integer", false); 
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh){
     std::string cura_uri = "http://software.ultimaker.com/xml/cura/3mf/2015/10";
     PMetaDataGroup metadataGroup = Mesh->GetMetaDataGroup();
     metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "True", "xs:boolean", false);
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::assembleObjects(){
@@ -179,7 +179,7 @@ bool Lib3mfProcessor::assembleObjects(){
     }
     
     model->AddBuildItem(mergedObject.get(), identityTransform);
-    return 0;
+    return true;
 }
 
 
@@ -188,7 +188,7 @@ bool Lib3mfProcessor::save3mf(const std::string outputFilename){
     std::cout << "Writing " << outputFilename << "..." << std::endl;
     writer->WriteToFile(outputFilename);
     std::cout << "Done" << std::endl;
-    return 0;
+    return true;
 }
 
 
@@ -232,7 +232,7 @@ bool Lib3mfProcessor::setMetaDataBambu(){
     setAssembleDataBambu(meshIterator->Count());
     setupBuildObjects();
     exportConfig();
-    return 0;
+    return true;
 }
 
 
@@ -260,7 +260,7 @@ bool Lib3mfProcessor::setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, Fi
     part.mesh_stat = {0, 0, 0, 0, 0};
 
     object.parts.push_back(part);
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setMetaDataForOutlineMeshBambu(Lib3MF::PMeshObject Mesh){
@@ -279,7 +279,7 @@ bool Lib3mfProcessor::setMetaDataForOutlineMeshBambu(Lib3MF::PMeshObject Mesh){
     part.mesh_stat = {0, 0, 0, 0, 0};
 
     object.parts.push_back(part);
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setObjectDataBambu(int meshCount){
@@ -287,7 +287,7 @@ bool Lib3mfProcessor::setObjectDataBambu(int meshCount){
     object.metadata.push_back({"name", "Group #1"});
     object.metadata.push_back({"extruder", "1"});
     config.objects.push_back(object);
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setPlateDataBambu(int meshCount){
@@ -305,7 +305,7 @@ bool Lib3mfProcessor::setPlateDataBambu(int meshCount){
     plate.model_instance.metadata.push_back({"instance_id", "0"});
     plate.model_instance.metadata.push_back({"identify_id", "92"});
     config.plates.push_back(plate);
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setAssembleDataBambu(int meshCount){
@@ -315,7 +315,7 @@ bool Lib3mfProcessor::setAssembleDataBambu(int meshCount){
     item.transform = "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1";
     item.offset = "0 0 0";
     config.assemble.items.push_back(item);
-    return 0;
+    return true;
 }
 
 bool Lib3mfProcessor::setupBuildObjects(){
@@ -340,7 +340,7 @@ bool Lib3mfProcessor::setupBuildObjects(){
     }
     
     model->AddBuildItem(mergedObject.get(), identityTransform);
-    return 0;
+    return true;
 }
 
 
@@ -352,5 +352,5 @@ bool Lib3mfProcessor::exportConfig(){
     } else {
         std::cerr << "XMLの書き出しに失敗しました。" << std::endl;
     }
-    return 0;
+    return true;
 }
