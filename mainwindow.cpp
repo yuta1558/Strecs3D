@@ -209,6 +209,9 @@ void MainWindow::processFiles()
             throw std::runtime_error("3MF file processing failed");
         }
 
+        std::filesystem::path tempFiledir = ".temp";
+        FileUtility::clearDirectoryContents(tempFiledir);
+
         QMessageBox::information(this, "Success", "Files processed successfully");
     }
     catch (const std::exception& e) {
