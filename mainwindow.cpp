@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
+#include "utils/fileUtility.h"
 #include <QPushButton>
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -36,6 +37,12 @@ MainWindow::MainWindow(QWidget* parent)
     // QVTKOpenGLNativeWidgetの作成
     vtkWidget = new QVTKOpenGLNativeWidget(centralWidget);
     layout->addWidget(vtkWidget);
+
+
+    modeComboBox = new QComboBox(centralWidget);
+    modeComboBox->addItem("cura");
+    modeComboBox->addItem("bambu");
+    layout->addWidget(modeComboBox);
 
     QPushButton* processButton = new QPushButton("Process", centralWidget);
     layout->addWidget(processButton);
@@ -210,51 +217,128 @@ void MainWindow::processFiles()
     }
 }
 
+QString MainWindow::getCurrentMode() const
+{
+    return modeComboBox->currentText();
+}
+
 bool MainWindow::process3mfFile()
 {
     try {
         // 1. 3MFプロセッサの初期化
         Lib3mfProcessor lib3mfProcessor;
-
-        // 2. 分割メッシュの読み込み
-        if (!lib3mfProcessor.getMeshes()) {
-            throw std::runtime_error("Failed to load divided meshes. Check if meshes exist and are valid.");
-        }
-
-        // 3. 元のSTLファイルの読み込み
-        if (!lib3mfProcessor.setStl(stlFile)) {
-            throw std::runtime_error("Failed to load STL file: " + stlFile);
-        }
-
-        // 4. メタデータの設定
-        if (!lib3mfProcessor.setMetaData()) {
-            throw std::runtime_error("Failed to set required metadata");
-        }
-
-        // 5. 3Dオブジェクトの構築
-        if (!lib3mfProcessor.assembleObjects()) {
-            throw std::runtime_error("Failed to assemble 3D objects");
-        }
-
-        // 6. 出力ディレクトリの準備
-        const std::string outputDir = "result";
-        const std::string outputPath = outputDir + "/result.3mf";
         
-        // 7. 3MFファイルの保存
-        if (!lib3mfProcessor.save3mf(outputPath)) {
-            throw std::runtime_error("Failed to save 3MF file to: " + outputPath);
+        // 2. 入力ファイルの読み込み
+        if (!loadInputFiles(lib3mfProcessor)) {
+            throw std::runtime_error("Failed to load input files");
         }
 
-        std::cout << "Successfully saved 3MF file: " << outputPath << std::endl;
+        // 3. モードに応じた処理
+        QString currentMode = getCurrentMode();
+        if (!processByMode(lib3mfProcessor, currentMode)) {
+            throw std::runtime_error("Failed to process in " + currentMode.toStdString() + " mode");
+        }
+
         return true;
     }
     catch (const std::exception& e) {
-        std::cerr << "3MF Processing Error: " << e.what() << std::endl;
-        QMessageBox::critical(this, 
-                            "3MF Processing Error", 
-                            QString::fromStdString("Failed to process 3MF file:\n" + std::string(e.what())));
+        handle3mfError(e);
         return false;
     }
+}
+
+bool MainWindow::loadInputFiles(Lib3mfProcessor& processor)
+{
+    // 分割メッシュの読み込み
+    if (!processor.getMeshes()) {
+        throw std::runtime_error("Failed to load divided meshes");
+    }
+
+    // 元のSTLファイルの読み込み
+    if (!processor.setStl(stlFile)) {
+        throw std::runtime_error("Failed to load STL file: " + stlFile);
+    }
+
+    return true;
+}
+
+bool MainWindow::processByMode(Lib3mfProcessor& processor, const QString& mode)
+{
+    if (mode == "cura") {
+        return processCuraMode(processor);
+    } else if (mode == "bambu") {
+        return processBambuMode(processor);
+    }
+    throw std::runtime_error("Unknown mode: " + mode.toStdString());
+}
+
+bool MainWindow::processCuraMode(Lib3mfProcessor& processor)
+{
+    std::cout << "Processing in Cura mode" << std::endl;
+    
+    // メタデータの設定
+    if (!processor.setMetaData()) {
+        throw std::runtime_error("Failed to set metadata");
+    }
+
+    // 3Dオブジェクトの構築
+    if (!processor.assembleObjects()) {
+        throw std::runtime_error("Failed to assemble objects");
+    }
+
+    // 出力ファイルの保存
+    const std::string outputPath = "result/result.3mf";
+    if (!processor.save3mf(outputPath)) {
+        throw std::runtime_error("Failed to save 3MF file");
+    }
+
+    std::cout << "Successfully saved 3MF file: " << outputPath << std::endl;
+    return true;
+}
+
+bool MainWindow::processBambuMode(Lib3mfProcessor& processor)
+{
+    std::cout << "Processing in Bambu mode" << std::endl;
+    
+    // メタデータ設定
+    processor.setMetaDataBambu();
+    
+    // 一時ファイルの保存
+    const std::string tempFile = ".temp/result.3mf";
+    if (!processor.save3mf(tempFile)) {
+        throw std::runtime_error("Failed to save temporary 3MF file");
+    }
+
+    // ZIP処理
+    return processBambuZipFiles();
+}
+
+bool MainWindow::processBambuZipFiles()
+{
+    const std::string extractDir = ".temp/3mf";
+    const std::string zipFile = ".temp/result.3mf";
+    const std::string outputFile = "result/result.3mf";
+
+    // ZIPファイルを解凍
+    if (!FileUtility::unzipFile(zipFile, extractDir)) {
+        throw std::runtime_error("Failed to extract ZIP file");
+    }
+
+    // ディレクトリをZIP化
+    if (!FileUtility::zipDirectory(extractDir, outputFile)) {
+        throw std::runtime_error("Failed to create output ZIP file");
+    }
+
+    std::cout << "Successfully processed Bambu mode files" << std::endl;
+    return true;
+}
+
+void MainWindow::handle3mfError(const std::exception& e)
+{
+    std::cerr << "3MF Processing Error: " << e.what() << std::endl;
+    QMessageBox::critical(this, 
+                         "3MF Processing Error", 
+                         QString::fromStdString("Failed to process 3MF file:\n" + std::string(e.what())));
 }
 
 bool MainWindow::initializeVtkProcessor()

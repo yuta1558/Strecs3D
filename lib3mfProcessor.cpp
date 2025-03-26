@@ -345,7 +345,14 @@ bool Lib3mfProcessor::setupBuildObjects(){
 
 
 bool Lib3mfProcessor::exportConfig(){
-    std::string outputFilename = ".temp/3mf/Metadata/model_settings.config";
+    // 出力先ディレクトリを指定
+    const std::string outputDir = ".temp/3mf/Metadata";
+    // ディレクトリが存在しなければ作成する
+    std::filesystem::create_directories(outputDir);
+
+    // 出力ファイル名を設定
+    std::string outputFilename = outputDir + "/model_settings.config";
+
     // XMLファイル "config.xml" に書き出し
     if (xmlconverter::writeConfigToFile(config, outputFilename)) {
         std::cout << "XMLファイル 'config.xml' に書き出しました。" << std::endl;
