@@ -95,7 +95,9 @@ bool Lib3mfProcessor::setStl(const std::string stlFileName){
 
 bool Lib3mfProcessor::setMetaData(){
     auto meshIterator = model->GetMeshObjects();
-    std::regex filePattern(R"(dividedMesh(\d+)_([0-9]+\.[0-9]+)_([0-9]+\.[0-9]+)\.stl)");
+    std::regex filePattern(
+        R"(^dividedMesh(\d+)_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)\.stl$)"
+    );
     for (; meshIterator->MoveNext(); ) {
         Lib3MF::PMeshObject currentMesh = meshIterator->GetCurrentMeshObject();
         auto name = currentMesh->GetName();
@@ -194,7 +196,9 @@ bool Lib3mfProcessor::save3mf(const std::string outputFilename){
 
 bool Lib3mfProcessor::setMetaDataBambu(){
     auto meshIterator = model->GetMeshObjects();
-    std::regex filePattern(R"(dividedMesh(\d+)_([0-9]+\.[0-9]+)_([0-9]+\.[0-9]+)\.stl)");
+    std::regex filePattern(
+        R"(^dividedMesh(\d+)_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)\.stl$)"
+    );
     for (; meshIterator->MoveNext(); ) {
         Lib3MF::PMeshObject currentMesh = meshIterator->GetCurrentMeshObject();
         auto name = currentMesh->GetName();

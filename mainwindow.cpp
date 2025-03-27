@@ -17,6 +17,8 @@
 #include <vtkSTLReader.h>
 #include <vtkPolyDataMapper.h>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -388,7 +390,11 @@ void MainWindow::saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData
 
 std::string MainWindow::generateMeshFileName(int index, float minValue, float maxValue) const
 {
-    return "dividedMesh" + std::to_string(index) + "_" + 
-           std::to_string(minValue) + "_" + 
-           std::to_string(maxValue) + ".stl";
+    std::ostringstream oss;
+    // index を 2 桁でゼロ埋め
+    oss << "dividedMesh"
+        << std::setw(2) << std::setfill('0') << index << "_"
+        << minValue << "_"
+        << maxValue << ".stl";
+    return oss.str();
 }
