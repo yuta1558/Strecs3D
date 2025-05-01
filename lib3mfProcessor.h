@@ -24,14 +24,14 @@ class Lib3mfProcessor{
     public:
         bool getMeshes();
         bool setStl(const std::string stlFileName);
-        bool setMetaData();
+        bool setMetaData(double maxStress);
         bool save3mf(const std::string outputFilename);
-        bool setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo);
+        bool setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress);
         bool setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh);
         bool assembleObjects();
 
-        bool setMetaDataBambu();
-        bool setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo);
+        bool setMetaDataBambu(double maxStress);
+        bool setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress);
         bool setMetaDataForOutlineMeshBambu(Lib3MF::PMeshObject Mesh);
 
         bool setObjectDataBambu(int meshCount);

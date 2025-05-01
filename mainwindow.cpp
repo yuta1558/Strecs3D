@@ -282,7 +282,7 @@ bool MainWindow::processCuraMode(Lib3mfProcessor& processor)
     std::cout << "Processing in Cura mode" << std::endl;
     
     // メタデータの設定
-    if (!processor.setMetaData()) {
+    if (!processor.setMetaData(vtkProcessor->getMaxStress())) {
         throw std::runtime_error("Failed to set metadata");
     }
 
@@ -306,7 +306,7 @@ bool MainWindow::processBambuMode(Lib3mfProcessor& processor)
     std::cout << "Processing in Bambu mode" << std::endl;
     
     // メタデータ設定
-    processor.setMetaDataBambu();
+    processor.setMetaDataBambu(vtkProcessor->getMaxStress());
     
     // 一時ファイルの保存
     const std::string tempFile = ".temp/result.3mf";
@@ -388,13 +388,16 @@ void MainWindow::saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData
     }
 }
 
-std::string MainWindow::generateMeshFileName(int index, float minValue, float maxValue) const
+std::string MainWindow::generateMeshFileName(int index,
+    float minValue,
+    float maxValue) const
 {
     std::ostringstream oss;
-    // index を 2 桁でゼロ埋め
+    oss << std::fixed << std::setprecision(6);
     oss << "dividedMesh"
-        << std::setw(2) << std::setfill('0') << index << "_"
-        << minValue << "_"
-        << maxValue << ".stl";
+    << std::setw(2) << std::setfill('0') << index << "_"
+    << minValue << "_"
+    << maxValue << ".stl";
+
     return oss.str();
 }

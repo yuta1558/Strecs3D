@@ -85,31 +85,31 @@ bool VtkProcessor::calcAverageStress() {
 
 vtkSmartPointer<vtkPolyData> VtkProcessor::extractCellsInRegion(double lowerBound, double upperBound){
 
-    // --- vtkThresholdフィルタの設定 ---
-    vtkSmartPointer<vtkThreshold> thresholdFilter = vtkSmartPointer<vtkThreshold>::New();
-    thresholdFilter->SetInputData(vtuData);
-    // "AverageVonMisesStress"がセルデータとして登録されていることを指定する
-    thresholdFilter->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_CELLS, "AverageVonMisesStress");
+    std::string scalar_name = "von Mises Stress";
+    vtkSmartPointer<vtkClipDataSet> clip_min = vtkSmartPointer<vtkClipDataSet>::New();
+    clip_min->SetInputData(vtuData);
+    clip_min->SetValue(lowerBound);
+    clip_min->SetInsideOut(false);  // min_val より大きい領域を保持
+    clip_min->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "von Mises Stress");
+    clip_min->Update();
+
+    // 3. クリップフィルタ2: max_val 以下の領域を抽出
+    vtkSmartPointer<vtkClipDataSet> clip_max = vtkSmartPointer<vtkClipDataSet>::New();
+    clip_max->SetInputConnection(clip_min->GetOutputPort());
+    clip_max->SetValue(upperBound);
+    clip_max->SetInsideOut(true);  // max_val より小さい領域を保持
+    clip_max->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "von Mises Stress");
+    clip_max->Update();
+
+    // 最終的な結果: min_val と max_val の間の値を持つ領域
+    vtkSmartPointer<vtkUnstructuredGrid> ug_range = clip_max->GetOutput();  
+    vtkSmartPointer<vtkGeometryFilter> geometry_filter = vtkSmartPointer<vtkGeometryFilter>::New();
+    geometry_filter->SetInputData(ug_range);    
+    geometry_filter->Update();
+    vtkSmartPointer<vtkPolyData> poly_data = geometry_filter->GetOutput();
     
-    // --- ThresholdFunctionの設定 ---
-    // vtkThreshold::THRESHOLD_BETWEEN を指定して、下限と上限の両方でフィルタリングする
-    thresholdFilter->SetThresholdFunction(vtkThreshold::THRESHOLD_BETWEEN);
-    thresholdFilter->SetLowerThreshold(lowerBound);
-    thresholdFilter->SetUpperThreshold(upperBound);
-    
-    thresholdFilter->Update();
-
-    // --- 抽出されたセルはvtkThresholdの出力（vtkUnstructuredGrid）に格納される ---
-    vtkSmartPointer<vtkUnstructuredGrid> extractedCells = thresholdFilter->GetOutput();
-
-    // --- 必要に応じて、vtkDataSetSurfaceFilterを用いてvtkPolyDataに変換（例：可視化用） ---
-    vtkSmartPointer<vtkDataSetSurfaceFilter> surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
-    surfaceFilter->SetInputData(extractedCells);
-    surfaceFilter->Update();
-
-    vtkSmartPointer<vtkPolyData> combinedMesh = surfaceFilter->GetOutput();
-    return combinedMesh;
-}
+    return poly_data;
+}   
 
 std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
     std::vector<vtkSmartPointer<vtkPolyData>> dividedPolyData;
@@ -120,69 +120,19 @@ std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
         double maxValue = stressValues[i + 1];
         std::cout << "Extracting cells in range: " << minValue << " -> " << maxValue << std::endl;
 
-        // 指定範囲のセルを抽出
         vtkSmartPointer<vtkPolyData> currentPolyData = this->extractCellsInRegion(minValue, maxValue);
         
-        if (!currentPolyData || currentPolyData->GetNumberOfCells() == 0) {
-            std::cout << "No cells extracted for range: " << minValue << " -> " << maxValue << std::endl;
-            continue;
-        }
-
-        // 体積計算用のフィルター
-        auto massProperties = vtkSmartPointer<vtkMassProperties>::New();
-        massProperties->SetInputData(currentPolyData);
-        massProperties->Update();
-        
-        double currentVolume = massProperties->GetVolume();
-        
-        // 体積が基準を超えるまで次の範囲と結合
-        while (currentVolume < volumeThreshold && i < isoSurfaceNum - 2) {
-            i++;
-            double nextMin = stressValues[i];
-            double nextMax = stressValues[i + 1];
-            
-            std::cout << "Combining with next range: " << nextMin << " -> " << nextMax << std::endl;
-            
-            // 次の範囲のセルを抽出
-            auto nextPolyData = this->extractCellsInRegion(nextMin, nextMax);
-            
-            if (!nextPolyData || nextPolyData->GetNumberOfCells() == 0) {
-                std::cout << "No cells in next range to combine" << std::endl;
-                continue;
-            }
-
-            // セルを結合
-            auto appendFilter = vtkSmartPointer<vtkAppendFilter>::New();
-            appendFilter->AddInputData(currentPolyData);
-            appendFilter->AddInputData(nextPolyData);
-            appendFilter->Update();
-
-            // 結合結果をPolyDataに変換
-            auto surfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
-            surfaceFilter->SetInputConnection(appendFilter->GetOutputPort());
-            surfaceFilter->Update();
-            
-            currentPolyData = surfaceFilter->GetOutput();
-            
-            // 新しい体積を計算
-            massProperties->SetInputData(currentPolyData);
-            massProperties->Update();
-            currentVolume = massProperties->GetVolume();
-        }
-
-        if (currentPolyData && currentPolyData->GetNumberOfCells() > 0) {
-            dividedPolyData.push_back(currentPolyData);
-            std::cout << "Added polyData with volume: " << currentVolume << std::endl;
-        }
+        dividedPolyData.push_back(currentPolyData);
     }
 
     return dividedPolyData;
 }
 
 void VtkProcessor::prepareStressValues(){
-    // 20000: 応力の刻み幅
-    for (float v = minStress; v <= maxStress; v +=20000.0f) {
-        stressValues.push_back(v);
+    int divisionNum = 5;
+    double stressInterval = (maxStress - minStress) / divisionNum;
+    for (int i=0; i<divisionNum; ++i){
+        stressValues.push_back(minStress + i*stressInterval);
     }
     isoSurfaceNum = stressValues.size();
     std::cout<< "isoSurfaceNum: " << isoSurfaceNum << std::endl;
@@ -388,4 +338,8 @@ void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& f
         // 書き込みに失敗した場合のエラーハンドリング
         std::cerr << "Error: Failed to write STL file: " << outputFilePath << std::endl;
     }
+}
+
+double VtkProcessor::getMaxStress(){
+    return this->maxStress;
 }

@@ -100,7 +100,7 @@ public:
     vtkSmartPointer<vtkPolyData> ReadSTL(const std::string& file_path);
     void stlDisplay(vtkSmartPointer<vtkPolyData> polyData);
     void savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName);
-
+    double getMaxStress();
 };
 
 
