@@ -57,51 +57,30 @@ private:
     double stressRange[2];
     float minStress;
     float maxStress;
-    std::vector<float> stressValues;
-    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-    vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    std::array<double, 3>  ComputeMeshCenter(vtkSmartPointer<vtkPolyData> polyData);
     int isoSurfaceNum;
+    std::vector<float> stressValues;
+
+    vtkSmartPointer<vtkRenderer>               renderer = vtkSmartPointer<vtkRenderer>::New();
+    vtkSmartPointer<vtkRenderWindow>           renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
     std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
-    double volumeThreshold = 10000.0; // 体積の閾値（デフォルト値）
-
 
 public:
     VtkProcessor(const std::string& vtuFileName);
     void showInfo();
     bool LoadAndPrepareData();
-    bool calcAverageStress();
-    vtkSmartPointer<vtkPolyData> extractCellsInRegion(double lowerBound, double upperBound);
-    std::vector<vtkSmartPointer<vtkPolyData>> divideMesh();
-    void stressDisplay();
     void prepareStressValues();
-    std::vector<float> getStressValues() const { return stressValues; }
-    bool generateIsoSurface();
-
-    vtkSmartPointer<vtkRenderer> getRenderer() const { return renderer; }
-    vtkSmartPointer<vtkRenderWindow> getRenderWindow() const { return renderWindow; }
-    vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor() const { return renderWindowInteractor; }
-    
-    void deleteSmallIsosurface(std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces, double threshold);
-    
-    int getIsoSurfaceNum() const { return isoSurfaceNum; }
-    const std::vector<vtkSmartPointer<vtkPolyData>>& getIsoSurfaces() const {
-        return isoSurfaces;
-    }
-
-    vtkSmartPointer<vtkPolyData> scalePolyData(vtkSmartPointer<vtkPolyData> polyData, double scaleFactor);
-    vtkSmartPointer<vtkPolyData> makePolyDataSmooth(vtkSmartPointer<vtkPolyData> polyData);
-    vtkSmartPointer<vtkPolyData> reversePolyDataOrientation(vtkSmartPointer<vtkPolyData> polyData);
-    void polyDataDisplay(vtkSmartPointer<vtkPolyData> polyData, vtkSmartPointer<vtkRenderer> renderer);
-
-    void startRnederAndInteraction();
-    vtkSmartPointer<vtkPolyData> ReadSTL(const std::string& file_path);
-    void stlDisplay(vtkSmartPointer<vtkPolyData> polyData);
+    vtkSmartPointer<vtkPolyData> extractRegionInRange(double lowerBound, double upperBound);
+    std::vector<vtkSmartPointer<vtkPolyData>> divideMesh();
     void savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName);
-    double getMaxStress();
-};
 
+    std::vector<float> getStressValues()                                   const { return stressValues; }
+    vtkSmartPointer<vtkRenderer> getRenderer()                             const { return renderer; }
+    vtkSmartPointer<vtkRenderWindow> getRenderWindow()                     const { return renderWindow; }
+    vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor() const { return renderWindowInteractor; }
+    int getIsoSurfaceNum()                                                 const { return isoSurfaceNum; }
+    double getMaxStress()                                                  const { return maxStress;}
+};
 
 #endif

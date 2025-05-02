@@ -356,7 +356,6 @@ bool MainWindow::initializeVtkProcessor()
     vtkProcessor = std::make_unique<VtkProcessor>(vtkFile);
     vtkProcessor->showInfo();
     vtkProcessor->LoadAndPrepareData();
-    vtkProcessor->calcAverageStress();
     vtkProcessor->prepareStressValues();
     
     return true;
