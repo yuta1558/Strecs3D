@@ -59,10 +59,6 @@ private:
     float maxStress;
     int isoSurfaceNum;
     std::vector<float> stressValues;
-
-    vtkSmartPointer<vtkRenderer>               renderer = vtkSmartPointer<vtkRenderer>::New();
-    vtkSmartPointer<vtkRenderWindow>           renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-    vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
     std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
 
@@ -76,11 +72,16 @@ public:
     void savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName);
 
     std::vector<float> getStressValues()                                   const { return stressValues; }
-    vtkSmartPointer<vtkRenderer> getRenderer()                             const { return renderer; }
-    vtkSmartPointer<vtkRenderWindow> getRenderWindow()                     const { return renderWindow; }
-    vtkSmartPointer<vtkRenderWindowInteractor> getRenderWindowInteractor() const { return renderWindowInteractor; }
     int getIsoSurfaceNum()                                                 const { return isoSurfaceNum; }
     double getMaxStress()                                                  const { return maxStress;}
+    
+    vtkSmartPointer<vtkActor> getVtuActor(const std::string& fileName);
+    vtkSmartPointer<vtkActor> getStlActor(const std::string& fileName);
+
+    void saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes);
+    std::string generateMeshFileName(int index,
+        float minValue,
+        float maxValue) const;
 };
 
 #endif

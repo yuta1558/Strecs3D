@@ -1,10 +1,12 @@
 #include "VtkProcessor.h"
 #include <filesystem>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 VtkProcessor::VtkProcessor(const std::string& vtuFileName): vtuFileName(vtuFileName) {
-    renderWindow->AddRenderer(renderer);
-    renderWindowInteractor->SetRenderWindow(renderWindow);
+    // renderWindow->AddRenderer(renderer);
+    // renderWindowInteractor->SetRenderWindow(renderWindow);
 }
 
 void VtkProcessor::showInfo(){
@@ -116,4 +118,121 @@ void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& f
     if (!writer->Write()) {
         std::cerr << "Error: Failed to write STL file: " << outputFilePath << std::endl;
     }
+}
+
+vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName){
+    // VTKファイルの読み込み
+    vtkSmartPointer<vtkXMLUnstructuredGridReader> reader =
+    vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    reader->SetFileName(fileName.c_str());
+    reader->Update();
+
+    // 読み込んだデータセットを取得
+    vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid =
+    vtuData = reader->GetOutput();
+    if (!unstructuredGrid){
+    std::cerr << "Error: Unable to read the VTK file." << std::endl;
+        return nullptr;
+    }
+    if (!vtuData) {
+        std::cerr << "Error: Unable to read the VTK file." << std::endl;
+        return nullptr;
+    }
+
+    // "von Mises Stress" をアクティブスカラーとして設定
+    vtkPointData* pointData = unstructuredGrid->GetPointData();
+    if (!pointData){
+    std::cerr << "Error: No point data found in the file." << std::endl;
+        return nullptr;
+    }
+    pointData->SetActiveScalars("von Mises Stress");
+
+    // ストレスのレンジを取得
+    double stressRange[2];
+    unstructuredGrid->GetScalarRange(stressRange);
+    minStress = stressRange[0];
+    maxStress = stressRange[1];
+
+    // LookupTableの作成（青から赤へのグラデーション）
+    vtkSmartPointer<vtkLookupTable> lookupTable =
+    vtkSmartPointer<vtkLookupTable>::New();
+    lookupTable->SetNumberOfTableValues(256);
+    lookupTable->SetRange(stressRange);
+    lookupTable->SetHueRange(0.6667, 0.0); // 青から赤へ
+    lookupTable->Build();
+
+    // Mapperの作成
+    vtkSmartPointer<vtkDataSetMapper> mapper =
+    vtkSmartPointer<vtkDataSetMapper>::New();
+    mapper->SetInputData(unstructuredGrid);
+    mapper->SetLookupTable(lookupTable);
+    mapper->SetScalarRange(stressRange);
+    mapper->ScalarVisibilityOn();
+
+    // Actorの作成
+    vtkSmartPointer<vtkActor> actor =
+    vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+
+    return actor;
+}
+
+
+vtkSmartPointer<vtkActor> VtkProcessor::getStlActor(const std::string& fileName){
+
+    // STLファイルの読み込み
+    vtkSmartPointer<vtkSTLReader> reader =
+        vtkSmartPointer<vtkSTLReader>::New();
+    reader->SetFileName(fileName.c_str());
+    reader->Update();
+
+    // 読み込んだデータセットを取得
+    vtkSmartPointer<vtkPolyData> polyData = reader->GetOutput();
+    if (!polyData)
+    {
+        std::cerr << "Error: Unable to read the STL file." << std::endl;
+        return nullptr;
+    }
+
+    // Mapperの作成
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(polyData);
+    mapper->ScalarVisibilityOff(); // STLファイルは通常スカラー値を持たないため
+
+    // Actorの作成
+    vtkSmartPointer<vtkActor> actor =
+        vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+    return actor;
+}
+
+
+
+void VtkProcessor::saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes)
+{
+    const auto& stressValues = this->getStressValues();
+    
+    for (size_t i = 0; i < dividedMeshes.size(); ++i) {
+        float minValue = stressValues[i];
+        float maxValue = stressValues[i + 1];
+        std::string fileName = generateMeshFileName(i + 1, minValue, maxValue);
+        this->savePolyDataAsSTL(dividedMeshes[i], fileName);
+    }
+}
+
+std::string VtkProcessor::generateMeshFileName(int index,
+    float minValue,
+    float maxValue) const
+{
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(6);
+    oss << "dividedMesh"
+    << std::setw(2) << std::setfill('0') << index << "_"
+    << minValue << "_"
+    << maxValue << ".stl";
+
+    return oss.str();
 }

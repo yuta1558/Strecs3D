@@ -20,8 +20,8 @@ public:
     ~MainWindow();
     bool initializeVtkProcessor();
     std::vector<vtkSmartPointer<vtkPolyData>> processMeshDivision();
-    void saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes);
-    std::string generateMeshFileName(int index, float minValue, float maxValue)const;
+    //void saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes);
+    //std::string generateMeshFileName(int index, float minValue, float maxValue)const;
     QString getCurrentMode() const;
 
 private slots:
