@@ -2,6 +2,7 @@
 #include "../mainwindow.h"
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QSizePolicy>
 
 ImportTab::ImportTab(MainWindow* mainWindow, QWidget* parent)
     : QWidget(parent)
@@ -20,9 +21,15 @@ void ImportTab::setupUI()
     leftpaneLayout->addWidget(openStlButton);
     leftpaneLayout->addWidget(openVtkButton);
 
+    // Set size policy for left pane
+    QWidget* leftPaneWidget = new QWidget(this);
+    leftPaneWidget->setLayout(leftpaneLayout);
+    leftPaneWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    leftPaneWidget->setMaximumWidth(300); // Set maximum width to prevent too wide left pane
+
     vtkWidget = new QVTKOpenGLNativeWidget(this);
-    layout->addLayout(leftpaneLayout);
-    layout->addWidget(vtkWidget);
+    layout->addWidget(leftPaneWidget, 1); // Stretch factor of 1
+    layout->addWidget(vtkWidget, 3);      // Stretch factor of 3
 
     renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
     vtkWidget->setRenderWindow(renderWindow);
