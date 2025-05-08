@@ -10,7 +10,7 @@
 #include <vtkPolyData.h>
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
-
+#include "UI/mainwindowui.h"
 
 class MainWindow : public QMainWindow
 {
@@ -20,14 +20,14 @@ public:
     ~MainWindow();
     bool initializeVtkProcessor();
     std::vector<vtkSmartPointer<vtkPolyData>> processMeshDivision();
-    //void saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes);
-    //std::string generateMeshFileName(int index, float minValue, float maxValue)const;
     QString getCurrentMode() const;
 
-private slots:
+public slots:
     void openVTKFile();
     void openSTLFile();
     void processFiles();
+
+private slots:
     bool process3mfFile();
 
 private:
@@ -43,6 +43,7 @@ private:
     void setupCameraCallbacks();
 
     std::unique_ptr<VtkProcessor> vtkProcessor;
+    std::unique_ptr<MainWindowUI> ui;
     vtkSmartPointer<CameraCallback> importCameraCallback;
     vtkSmartPointer<CameraCallback> settingsCameraCallback;
 
@@ -54,10 +55,6 @@ private:
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> settingsRenderWindow;
     vtkSmartPointer<vtkRenderer> settingsRenderer;
 
-    // QVTKOpenGLNativeWidget* vtkWidget;
-    // QVTKOpenGLNativeWidget* previewVtkWidget;
-    // vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
-    // vtkSmartPointer<vtkRenderer> renderer;
     std::string vtkFile;
     std::string stlFile;
     QComboBox* modeComboBox;

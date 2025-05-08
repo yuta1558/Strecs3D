@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(Strecs3D LANGUAGES CXX)
 
 # Qt のMOCを自動有効化
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
@@ -16,7 +18,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Debugモードの場合、デバッグ情報を追加する
@@ -27,9 +29,7 @@ endif()
 # 必要なパッケージの検索
 find_package(VTK REQUIRED)
 
-if(VTK_VERSION VERSION_LESS "8.90.0")
-  include(${VTK_USE_FILE})
-endif()
+include(${VTK_USE_FILE})
 
 # lib3mf の設定
 set(LIB3MF_ROOT "$ENV{HOME}/libs/lib3mf/lib3mf-2.3.2-Darwin" CACHE PATH "Path to lib3mf installation")
@@ -53,6 +53,7 @@ endif()
 add_executable(Strecs3D
   main.cpp
   mainwindow.cpp
+  UI/mainwindowui.cpp
   VtkProcessor.cpp
   lib3mfProcessor.cpp
   utils/fileUtility.cpp
@@ -68,6 +69,8 @@ target_include_directories(Strecs3D PRIVATE
 
 # リンクするライブラリの設定
 target_link_libraries(Strecs3D PRIVATE
+  Qt6::Core
+  Qt6::Widgets
   ${VTK_LIBRARIES}
   "${LIB3MF_LIB}"
   ${LIBZIP_LIBRARIES}
