@@ -31,12 +31,22 @@ private slots:
     bool process3mfFile();
 
 private:
-    QVTKOpenGLNativeWidget* vtkWidget;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
-    vtkSmartPointer<vtkRenderer> renderer;
+    std::unique_ptr<VtkProcessor> vtkProcessor;
+
+    QVTKOpenGLNativeWidget* importVtkWidget;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> importRenderWindow;
+    vtkSmartPointer<vtkRenderer> importRenderer;
+
+    QVTKOpenGLNativeWidget* settingsVtkWidget;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> settingsRenderWindow;
+    vtkSmartPointer<vtkRenderer> settingsRenderer;
+
+    // QVTKOpenGLNativeWidget* vtkWidget;
+    // QVTKOpenGLNativeWidget* previewVtkWidget;
+    // vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
+    // vtkSmartPointer<vtkRenderer> renderer;
     std::string vtkFile;
     std::string stlFile;
-    std::unique_ptr<VtkProcessor> vtkProcessor;
     QComboBox* modeComboBox;
 
     bool loadInputFiles(class Lib3mfProcessor& processor);

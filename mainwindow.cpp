@@ -25,40 +25,104 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setWindowTitle("von Mises Stress Viewer");
 
+    // 中央ウィジェット＋レイアウト
     QWidget* centralWidget = new QWidget(this);
-    QVBoxLayout* layout = new QVBoxLayout(centralWidget);
+    QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
 
-    QPushButton* openStlButton = new QPushButton("Open STL File", centralWidget);
-    layout->addWidget(openStlButton);
+    // ─── タブウィジェット ─────────────────────────────
+    QTabWidget* tabWidget = new QTabWidget(centralWidget);
+    // 角丸＆ダークテーマ風のスタイル
+    tabWidget->setStyleSheet(R"(
+        QTabWidget::pane {
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #2e2e2e;
+        }
+        QTabBar::tab {
+            background: #3a3a3a;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            padding: 6px 12px;
+            min-width: 80px;
+        }
+        QTabBar::tab:selected {
+            background:rgb(79, 76, 119);
+        }
+    )");
 
-    QPushButton* openVtkButton = new QPushButton("Open VTK File", centralWidget);
-    layout->addWidget(openVtkButton);
-    
-    vtkWidget = new QVTKOpenGLNativeWidget(centralWidget);
-    layout->addWidget(vtkWidget);
+    // 各タブページ（中身はあとでレイアウトを作る）
+    QWidget* importPage  = new QWidget();
+    QWidget* settingsPage = new QWidget();
+    QWidget* previewPage = new QWidget();
 
+    tabWidget->addTab(importPage,  tr("Import"));
+    tabWidget->addTab(settingsPage, tr("Settings"));
+    tabWidget->addTab(previewPage, tr("Preview"));
 
-    modeComboBox = new QComboBox(centralWidget);
+    mainLayout->addWidget(tabWidget);
+    // ────────────────────────────────────────────────
+
+    // ─── Import タブのレイアウト ───────────────────────
+    QVBoxLayout* importLayout = new QVBoxLayout(importPage);
+    QPushButton* openStlButton = new QPushButton("Open STL File", importPage);
+    QPushButton* openVtkButton = new QPushButton("Open VTK File", importPage);
+    importLayout->addWidget(openStlButton);
+    importLayout->addWidget(openVtkButton);
+
+    importVtkWidget = new QVTKOpenGLNativeWidget(importPage);
+    importLayout->addWidget(importVtkWidget);
+
+    importRenderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    importVtkWidget->setRenderWindow(importRenderWindow);
+    importRenderer = vtkSmartPointer<vtkRenderer>::New();
+    importRenderWindow->AddRenderer(importRenderer);
+    // ────────────────────────────────────────────────
+
+    // ─── settings タブのレイアウト ──────────────────────
+    QVBoxLayout* settingsLayout = new QVBoxLayout(settingsPage);
+    modeComboBox = new QComboBox(settingsPage);
     modeComboBox->addItem("cura");
     modeComboBox->addItem("bambu");
-    layout->addWidget(modeComboBox);
+    QPushButton* processButton = new QPushButton("Process", settingsPage);
+    settingsLayout->addWidget(modeComboBox);
+    settingsLayout->addWidget(processButton);
 
-    QPushButton* processButton = new QPushButton("Process", centralWidget);
-    layout->addWidget(processButton);
+    settingsVtkWidget = new QVTKOpenGLNativeWidget(settingsPage);
+    settingsLayout->addWidget(settingsVtkWidget);
+
+    settingsRenderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    settingsVtkWidget->setRenderWindow(settingsRenderWindow);
+    settingsRenderer = vtkSmartPointer<vtkRenderer>::New();
+    settingsRenderWindow->AddRenderer(settingsRenderer);
+    // ────────────────────────────────────────────────
+
+    // ─── Preview タブのレイアウト ──────────────────────
+    QVBoxLayout* previewLayout = new QVBoxLayout(previewPage);
+    // Preview タブ用の独自のウィジェットを配置
+    // previewVtkWidget = new QVTKOpenGLNativeWidget(previewPage);
+    // previewLayout->addWidget(previewVtkWidget);
+    // ────────────────────────────────────────────────
 
     setCentralWidget(centralWidget);
 
-    renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    vtkWidget->setRenderWindow(renderWindow);
+    // VTK のセットアップ
+    // renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    // importVtkWidget->setRenderWindow(renderWindow);
+    // settingsVtkWidget->setRenderWindow(renderWindow);
+    // renderer = vtkSmartPointer<vtkRenderer>::New();
+    // renderWindow->AddRenderer(renderer);
 
-    renderer = vtkSmartPointer<vtkRenderer>::New();
-    renderWindow->AddRenderer(renderer);
+    // シグナル／スロット接続
+    connect(openStlButton,  &QPushButton::clicked, this, &MainWindow::openSTLFile);
+    connect(openVtkButton,  &QPushButton::clicked, this, &MainWindow::openVTKFile);
+    connect(processButton,  &QPushButton::clicked, this, &MainWindow::processFiles);
 
-    connect(openVtkButton, &QPushButton::clicked, this, &MainWindow::openVTKFile);
-    connect(openStlButton, &QPushButton::clicked, this, &MainWindow::openSTLFile);
-    connect(processButton, &QPushButton::clicked, this, &MainWindow::processFiles);
+    // 全体のスタイル＆サイズ
+    resize(1600, 900);
+    importVtkWidget->setStyleSheet("background-color: #1a1a1a;");
+    settingsVtkWidget->setStyleSheet("background-color: #1a1a1a;");
+    this->setStyleSheet("background-color: #1a1a1a;");
 
-    resize(800, 600);
     vtkProcessor = std::make_unique<VtkProcessor>(vtkFile);
 }
 
@@ -244,13 +308,19 @@ void MainWindow::openVTKFile()
     if (fileName.isEmpty())
         return; // ファイルが選択されなかった場合は何もしない
     vtkFile = fileName.toStdString();
-    renderer->RemoveAllViewProps();
 
-    auto actor = vtkProcessor->getVtuActor(vtkFile);
-    renderer->AddActor(actor);
-    renderer->ResetCamera();
+    importRenderer->RemoveAllViewProps();
+    auto importActor = vtkProcessor->getVtuActor(vtkFile);
+    importRenderer->AddActor(importActor);
+    importRenderer->ResetCamera();
 
-    vtkWidget->renderWindow()->Render();
+    settingsRenderer->RemoveAllViewProps();
+    auto settingsActor = vtkProcessor->getVtuActor(vtkFile);
+    settingsRenderer->AddActor(settingsActor);
+    settingsRenderer->ResetCamera();
+
+    importVtkWidget->renderWindow()->Render();
+    settingsVtkWidget->renderWindow()->Render();
 }
 
 
@@ -263,11 +333,16 @@ void MainWindow::openSTLFile()
     if (fileName.isEmpty())
         return; // ファイルが選択されなかった場合は何もしない
     stlFile = fileName.toStdString();
-    renderer->RemoveAllViewProps();
+    importRenderer->RemoveAllViewProps();
+    auto importActor = vtkProcessor->getStlActor(stlFile);
+    importRenderer->AddActor(importActor);
+    importRenderer->ResetCamera();
 
-    auto actor = vtkProcessor->getStlActor(stlFile);
-    renderer->AddActor(actor);
-    renderer->ResetCamera();
+    settingsRenderer->RemoveAllViewProps();
+    auto settingsActor = vtkProcessor->getStlActor(stlFile);
+    settingsRenderer->AddActor(settingsActor);
+    settingsRenderer->ResetCamera();
 
-    vtkWidget->renderWindow()->Render();
+    importVtkWidget->renderWindow()->Render();
+    settingsVtkWidget->renderWindow()->Render();
 }
