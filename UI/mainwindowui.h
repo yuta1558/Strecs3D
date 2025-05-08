@@ -3,12 +3,9 @@
 
 #include <QWidget>
 #include <QTabWidget>
-#include <QVTKOpenGLNativeWidget.h>
-#include <QComboBox>
-#include <QPushButton>
-#include <vtkSmartPointer.h>
-#include <vtkGenericOpenGLRenderWindow.h>
-#include <vtkRenderer.h>
+#include "ImportTab.h"
+#include "SettingsTab.h"
+#include "PreviewTab.h"
 
 class MainWindow;
 
@@ -19,35 +16,20 @@ public:
 
     void setupUI();
     QWidget* getCentralWidget() const { return centralWidget; }
-    QVTKOpenGLNativeWidget* getImportVtkWidget() const { return importVtkWidget; }
-    QVTKOpenGLNativeWidget* getSettingsVtkWidget() const { return settingsVtkWidget; }
-    QComboBox* getModeComboBox() const { return modeComboBox; }
-    vtkRenderer* getImportRenderer() const { return importRenderer; }
-    vtkRenderer* getSettingsRenderer() const { return settingsRenderer; }
+    ImportTab* getImportTab() const { return importTab; }
+    SettingsTab* getSettingsTab() const { return settingsTab; }
+    PreviewTab* getPreviewTab() const { return previewTab; }
 
 private:
     void setupTabWidget();
-    void setupImportTab();
-    void setupSettingsTab();
-    void setupPreviewTab();
     void setupStyle();
 
     MainWindow* mainWindow;
     QWidget* centralWidget;
     QTabWidget* tabWidget;
-    QWidget* importPage;
-    QWidget* settingsPage;
-    QWidget* previewPage;
-
-    QVTKOpenGLNativeWidget* importVtkWidget;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> importRenderWindow;
-    vtkSmartPointer<vtkRenderer> importRenderer;
-
-    QVTKOpenGLNativeWidget* settingsVtkWidget;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> settingsRenderWindow;
-    vtkSmartPointer<vtkRenderer> settingsRenderer;
-
-    QComboBox* modeComboBox;
+    ImportTab* importTab;
+    SettingsTab* settingsTab;
+    PreviewTab* previewTab;
 };
 
 #endif // MAINWINDOWUI_H 

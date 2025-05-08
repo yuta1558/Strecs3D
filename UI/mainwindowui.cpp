@@ -16,9 +16,6 @@ void MainWindowUI::setupUI()
     setupTabWidget();
     mainLayout->addWidget(tabWidget);
 
-    setupImportTab();
-    setupSettingsTab();
-    setupPreviewTab();
     setupStyle();
 }
 
@@ -43,65 +40,16 @@ void MainWindowUI::setupTabWidget()
         }
     )");
 
-    importPage = new QWidget();
-    settingsPage = new QWidget();
-    previewPage = new QWidget();
+    importTab = new ImportTab(mainWindow);
+    settingsTab = new SettingsTab(mainWindow);
+    previewTab = new PreviewTab(mainWindow);
 
-    tabWidget->addTab(importPage, QObject::tr("Import"));
-    tabWidget->addTab(settingsPage, QObject::tr("Settings"));
-    tabWidget->addTab(previewPage, QObject::tr("Preview"));
-}
-
-void MainWindowUI::setupImportTab()
-{
-    QVBoxLayout* importLayout = new QVBoxLayout(importPage);
-    QPushButton* openStlButton = new QPushButton("Open STL File", importPage);
-    QPushButton* openVtkButton = new QPushButton("Open VTK File", importPage);
-    importLayout->addWidget(openStlButton);
-    importLayout->addWidget(openVtkButton);
-
-    importVtkWidget = new QVTKOpenGLNativeWidget(importPage);
-    importLayout->addWidget(importVtkWidget);
-
-    importRenderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    importVtkWidget->setRenderWindow(importRenderWindow);
-    importRenderer = vtkSmartPointer<vtkRenderer>::New();
-    importRenderWindow->AddRenderer(importRenderer);
-
-    QObject::connect(openStlButton, &QPushButton::clicked, mainWindow, &MainWindow::openSTLFile);
-    QObject::connect(openVtkButton, &QPushButton::clicked, mainWindow, &MainWindow::openVTKFile);
-}
-
-void MainWindowUI::setupSettingsTab()
-{
-    QVBoxLayout* settingsLayout = new QVBoxLayout(settingsPage);
-    modeComboBox = new QComboBox(settingsPage);
-    modeComboBox->addItem("cura");
-    modeComboBox->addItem("bambu");
-    QPushButton* processButton = new QPushButton("Process", settingsPage);
-    settingsLayout->addWidget(modeComboBox);
-    settingsLayout->addWidget(processButton);
-
-    settingsVtkWidget = new QVTKOpenGLNativeWidget(settingsPage);
-    settingsLayout->addWidget(settingsVtkWidget);
-
-    settingsRenderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    settingsVtkWidget->setRenderWindow(settingsRenderWindow);
-    settingsRenderer = vtkSmartPointer<vtkRenderer>::New();
-    settingsRenderWindow->AddRenderer(settingsRenderer);
-
-    QObject::connect(processButton, &QPushButton::clicked, mainWindow, &MainWindow::processFiles);
-}
-
-void MainWindowUI::setupPreviewTab()
-{
-    QVBoxLayout* previewLayout = new QVBoxLayout(previewPage);
-    // Preview tab implementation will be added here when needed
+    tabWidget->addTab(importTab, QObject::tr("Import"));
+    tabWidget->addTab(settingsTab, QObject::tr("Settings"));
+    tabWidget->addTab(previewTab, QObject::tr("Preview"));
 }
 
 void MainWindowUI::setupStyle()
 {
-    importVtkWidget->setStyleSheet("background-color: #1a1a1a;");
-    settingsVtkWidget->setStyleSheet("background-color: #1a1a1a;");
     mainWindow->setStyleSheet("background-color: #1a1a1a;");
 } 

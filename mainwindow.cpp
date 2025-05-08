@@ -38,9 +38,9 @@ void MainWindow::CameraCallback::Execute(vtkObject* caller, unsigned long, void*
     vtkRenderer* renderer = static_cast<vtkRenderer*>(caller);
     if (window && renderer) {
         if (isImport) {
-            window->syncCameras(renderer, window->ui->getSettingsRenderer());
+            window->syncCameras(renderer, window->ui->getSettingsTab()->getRenderer());
         } else {
-            window->syncCameras(renderer, window->ui->getImportRenderer());
+            window->syncCameras(renderer, window->ui->getImportTab()->getRenderer());
         }
     }
 }
@@ -50,21 +50,21 @@ void MainWindow::setupCameraCallbacks()
     importCameraCallback = vtkSmartPointer<CameraCallback>::New();
     importCameraCallback->window = this;
     importCameraCallback->isImport = true;
-    ui->getImportRenderer()->AddObserver(vtkCommand::ModifiedEvent, importCameraCallback);
+    ui->getImportTab()->getRenderer()->AddObserver(vtkCommand::ModifiedEvent, importCameraCallback);
 
     settingsCameraCallback = vtkSmartPointer<CameraCallback>::New();
     settingsCameraCallback->window = this;
     settingsCameraCallback->isImport = false;
-    ui->getSettingsRenderer()->AddObserver(vtkCommand::ModifiedEvent, settingsCameraCallback);
+    ui->getSettingsTab()->getRenderer()->AddObserver(vtkCommand::ModifiedEvent, settingsCameraCallback);
 }
 
 MainWindow::~MainWindow()
 {
-    if (ui->getImportRenderer() && importCameraCallback) {
-        ui->getImportRenderer()->RemoveObserver(importCameraCallback);
+    if (ui->getImportTab()->getRenderer() && importCameraCallback) {
+        ui->getImportTab()->getRenderer()->RemoveObserver(importCameraCallback);
     }
-    if (ui->getSettingsRenderer() && settingsCameraCallback) {
-        ui->getSettingsRenderer()->RemoveObserver(settingsCameraCallback);
+    if (ui->getSettingsTab()->getRenderer() && settingsCameraCallback) {
+        ui->getSettingsTab()->getRenderer()->RemoveObserver(settingsCameraCallback);
     }
 }
 
@@ -156,7 +156,7 @@ bool MainWindow::process3mfFile()
             throw std::runtime_error("Failed to load input files");
         }
 
-        QString currentMode = ui->getModeComboBox()->currentText();
+        QString currentMode = ui->getSettingsTab()->getModeComboBox()->currentText();
         if (!processByMode(lib3mfProcessor, currentMode)) {
             throw std::runtime_error("Failed to process in " + currentMode.toStdString() + " mode");
         }
@@ -260,24 +260,23 @@ void MainWindow::openVTKFile()
                                                     "",
                                                     "VTK Files (*.vtu)");
     if (fileName.isEmpty())
-        return; // ファイルが選択されなかった場合は何もしない
+        return;
     vtkFile = fileName.toStdString();
 
-    ui->getImportRenderer()->RemoveAllViewProps();
+    ui->getImportTab()->getRenderer()->RemoveAllViewProps();
     auto importActor = vtkProcessor->getVtuActor(vtkFile);
-    ui->getImportRenderer()->AddActor(importActor);
-    ui->getImportRenderer()->ResetCamera();
+    ui->getImportTab()->getRenderer()->AddActor(importActor);
+    ui->getImportTab()->getRenderer()->ResetCamera();
 
-    ui->getSettingsRenderer()->RemoveAllViewProps();
+    ui->getSettingsTab()->getRenderer()->RemoveAllViewProps();
     auto settingsActor = vtkProcessor->getVtuActor(vtkFile);
-    ui->getSettingsRenderer()->AddActor(settingsActor);
-    ui->getSettingsRenderer()->ResetCamera();
+    ui->getSettingsTab()->getRenderer()->AddActor(settingsActor);
+    ui->getSettingsTab()->getRenderer()->ResetCamera();
 
-    // カメラを同期
-    syncCameras(ui->getImportRenderer(), ui->getSettingsRenderer());
+    syncCameras(ui->getImportTab()->getRenderer(), ui->getSettingsTab()->getRenderer());
 
-    ui->getImportVtkWidget()->renderWindow()->Render();
-    ui->getSettingsVtkWidget()->renderWindow()->Render();
+    ui->getImportTab()->getVtkWidget()->renderWindow()->Render();
+    ui->getSettingsTab()->getVtkWidget()->renderWindow()->Render();
 }
 
 void MainWindow::openSTLFile()
@@ -287,21 +286,25 @@ void MainWindow::openSTLFile()
                                                     "",
                                                     "STL Files (*.stl)");
     if (fileName.isEmpty())
-        return; // ファイルが選択されなかった場合は何もしない
+        return;
     stlFile = fileName.toStdString();
-    ui->getImportRenderer()->RemoveAllViewProps();
+    ui->getImportTab()->getRenderer()->RemoveAllViewProps();
     auto importActor = vtkProcessor->getStlActor(stlFile);
-    ui->getImportRenderer()->AddActor(importActor);
-    ui->getImportRenderer()->ResetCamera();
+    ui->getImportTab()->getRenderer()->AddActor(importActor);
+    ui->getImportTab()->getRenderer()->ResetCamera();
 
-    ui->getSettingsRenderer()->RemoveAllViewProps();
+    ui->getSettingsTab()->getRenderer()->RemoveAllViewProps();
     auto settingsActor = vtkProcessor->getStlActor(stlFile);
-    ui->getSettingsRenderer()->AddActor(settingsActor);
-    ui->getSettingsRenderer()->ResetCamera();
+    ui->getSettingsTab()->getRenderer()->AddActor(settingsActor);
+    ui->getSettingsTab()->getRenderer()->ResetCamera();
 
-    // カメラを同期
-    syncCameras(ui->getImportRenderer(), ui->getSettingsRenderer());
+    syncCameras(ui->getImportTab()->getRenderer(), ui->getSettingsTab()->getRenderer());
 
-    ui->getImportVtkWidget()->renderWindow()->Render();
-    ui->getSettingsVtkWidget()->renderWindow()->Render();
+    ui->getImportTab()->getVtkWidget()->renderWindow()->Render();
+    ui->getSettingsTab()->getVtkWidget()->renderWindow()->Render();
+}
+
+QString MainWindow::getCurrentMode() const
+{
+    return ui->getSettingsTab()->getModeComboBox()->currentText();
 }
