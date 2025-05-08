@@ -13,13 +13,15 @@ ImportTab::ImportTab(MainWindow* mainWindow, QWidget* parent)
 
 void ImportTab::setupUI()
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QHBoxLayout* layout = new QHBoxLayout(this);
+    QVBoxLayout* leftpaneLayout = new QVBoxLayout();
     QPushButton* openStlButton = new QPushButton("Open STL File", this);
     QPushButton* openVtkButton = new QPushButton("Open VTK File", this);
-    layout->addWidget(openStlButton);
-    layout->addWidget(openVtkButton);
+    leftpaneLayout->addWidget(openStlButton);
+    leftpaneLayout->addWidget(openVtkButton);
 
     vtkWidget = new QVTKOpenGLNativeWidget(this);
+    layout->addLayout(leftpaneLayout);
     layout->addWidget(vtkWidget);
 
     renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();

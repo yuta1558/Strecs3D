@@ -1,5 +1,6 @@
 #include "PreviewTab.h"
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 
 PreviewTab::PreviewTab(MainWindow* mainWindow, QWidget* parent)
     : QWidget(parent)
@@ -11,5 +12,15 @@ PreviewTab::PreviewTab(MainWindow* mainWindow, QWidget* parent)
 void PreviewTab::setupUI()
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
-    // Preview tab implementation will be added here when needed
+    QHBoxLayout* topLayout = new QHBoxLayout();
+    
+    modeComboBox = new QComboBox(this);
+    modeComboBox->addItem("cura");
+    modeComboBox->addItem("bambu");
+    
+    topLayout->addWidget(modeComboBox);
+    topLayout->addStretch();
+    
+    layout->addLayout(topLayout);
+    layout->addStretch();
 } 

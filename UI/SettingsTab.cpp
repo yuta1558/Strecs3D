@@ -13,15 +13,13 @@ SettingsTab::SettingsTab(MainWindow* mainWindow, QWidget* parent)
 
 void SettingsTab::setupUI()
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
-    modeComboBox = new QComboBox(this);
-    modeComboBox->addItem("cura");
-    modeComboBox->addItem("bambu");
+    QHBoxLayout* layout = new QHBoxLayout(this);
+    QVBoxLayout* leftpaneLayout = new QVBoxLayout();
     QPushButton* processButton = new QPushButton("Process", this);
-    layout->addWidget(modeComboBox);
-    layout->addWidget(processButton);
+    leftpaneLayout->addWidget(processButton);
 
     vtkWidget = new QVTKOpenGLNativeWidget(this);
+    layout->addLayout(leftpaneLayout);
     layout->addWidget(vtkWidget);
 
     renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
