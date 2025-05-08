@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QVBoxLayout>
 #include <QMessageBox>
+#include <vtkCamera.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkLookupTable.h>
 #include <vtkDataSetMapper.h>
@@ -124,10 +125,60 @@ MainWindow::MainWindow(QWidget* parent)
     this->setStyleSheet("background-color: #1a1a1a;");
 
     vtkProcessor = std::make_unique<VtkProcessor>(vtkFile);
+    setupCameraCallbacks();
+}
+
+void MainWindow::CameraCallback::Execute(vtkObject* caller, unsigned long, void*)
+{
+    vtkRenderer* renderer = static_cast<vtkRenderer*>(caller);
+    if (window && renderer) {
+        if (isImport) {
+            window->syncCameras(renderer, window->settingsRenderer);
+        } else {
+            window->syncCameras(renderer, window->importRenderer);
+        }
+    }
+}
+
+void MainWindow::setupCameraCallbacks()
+{
+    importCameraCallback = vtkSmartPointer<CameraCallback>::New();
+    importCameraCallback->window = this;
+    importCameraCallback->isImport = true;
+    importRenderer->AddObserver(vtkCommand::ModifiedEvent, importCameraCallback);
+
+    settingsCameraCallback = vtkSmartPointer<CameraCallback>::New();
+    settingsCameraCallback->window = this;
+    settingsCameraCallback->isImport = false;
+    settingsRenderer->AddObserver(vtkCommand::ModifiedEvent, settingsCameraCallback);
 }
 
 MainWindow::~MainWindow()
 {
+    if (importRenderer && importCameraCallback) {
+        importRenderer->RemoveObserver(importCameraCallback);
+    }
+    if (settingsRenderer && settingsCameraCallback) {
+        settingsRenderer->RemoveObserver(settingsCameraCallback);
+    }
+}
+
+void MainWindow::syncCameras(vtkRenderer* source, vtkRenderer* dest)
+{
+    if (!source || !dest) return;
+    
+    vtkCamera* sourceCam = source->GetActiveCamera();
+    vtkCamera* destCam = dest->GetActiveCamera();
+    
+    // カメラパラメータをコピー
+    destCam->SetPosition(sourceCam->GetPosition());
+    destCam->SetFocalPoint(sourceCam->GetFocalPoint());
+    destCam->SetViewUp(sourceCam->GetViewUp());
+    destCam->SetViewAngle(sourceCam->GetViewAngle());
+    destCam->SetClippingRange(sourceCam->GetClippingRange());
+    
+    dest->ResetCameraClippingRange();
+    dest->GetRenderWindow()->Render();
 }
 
 void MainWindow::processFiles()
@@ -319,6 +370,9 @@ void MainWindow::openVTKFile()
     settingsRenderer->AddActor(settingsActor);
     settingsRenderer->ResetCamera();
 
+    // カメラを同期
+    syncCameras(importRenderer, settingsRenderer);
+
     importVtkWidget->renderWindow()->Render();
     settingsVtkWidget->renderWindow()->Render();
 }
@@ -342,6 +396,9 @@ void MainWindow::openSTLFile()
     auto settingsActor = vtkProcessor->getStlActor(stlFile);
     settingsRenderer->AddActor(settingsActor);
     settingsRenderer->ResetCamera();
+
+    // カメラを同期
+    syncCameras(importRenderer, settingsRenderer);
 
     importVtkWidget->renderWindow()->Render();
     settingsVtkWidget->renderWindow()->Render();

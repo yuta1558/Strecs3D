@@ -31,7 +31,20 @@ private slots:
     bool process3mfFile();
 
 private:
+    class CameraCallback : public vtkCommand {
+    public:
+        static CameraCallback* New() { return new CameraCallback; }
+        virtual void Execute(vtkObject* caller, unsigned long, void*);
+        MainWindow* window;
+        bool isImport;
+    };
+
+    void syncCameras(vtkRenderer* source, vtkRenderer* dest);
+    void setupCameraCallbacks();
+
     std::unique_ptr<VtkProcessor> vtkProcessor;
+    vtkSmartPointer<CameraCallback> importCameraCallback;
+    vtkSmartPointer<CameraCallback> settingsCameraCallback;
 
     QVTKOpenGLNativeWidget* importVtkWidget;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> importRenderWindow;
