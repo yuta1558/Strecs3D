@@ -26,6 +26,7 @@ public slots:
     void openVTKFile();
     void openSTLFile();
     void processFiles();
+    void loadAndDisplayTempStlFiles();
 
 private slots:
     bool process3mfFile();

@@ -104,6 +104,10 @@ void MainWindow::processFiles()
             throw std::runtime_error("3MF file processing failed");
         }
 
+        // Display STL files first
+        loadAndDisplayTempStlFiles();
+
+        // Then clear the temporary directory
         std::filesystem::path tempFiledir = ".temp";
         FileUtility::clearDirectoryContents(tempFiledir);
 
@@ -251,6 +255,37 @@ void MainWindow::handle3mfError(const std::exception& e)
     QMessageBox::critical(this, 
                          "3MF Processing Error", 
                          QString::fromStdString("Failed to process 3MF file:\n" + std::string(e.what())));
+}
+
+void MainWindow::loadAndDisplayTempStlFiles()
+{
+    try {
+        std::filesystem::path tempDir = ".temp/div";
+        if (!std::filesystem::exists(tempDir)) {
+            throw std::runtime_error(".temp directory does not exist");
+        }
+
+        // Clear existing actors from the preview tab
+        ui->getPreviewTab()->getRenderer()->RemoveAllViewProps();
+
+        // Iterate through all STL files in .temp directory
+        for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
+            if (entry.path().extension() == ".stl") {
+                auto actor = vtkProcessor->getStlActor(entry.path().string());
+                if (actor) {
+                    ui->getPreviewTab()->getRenderer()->AddActor(actor);
+                }
+            }
+        }
+
+        // Reset camera and render
+        ui->getPreviewTab()->getRenderer()->ResetCamera();
+        ui->getPreviewTab()->getVtkWidget()->renderWindow()->Render();
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error loading STL files: " << e.what() << std::endl;
+        QMessageBox::critical(this, "Error", QString("Failed to load STL files: ") + e.what());
+    }
 }
 
 void MainWindow::openVTKFile()
