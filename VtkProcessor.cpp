@@ -85,7 +85,7 @@ std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
 void VtkProcessor::prepareStressValues(){
     int divisionNum = 5;
     double stressInterval = (maxStress - minStress) / divisionNum;
-    for (int i=0; i<divisionNum; ++i){
+    for (int i=0; i<=divisionNum; ++i){
         stressValues.push_back(minStress + i*stressInterval);
     }
     isoSurfaceNum = stressValues.size();
