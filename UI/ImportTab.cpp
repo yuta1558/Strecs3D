@@ -26,6 +26,7 @@ void ImportTab::setupUI()
     leftPaneWidget->setLayout(leftpaneLayout);
     leftPaneWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     leftPaneWidget->setMaximumWidth(300); // Set maximum width to prevent too wide left pane
+    leftPaneWidget->setStyleSheet("QWidget { background-color: #2D2D2D; border-radius: 10px; }");
 
     vtkWidget = new QVTKOpenGLNativeWidget(this);
     layout->addWidget(leftPaneWidget, 1); // Stretch factor of 1
@@ -35,8 +36,9 @@ void ImportTab::setupUI()
     vtkWidget->setRenderWindow(renderWindow);
     renderer = vtkSmartPointer<vtkRenderer>::New();
     renderWindow->AddRenderer(renderer);
-
-    vtkWidget->setStyleSheet("background-color: #1a1a1a;");
+    
+    // Set background color to dark gray (RGB values from 0 to 1)
+    renderer->SetBackground(0.1, 0.1, 0.1);  // Dark gray color
 }
 
 void ImportTab::setupConnections()
