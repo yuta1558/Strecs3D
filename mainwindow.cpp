@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <regex>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -268,13 +269,58 @@ void MainWindow::loadAndDisplayTempStlFiles()
         // Clear existing actors from the preview tab
         ui->getPreviewTab()->getRenderer()->RemoveAllViewProps();
 
-        // Iterate through all STL files in .temp directory
+        // Get all STL files and extract their numbers
+        std::vector<std::pair<std::filesystem::path, int>> stlFiles;
+        std::regex filePattern(R"(^dividedMesh(\d+)_)");
+        
         for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
             if (entry.path().extension() == ".stl") {
-                auto actor = vtkProcessor->getStlActor(entry.path().string());
-                if (actor) {
-                    ui->getPreviewTab()->getRenderer()->AddActor(actor);
+                std::string filename = entry.path().filename().string();
+                std::smatch match;
+                if (std::regex_search(filename, match, filePattern)) {
+                    int number = std::stoi(match[1].str());
+                    stlFiles.push_back({entry.path(), number});
                 }
+            }
+        }
+
+        // Sort by the extracted number
+        std::sort(stlFiles.begin(), stlFiles.end(),
+            [](const auto& a, const auto& b) { return a.second < b.second; });
+
+        if (stlFiles.empty()) {
+            throw std::runtime_error("No valid STL files found");
+        }
+
+        // Get min and max numbers for color interpolation
+        int minNumber = stlFiles.front().second;
+        int maxNumber = stlFiles.back().second;
+        double range = maxNumber - minNumber;
+
+        // Display each STL file with appropriate color
+        for (const auto& [path, number] : stlFiles) {
+            double r, g, b;
+            
+            // Calculate normalized position (0 to 1) in the range
+            double normalizedPos = (number - minNumber) / range;
+            
+            if (normalizedPos <= 0.5) {
+                // Blue to White (0 to 0.5)
+                double t = normalizedPos * 2.0; // Scale to 0-1
+                r = t;
+                g = t;
+                b = 1.0;
+            } else {
+                // White to Red (0.5 to 1)
+                double t = (normalizedPos - 0.5) * 2.0; // Scale to 0-1
+                r = 1.0;
+                g = 1.0 - t;
+                b = 1.0 - t;
+            }
+
+            auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
+            if (actor) {
+                ui->getPreviewTab()->getRenderer()->AddActor(actor);
             }
         }
 

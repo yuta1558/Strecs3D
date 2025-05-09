@@ -209,7 +209,31 @@ vtkSmartPointer<vtkActor> VtkProcessor::getStlActor(const std::string& fileName)
     return actor;
 }
 
+vtkSmartPointer<vtkActor> VtkProcessor::getColoredStlActor(const std::string& fileName, double r, double g, double b) {
+    // STLファイルの読み込み
+    vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
+    reader->SetFileName(fileName.c_str());
+    reader->Update();
 
+    // 読み込んだデータセットを取得
+    vtkSmartPointer<vtkPolyData> polyData = reader->GetOutput();
+    if (!polyData) {
+        std::cerr << "Error: Unable to read the STL file." << std::endl;
+        return nullptr;
+    }
+
+    // Mapperの作成
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(polyData);
+    mapper->ScalarVisibilityOff(); // STLファイルは通常スカラー値を持たないため
+
+    // Actorの作成
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(r, g, b); // 指定された色を設定
+    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+    return actor;
+}
 
 void VtkProcessor::saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes)
 {
