@@ -161,7 +161,7 @@ bool MainWindow::process3mfFile()
             throw std::runtime_error("Failed to load input files");
         }
 
-        QString currentMode = ui->getPreviewTab()->getModeComboBox()->currentText();
+        QString currentMode = ui->getSettingsTab()->getModeComboBox()->currentText();
         if (!processByMode(lib3mfProcessor, currentMode)) {
             throw std::runtime_error("Failed to process in " + currentMode.toStdString() + " mode");
         }
@@ -391,5 +391,5 @@ void MainWindow::openSTLFile()
 
 QString MainWindow::getCurrentMode() const
 {
-    return ui->getPreviewTab()->getModeComboBox()->currentText();
+    return ui->getSettingsTab()->getModeComboBox()->currentText();
 }

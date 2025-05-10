@@ -3,6 +3,7 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QSizePolicy>
+#include <QComboBox>
 
 SettingsTab::SettingsTab(MainWindow* mainWindow, QWidget* parent)
     : QWidget(parent)
@@ -17,6 +18,12 @@ void SettingsTab::setupUI()
     QHBoxLayout* layout = new QHBoxLayout(this);
     QVBoxLayout* leftpaneLayout = new QVBoxLayout();
     QPushButton* processButton = new QPushButton("Process", this);
+    
+    modeComboBox = new QComboBox(this);
+    modeComboBox->addItem("cura");
+    modeComboBox->addItem("bambu");
+    
+    leftpaneLayout->addWidget(modeComboBox);
     leftpaneLayout->addWidget(processButton);
 
     // Set size policy for left pane

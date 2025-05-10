@@ -2,7 +2,6 @@
 #define PREVIEWTAB_H
 
 #include <QWidget>
-#include <QComboBox>
 #include <QPushButton>
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkSmartPointer.h>
@@ -15,7 +14,6 @@ class PreviewTab : public QWidget {
     Q_OBJECT
 public:
     explicit PreviewTab(MainWindow* mainWindow, QWidget* parent = nullptr);
-    QComboBox* getModeComboBox() const { return modeComboBox; }
     QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
     vtkRenderer* getRenderer() const { return renderer; }
 
@@ -27,7 +25,6 @@ private:
     QString getDefaultExportFilename() const;
 
     MainWindow* mainWindow;
-    QComboBox* modeComboBox;
     QVTKOpenGLNativeWidget* vtkWidget;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;

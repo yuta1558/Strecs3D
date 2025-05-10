@@ -22,11 +22,6 @@ void PreviewTab::setupUI()
     QVBoxLayout* leftpaneLayout = new QVBoxLayout();
     QPushButton* export3mfButton = new QPushButton("export 3mf", this);
     
-    modeComboBox = new QComboBox(this);
-    modeComboBox->addItem("cura");
-    modeComboBox->addItem("bambu");
-    
-    leftpaneLayout->addWidget(modeComboBox);
     leftpaneLayout->addWidget(export3mfButton);
     leftpaneLayout->addStretch();
     
