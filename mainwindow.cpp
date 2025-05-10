@@ -362,13 +362,17 @@ void MainWindow::openVTKFile()
 
 void MainWindow::openSTLFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    "Open STL File",
-                                                    "",
-                                                    "STL Files (*.stl)");
-    if (fileName.isEmpty())
+    QString filename = QFileDialog::getOpenFileName(this,
+        "Open STL File",
+        QDir::homePath(),
+        "STL Files (*.stl)");
+
+    if (filename.isEmpty()) {
         return;
-    stlFile = fileName.toStdString();
+    }
+
+    currentStlFilename = filename;
+    stlFile = filename.toStdString();
     ui->getImportTab()->getRenderer()->RemoveAllViewProps();
     auto importActor = vtkProcessor->getStlActor(stlFile);
     ui->getImportTab()->getRenderer()->AddActor(importActor);

@@ -11,6 +11,7 @@
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
 #include "UI/mainwindowui.h"
+#include <QString>
 
 class MainWindow : public QMainWindow
 {
@@ -21,6 +22,7 @@ public:
     bool initializeVtkProcessor();
     std::vector<vtkSmartPointer<vtkPolyData>> processMeshDivision();
     QString getCurrentMode() const;
+    QString getCurrentStlFilename() const { return currentStlFilename; }
 
 public slots:
     void openVTKFile();
@@ -59,6 +61,8 @@ private:
     std::string vtkFile;
     std::string stlFile;
     QComboBox* modeComboBox;
+
+    QString currentStlFilename;
 
     bool loadInputFiles(class Lib3mfProcessor& processor);
     bool processByMode(class Lib3mfProcessor& processor, const QString& mode);

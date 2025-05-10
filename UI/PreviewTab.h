@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QPushButton>
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkSmartPointer.h>
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -18,14 +19,19 @@ public:
     QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
     vtkRenderer* getRenderer() const { return renderer; }
 
+private slots:
+    void export3MF();
+
 private:
     void setupUI();
+    QString getDefaultExportFilename() const;
 
     MainWindow* mainWindow;
     QComboBox* modeComboBox;
     QVTKOpenGLNativeWidget* vtkWidget;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;
+    QPushButton* export3MFButton;
 };
 
 #endif // PREVIEWTAB_H 
