@@ -82,6 +82,11 @@ std::vector<vtkSmartPointer<vtkPolyData>> VtkProcessor::divideMesh() {
     return dividedPolyData;
 }
 
+void VtkProcessor::clearPreviousData(){
+    stressValues.clear();
+    dividedMeshes.clear();
+}
+
 void VtkProcessor::prepareStressValues(){
     int divisionNum = 5;
     double stressInterval = (maxStress - minStress) / divisionNum;

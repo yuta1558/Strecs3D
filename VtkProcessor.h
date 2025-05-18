@@ -59,7 +59,6 @@ private:
     float maxStress;
     int isoSurfaceNum;
     std::vector<float> stressValues;
-    std::vector<vtkSmartPointer<vtkPolyData>> isoSurfaces;
     std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
 
 public:
@@ -67,6 +66,7 @@ public:
     void showInfo();
     bool LoadAndPrepareData();
     void prepareStressValues();
+    void clearPreviousData();
     vtkSmartPointer<vtkPolyData> extractRegionInRange(double lowerBound, double upperBound);
     std::vector<vtkSmartPointer<vtkPolyData>> divideMesh();
     void savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName);

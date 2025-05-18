@@ -122,6 +122,7 @@ void MainWindow::processFiles()
 
 bool MainWindow::initializeVtkProcessor()
 {
+    vtkProcessor->clearPreviousData();
     if (vtkFile.empty()) {
         QMessageBox::warning(this, "Warning", "No VTK file selected");
         return false;
