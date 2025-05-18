@@ -53,7 +53,6 @@ class VtkProcessor{
 private:
     std::string vtuFileName;
     vtkSmartPointer<vtkUnstructuredGrid> vtuData;
-    vtkSmartPointer<vtkLookupTable> lookupTable;
     double stressRange[2];
     float minStress;
     float maxStress;

@@ -28,12 +28,6 @@ bool VtkProcessor:: LoadAndPrepareData() {
     vtkPointData* pointData = vtuData->GetPointData();
     pointData->SetActiveScalars("von Mises Stress");
     vtuData->GetScalarRange(stressRange);
-    // LookupTableの作成
-    lookupTable = vtkSmartPointer<vtkLookupTable>::New();
-    lookupTable->SetNumberOfTableValues(256);
-    lookupTable->SetRange(stressRange);
-    lookupTable->SetHueRange(0.6667, 0.0); // 青から赤へ
-    lookupTable->Build();
 
     minStress = stressRange[0];
     maxStress = stressRange[1];
@@ -158,12 +152,41 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
     minStress = stressRange[0];
     maxStress = stressRange[1];
 
-    // LookupTableの作成（青から赤へのグラデーション）
+    // LookupTableの作成（青から白を経由して赤へのグラデーション）
     vtkSmartPointer<vtkLookupTable> lookupTable =
     vtkSmartPointer<vtkLookupTable>::New();
     lookupTable->SetNumberOfTableValues(256);
     lookupTable->SetRange(stressRange);
-    lookupTable->SetHueRange(0.6667, 0.0); // 青から赤へ
+    
+    // RGB色空間で青→白→赤のグラデーションを設定
+    lookupTable->SetTableRange(stressRange);
+    lookupTable->SetHueRange(0.0, 0.0); // Hueは使用しない
+    lookupTable->SetSaturationRange(0.0, 0.0); // Saturationは使用しない
+    lookupTable->SetValueRange(1.0, 1.0); // 明度を1に固定
+    lookupTable->SetAlphaRange(1.0, 1.0); // 透明度を1に固定
+    
+    // カラーテーブルを手動で設定
+    for (int i = 0; i < 256; i++) {
+        double t = static_cast<double>(i) / 255.0;
+        double r, g, b;
+        
+        if (t < 0.5) {
+            // 青から白へのグラデーション
+            t = t * 2.0; // 0.0-0.5 を 0.0-1.0 に変換
+            r = t;
+            g = t;
+            b = 1.0;
+        } else {
+            // 白から赤へのグラデーション
+            t = (t - 0.5) * 2.0; // 0.5-1.0 を 0.0-1.0 に変換
+            r = 1.0;
+            g = 1.0 - t;
+            b = 1.0 - t;
+        }
+        
+        lookupTable->SetTableValue(i, r, g, b, 1.0);
+    }
+    
     lookupTable->Build();
 
     // Mapperの作成
