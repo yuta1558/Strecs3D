@@ -23,8 +23,13 @@ void SettingsTab::setupUI()
     modeComboBox->addItem("cura");
     modeComboBox->addItem("bambu");
     
+    // Create message console
+    messageConsole = new MessageConsole(this);
+    messageConsole->setMinimumHeight(200);
+    
     leftpaneLayout->addWidget(modeComboBox);
     leftpaneLayout->addWidget(processButton);
+    leftpaneLayout->addWidget(messageConsole);
 
     // Set size policy for left pane
     QWidget* leftPaneWidget = new QWidget(this);

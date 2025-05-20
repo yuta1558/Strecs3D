@@ -18,8 +18,14 @@ void ImportTab::setupUI()
     QVBoxLayout* leftpaneLayout = new QVBoxLayout();
     QPushButton* openStlButton = new QPushButton("Open STL File", this);
     QPushButton* openVtkButton = new QPushButton("Open VTK File", this);
+    
+    // Create message console
+    messageConsole = new MessageConsole(this);
+    messageConsole->setMinimumHeight(200);
+    
     leftpaneLayout->addWidget(openStlButton);
     leftpaneLayout->addWidget(openVtkButton);
+    leftpaneLayout->addWidget(messageConsole);
 
     // Set size policy for left pane
     QWidget* leftPaneWidget = new QWidget(this);
@@ -47,8 +53,10 @@ void ImportTab::setupConnections()
     for (QPushButton* button : buttons) {
         if (button->text() == "Open STL File") {
             connect(button, &QPushButton::clicked, mainWindow, &MainWindow::openSTLFile);
+            mainWindow->logMessage("Open STL File");
         } else if (button->text() == "Open VTK File") {
             connect(button, &QPushButton::clicked, mainWindow, &MainWindow::openVTKFile);
+            mainWindow->logMessage("Open VTK File");
         }
     }
 } 

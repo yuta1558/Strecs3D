@@ -7,6 +7,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
+#include "MessageConsole.h"
 
 class MainWindow;
 
@@ -16,6 +17,7 @@ public:
     explicit PreviewTab(MainWindow* mainWindow, QWidget* parent = nullptr);
     QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
     vtkRenderer* getRenderer() const { return renderer; }
+    MessageConsole* getMessageConsole() const { return messageConsole; }
 
 private slots:
     void export3MF();
@@ -29,6 +31,7 @@ private:
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;
     QPushButton* export3MFButton;
+    MessageConsole* messageConsole;
 };
 
 #endif // PREVIEWTAB_H 

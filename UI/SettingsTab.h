@@ -7,6 +7,7 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
 #include <QComboBox>
+#include "MessageConsole.h"
 
 class MainWindow;
 
@@ -17,6 +18,7 @@ public:
     QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
     vtkRenderer* getRenderer() const { return renderer; }
     QComboBox* getModeComboBox() const { return modeComboBox; }
+    MessageConsole* getMessageConsole() const { return messageConsole; }
 
 private:
     void setupUI();
@@ -27,6 +29,7 @@ private:
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;
     QComboBox* modeComboBox;
+    MessageConsole* messageConsole;
 };
 
 #endif // SETTINGSTAB_H 

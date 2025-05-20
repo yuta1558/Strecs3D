@@ -22,7 +22,12 @@ void PreviewTab::setupUI()
     QVBoxLayout* leftpaneLayout = new QVBoxLayout();
     QPushButton* export3mfButton = new QPushButton("export 3mf", this);
     
+    // Create message console
+    messageConsole = new MessageConsole(this);
+    messageConsole->setMinimumHeight(200);
+    
     leftpaneLayout->addWidget(export3mfButton);
+    leftpaneLayout->addWidget(messageConsole);
     leftpaneLayout->addStretch();
     
     QWidget* leftPaneWidget = new QWidget(this);

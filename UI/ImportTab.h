@@ -6,6 +6,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
+#include "MessageConsole.h"
 
 class MainWindow;
 
@@ -15,6 +16,7 @@ public:
     explicit ImportTab(MainWindow* mainWindow, QWidget* parent = nullptr);
     QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
     vtkRenderer* getRenderer() const { return renderer; }
+    MessageConsole* getMessageConsole() const { return messageConsole; }
 
 private:
     void setupUI();
@@ -24,6 +26,7 @@ private:
     QVTKOpenGLNativeWidget* vtkWidget;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;
+    MessageConsole* messageConsole;
 };
 
 #endif // IMPORTTAB_H 

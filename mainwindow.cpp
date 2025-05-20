@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     vtkProcessor = std::make_unique<VtkProcessor>(vtkFile);
     setupCameraCallbacks();
+    setupMessageConsoles();
 }
 
 void MainWindow::CameraCallback::Execute(vtkObject* caller, unsigned long, void*)
@@ -57,6 +58,50 @@ void MainWindow::setupCameraCallbacks()
     settingsCameraCallback->window = this;
     settingsCameraCallback->isImport = false;
     ui->getSettingsTab()->getRenderer()->AddObserver(vtkCommand::ModifiedEvent, settingsCameraCallback);
+}
+
+void MainWindow::setupMessageConsoles()
+{
+    // Connect message console signals
+    connect(ui->getImportTab()->getMessageConsole(), &MessageConsole::messageAdded,
+            this, &MainWindow::syncMessageConsoles);
+    connect(ui->getSettingsTab()->getMessageConsole(), &MessageConsole::messageAdded,
+            this, &MainWindow::syncMessageConsoles);
+    connect(ui->getPreviewTab()->getMessageConsole(), &MessageConsole::messageAdded,
+            this, &MainWindow::syncMessageConsoles);
+}
+
+void MainWindow::syncMessageConsoles(const QString& message)
+{
+    // Get the sender console
+    MessageConsole* sender = qobject_cast<MessageConsole*>(QObject::sender());
+    if (!sender) return;
+
+    // Block signals temporarily to prevent infinite recursion
+    if (ui->getImportTab() && ui->getImportTab()->getMessageConsole() && sender != ui->getImportTab()->getMessageConsole()) {
+        ui->getImportTab()->getMessageConsole()->blockSignals(true);
+        ui->getImportTab()->getMessageConsole()->appendMessage(message);
+        ui->getImportTab()->getMessageConsole()->blockSignals(false);
+    }
+
+    if (ui->getSettingsTab() && ui->getSettingsTab()->getMessageConsole() && sender != ui->getSettingsTab()->getMessageConsole()) {
+        ui->getSettingsTab()->getMessageConsole()->blockSignals(true);
+        ui->getSettingsTab()->getMessageConsole()->appendMessage(message);
+        ui->getSettingsTab()->getMessageConsole()->blockSignals(false);
+    }
+
+    if (ui->getPreviewTab() && ui->getPreviewTab()->getMessageConsole() && sender != ui->getPreviewTab()->getMessageConsole()) {
+        ui->getPreviewTab()->getMessageConsole()->blockSignals(true);
+        ui->getPreviewTab()->getMessageConsole()->appendMessage(message);
+        ui->getPreviewTab()->getMessageConsole()->blockSignals(false);
+    }
+}
+
+void MainWindow::logMessage(const QString& message)
+{
+    if (ui && ui->getImportTab() && ui->getImportTab()->getMessageConsole()) {
+        ui->getImportTab()->getMessageConsole()->appendMessage(message);
+    }
 }
 
 MainWindow::~MainWindow()
@@ -337,6 +382,7 @@ void MainWindow::loadAndDisplayTempStlFiles()
 
 void MainWindow::openVTKFile()
 {
+    
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Open VTK File",
                                                     "",
@@ -344,7 +390,8 @@ void MainWindow::openVTKFile()
     if (fileName.isEmpty())
         return;
     vtkFile = fileName.toStdString();
-
+    
+    logMessage("Open VTK File: " + fileName);
     ui->getImportTab()->getRenderer()->RemoveAllViewProps();
     auto importActor = vtkProcessor->getVtuActor(vtkFile);
     ui->getImportTab()->getRenderer()->AddActor(importActor);
@@ -374,6 +421,7 @@ void MainWindow::openSTLFile()
 
     currentStlFilename = filename;
     stlFile = filename.toStdString();
+    logMessage("Open STL File: " +  filename );
     ui->getImportTab()->getRenderer()->RemoveAllViewProps();
     auto importActor = vtkProcessor->getStlActor(stlFile);
     ui->getImportTab()->getRenderer()->AddActor(importActor);

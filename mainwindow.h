@@ -11,6 +11,7 @@
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
 #include "UI/mainwindowui.h"
+#include "UI/MessageConsole.h"
 #include <QString>
 
 class MainWindow : public QMainWindow
@@ -23,6 +24,7 @@ public:
     std::vector<vtkSmartPointer<vtkPolyData>> processMeshDivision();
     QString getCurrentMode() const;
     QString getCurrentStlFilename() const { return currentStlFilename; }
+    void logMessage(const QString& message);
 
 public slots:
     void openVTKFile();
@@ -32,6 +34,7 @@ public slots:
 
 private slots:
     bool process3mfFile();
+    void syncMessageConsoles(const QString& message);
 
 private:
     class CameraCallback : public vtkCommand {
@@ -44,6 +47,7 @@ private:
 
     void syncCameras(vtkRenderer* source, vtkRenderer* dest);
     void setupCameraCallbacks();
+    void setupMessageConsoles();
 
     std::unique_ptr<VtkProcessor> vtkProcessor;
     std::unique_ptr<MainWindowUI> ui;
