@@ -395,11 +395,41 @@ void MainWindow::openVTKFile()
     ui->getImportTab()->getRenderer()->RemoveAllViewProps();
     auto importActor = vtkProcessor->getVtuActor(vtkFile);
     ui->getImportTab()->getRenderer()->AddActor(importActor);
+    auto lookupTable = vtkProcessor->getCurrentLookupTable();
+    if (lookupTable)
+    {
+        vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+        scalarBar->SetLookupTable(lookupTable);
+        scalarBar->SetTitle("von Mises Stress");
+        scalarBar->GetLabelTextProperty()->SetColor(1,1,1);
+        scalarBar->GetTitleTextProperty()->SetColor(1,1,1);
+        scalarBar->SetNumberOfLabels(5);
+        scalarBar->SetOrientationToHorizontal();
+        scalarBar->SetWidth(0.5);
+        scalarBar->SetHeight(0.05);
+        scalarBar->SetPosition(0.5, 0.05);
+        ui->getImportTab()->getRenderer()->AddActor2D(scalarBar);
+    }
     ui->getImportTab()->getRenderer()->ResetCamera();
 
     ui->getSettingsTab()->getRenderer()->RemoveAllViewProps();
     auto settingsActor = vtkProcessor->getVtuActor(vtkFile);
     ui->getSettingsTab()->getRenderer()->AddActor(settingsActor);
+    lookupTable = vtkProcessor->getCurrentLookupTable();
+    if (lookupTable)
+    {
+        vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+        scalarBar->SetLookupTable(lookupTable);
+        scalarBar->SetTitle("von Mises Stress");
+        scalarBar->GetLabelTextProperty()->SetColor(1,1,1);
+        scalarBar->GetTitleTextProperty()->SetColor(1,1,1);
+        scalarBar->SetNumberOfLabels(5);
+        scalarBar->SetOrientationToHorizontal();
+        scalarBar->SetWidth(0.5);
+        scalarBar->SetHeight(0.05);
+        scalarBar->SetPosition(0.5, 0.05);
+        ui->getSettingsTab()->getRenderer()->AddActor2D(scalarBar);
+    }
     ui->getSettingsTab()->getRenderer()->ResetCamera();
 
     syncCameras(ui->getImportTab()->getRenderer(), ui->getSettingsTab()->getRenderer());

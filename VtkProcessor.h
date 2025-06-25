@@ -59,6 +59,7 @@ private:
     int isoSurfaceNum;
     std::vector<float> stressValues;
     std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
+    vtkSmartPointer<vtkLookupTable> currentLookupTable;
 
 public:
     VtkProcessor(const std::string& vtuFileName);
@@ -82,6 +83,7 @@ public:
     std::string generateMeshFileName(int index,
         float minValue,
         float maxValue) const;
+    vtkSmartPointer<vtkLookupTable> getCurrentLookupTable() const { return currentLookupTable; }
 };
 
 #endif

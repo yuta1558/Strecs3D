@@ -189,6 +189,9 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
     
     lookupTable->Build();
 
+    // メンバー変数に保存
+    currentLookupTable = lookupTable;
+
     // Mapperの作成
     vtkSmartPointer<vtkDataSetMapper> mapper =
     vtkSmartPointer<vtkDataSetMapper>::New();
