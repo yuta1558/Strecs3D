@@ -58,6 +58,7 @@ add_executable(Strecs3D
   UI/SettingsTab.cpp
   UI/PreviewTab.cpp
   UI/MessageConsole.cpp
+  UI/DensitySlider.cpp
   VtkProcessor.cpp
   lib3mfProcessor.cpp
   utils/fileUtility.cpp

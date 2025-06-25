@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QSizePolicy>
 #include <QComboBox>
+#include "DensitySlider.h"
 
 SettingsTab::SettingsTab(MainWindow* mainWindow, QWidget* parent)
     : QWidget(parent)
@@ -22,6 +23,10 @@ void SettingsTab::setupUI()
     modeComboBox = new QComboBox(this);
     modeComboBox->addItem("cura");
     modeComboBox->addItem("bambu");
+    
+    // CustomRangeSliderを追加
+    CustomRangeSlider* rangeSlider = new CustomRangeSlider(this);
+    leftpaneLayout->addWidget(rangeSlider);
     
     // Create message console
     messageConsole = new MessageConsole(this);
