@@ -31,42 +31,50 @@ QColor getGradientColor(double t) {
     return QColor(); // fallback
 }
 
-CustomRangeSlider::CustomRangeSlider(QWidget* parent)
+DensitySlider::DensitySlider(QWidget* parent)
     : QWidget(parent)
 {
     // 初期ハンドル位置（均等分割）
     m_handles = {50, 100, 150};
-    setMinimumWidth(60);
+    setMinimumWidth(120);
     setMinimumHeight(220);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 }
 
-QSize CustomRangeSlider::minimumSizeHint() const {
+QSize DensitySlider::minimumSizeHint() const {
     return QSize(60, 220);
 }
 
-QSize CustomRangeSlider::sizeHint() const {
+QSize DensitySlider::sizeHint() const {
     return QSize(60, 300);
 }
 
-std::vector<int> CustomRangeSlider::handlePositions() const {
+std::vector<int> DensitySlider::handlePositions() const {
     return m_handles;
 }
 
-void CustomRangeSlider::paintEvent(QPaintEvent*) {
+void DensitySlider::setStressRange(double minStress, double maxStress) {
+    m_minStress = minStress;
+    m_maxStress = maxStress;
+    update();
+}
+
+void DensitySlider::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     int w = width();
     int h = height();
     int x = w / 2;
-    int left = x - 15;
-    int right = x + 15;
+    int sliderWidth = 30;
+    int left = x - sliderWidth / 2;
+    int right = x + sliderWidth / 2;
     int top = m_margin;
     int bottom = h - m_margin;
 
     // グラデーション長方形（スライダの左側に表示）
     int gradWidth = 30;
-    int gradLeft = left - gradWidth - 30; // スライダから10px離す
+    int gradGap = 20; // スライダとグラデーションバーの間隔
+    int gradLeft = left - gradGap - gradWidth; // スライダの中心から左右対称な距離
     int gradRight = gradLeft + gradWidth;
     QLinearGradient gradient(gradLeft, top, gradLeft, bottom);
     gradient.setColorAt(0.0, QColor("#FF4D00")); // 赤
@@ -76,10 +84,33 @@ void CustomRangeSlider::paintEvent(QPaintEvent*) {
     painter.setBrush(gradient);
     painter.drawRect(gradLeft, top, gradWidth, bottom - top);
 
-    // 長方形
+    // Stress値のラベルを描画
+    painter.setPen(Qt::white);
+    QFont font = painter.font();
+    font.setPointSize(10);
+    painter.setFont(font);
+    // ラベルのX座標: グラデーションバーの左側に余白を設けて表示
+    int labelWidth = gradWidth + 28; // ラベルの幅を広げる
+    int labelX = gradLeft - labelWidth - 8; // さらに左に余白を追加
+    // 上側（最大値）
+    painter.drawText(labelX, top - 5, labelWidth, 20, Qt::AlignRight | Qt::AlignVCenter,
+                    QString::number(m_maxStress, 'g', 2));
+    // 下側（最小値）
+    painter.drawText(labelX, bottom - 15, labelWidth, 20, Qt::AlignRight | Qt::AlignVCenter,
+                    QString::number(m_minStress, 'g', 2));
+
+    for (int y : m_handles) {
+        // y座標を0.0〜1.0に正規化（bottomが0、topが1になるように）
+        double t = (double)(y - bottom) / (top - bottom); // top=1, bottom=0
+        double stress = m_minStress + t * (m_maxStress - m_minStress);
+        painter.drawText(labelX, y - 10, labelWidth, 20, Qt::AlignRight | Qt::AlignVCenter,
+                        QString::number(stress, 'g', 2));
+    }
+
+    // 長方形（スライダ本体）
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(60, 60, 60));
-    painter.drawRect(left, top, right - left, bottom - top);
+    painter.drawRect(left, top, sliderWidth, bottom - top);
 
     // 領域の色
     std::vector<int> positions = {top};
@@ -93,7 +124,7 @@ void CustomRangeSlider::paintEvent(QPaintEvent*) {
         QColor regionColor = getGradientColor(t);
         regionColor.setAlpha(190); // 完全不透明
         painter.setBrush(regionColor);
-        painter.drawRect(left, positions[i], right - left, positions[i+1] - positions[i]);
+        painter.drawRect(left, positions[i], sliderWidth, positions[i+1] - positions[i]);
     }
 
     // ハンドル
@@ -105,7 +136,7 @@ void CustomRangeSlider::paintEvent(QPaintEvent*) {
     }
 }
 
-int CustomRangeSlider::handleAtPosition(const QPoint& pos) const {
+int DensitySlider::handleAtPosition(const QPoint& pos) const {
     int w = width();
     int x = w / 2;
     int left = x - 15;
@@ -122,11 +153,11 @@ int CustomRangeSlider::handleAtPosition(const QPoint& pos) const {
     return -1;
 }
 
-void CustomRangeSlider::mousePressEvent(QMouseEvent* event) {
+void DensitySlider::mousePressEvent(QMouseEvent* event) {
     m_draggedHandle = handleAtPosition(event->pos());
 }
 
-void CustomRangeSlider::mouseMoveEvent(QMouseEvent* event) {
+void DensitySlider::mouseMoveEvent(QMouseEvent* event) {
     if (m_draggedHandle >= 0) {
         int y = std::clamp(event->pos().y(), m_margin, height() - m_margin);
         // ハンドル間の最小距離を保つ
@@ -141,11 +172,11 @@ void CustomRangeSlider::mouseMoveEvent(QMouseEvent* event) {
     }
 }
 
-void CustomRangeSlider::mouseReleaseEvent(QMouseEvent*) {
+void DensitySlider::mouseReleaseEvent(QMouseEvent*) {
     m_draggedHandle = -1;
 }
 
-void CustomRangeSlider::clampHandles() {
+void DensitySlider::clampHandles() {
     int top = m_margin;
     int bottom = height() - m_margin;
     for (int i = 0; i < (int)m_handles.size(); ++i) {

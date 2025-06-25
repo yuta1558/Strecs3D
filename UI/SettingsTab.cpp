@@ -24,8 +24,8 @@ void SettingsTab::setupUI()
     modeComboBox->addItem("cura");
     modeComboBox->addItem("bambu");
     
-    // CustomRangeSliderを追加
-    CustomRangeSlider* rangeSlider = new CustomRangeSlider(this);
+    // DensitySliderを追加
+    rangeSlider = new DensitySlider(this);
     leftpaneLayout->addWidget(rangeSlider);
     
     // Create message console

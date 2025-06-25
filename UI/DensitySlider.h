@@ -2,13 +2,14 @@
 #include <QWidget>
 #include <vector>
 
-class CustomRangeSlider : public QWidget {
+class DensitySlider : public QWidget {
     Q_OBJECT
 public:
-    explicit CustomRangeSlider(QWidget* parent = nullptr);
+    explicit DensitySlider(QWidget* parent = nullptr);
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
     std::vector<int> handlePositions() const;
+    void setStressRange(double minStress, double maxStress);
 
 signals:
     void handlePositionsChanged(const std::vector<int>& positions);
@@ -27,4 +28,7 @@ private:
     int m_minDistance = 20; // ハンドル間の最小距離
     int handleAtPosition(const QPoint& pos) const;
     void clampHandles();
+    
+    double m_minStress = 0.0;
+    double m_maxStress = 1.0;
 }; 

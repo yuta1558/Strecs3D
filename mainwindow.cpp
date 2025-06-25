@@ -382,7 +382,6 @@ void MainWindow::loadAndDisplayTempStlFiles()
 
 void MainWindow::openVTKFile()
 {
-    
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Open VTK File",
                                                     "",
@@ -431,6 +430,12 @@ void MainWindow::openVTKFile()
         ui->getSettingsTab()->getRenderer()->AddActor2D(scalarBar);
     }
     ui->getSettingsTab()->getRenderer()->ResetCamera();
+
+    // Stress範囲をスライダーに反映
+    auto slider = ui->getSettingsTab()->getRangeSlider();
+    if (slider) {
+        slider->setStressRange(vtkProcessor->getMinStress(), vtkProcessor->getMaxStress());
+    }
 
     syncCameras(ui->getImportTab()->getRenderer(), ui->getSettingsTab()->getRenderer());
 

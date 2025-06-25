@@ -8,6 +8,7 @@
 #include <vtkRenderer.h>
 #include <QComboBox>
 #include "MessageConsole.h"
+#include "DensitySlider.h"
 
 class MainWindow;
 
@@ -19,6 +20,7 @@ public:
     vtkRenderer* getRenderer() const { return renderer; }
     QComboBox* getModeComboBox() const { return modeComboBox; }
     MessageConsole* getMessageConsole() const { return messageConsole; }
+    DensitySlider* getRangeSlider() const { return rangeSlider; }
 
 private:
     void setupUI();
@@ -30,6 +32,7 @@ private:
     vtkSmartPointer<vtkRenderer> renderer;
     QComboBox* modeComboBox;
     MessageConsole* messageConsole;
+    DensitySlider* rangeSlider = nullptr;
 };
 
 #endif // SETTINGSTAB_H 

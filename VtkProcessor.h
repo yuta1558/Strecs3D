@@ -74,6 +74,7 @@ public:
     std::vector<float> getStressValues()                                   const { return stressValues; }
     int getIsoSurfaceNum()                                                 const { return isoSurfaceNum; }
     double getMaxStress()                                                  const { return maxStress;}
+    double getMinStress()                                                  const { return minStress;}
     
     vtkSmartPointer<vtkActor> getVtuActor(const std::string& fileName);
     vtkSmartPointer<vtkActor> getStlActor(const std::string& fileName);
