@@ -178,8 +178,15 @@ bool MainWindow::initializeVtkProcessor()
     }
 
     vtkProcessor->showInfo();
-    vtkProcessor->prepareStressValues();
-    
+
+    // DensitySliderからstressThresholdsを取得して渡す
+    auto slider = ui->getSettingsTab()->getRangeSlider();
+    std::vector<double> thresholds;
+    if (slider) {
+        thresholds = slider->stressThresholds();
+    }
+    vtkProcessor->prepareStressValues(thresholds);
+
     return true;
 }
 

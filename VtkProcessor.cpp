@@ -81,14 +81,13 @@ void VtkProcessor::clearPreviousData(){
     dividedMeshes.clear();
 }
 
-void VtkProcessor::prepareStressValues(){
-    int divisionNum = 5;
-    double stressInterval = (maxStress - minStress) / divisionNum;
-    for (int i=0; i<=divisionNum; ++i){
-        stressValues.push_back(minStress + i*stressInterval);
+void VtkProcessor::prepareStressValues(const std::vector<double>& thresholds) {
+    stressValues.clear();
+    for (double v : thresholds) {
+        stressValues.push_back(static_cast<float>(v));
     }
     isoSurfaceNum = stressValues.size();
-    std::cout<< "isoSurfaceNum: " << isoSurfaceNum << std::endl;
+    std::cout << "isoSurfaceNum: " << isoSurfaceNum << std::endl;
 }
 
 void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName) {

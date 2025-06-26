@@ -299,5 +299,6 @@ std::vector<double> DensitySlider::stressThresholds() const {
         thresholds.push_back(stress);
     }
     thresholds.push_back(m_maxStress);
+    std::sort(thresholds.begin(), thresholds.end()); // 昇順にソート
     return thresholds;
 } 

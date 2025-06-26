@@ -65,7 +65,7 @@ public:
     VtkProcessor(const std::string& vtuFileName);
     void showInfo();
     bool LoadAndPrepareData();
-    void prepareStressValues();
+    void prepareStressValues(const std::vector<double>& thresholds);
     void clearPreviousData();
     vtkSmartPointer<vtkPolyData> extractRegionInRange(double lowerBound, double upperBound);
     std::vector<vtkSmartPointer<vtkPolyData>> divideMesh();
