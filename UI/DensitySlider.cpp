@@ -2,6 +2,10 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <algorithm>
+#include <QLineEdit>
+#include <QResizeEvent>
+#include <QDoubleValidator>
+#include <cassert>
 
 // グラデーションストップの定義
 static const struct GradStop {
@@ -39,6 +43,16 @@ DensitySlider::DensitySlider(QWidget* parent)
     setMinimumWidth(120);
     setMinimumHeight(220);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    // パーセント入力欄を4つ作成
+    for (int i = 0; i < 4; ++i) {
+        QLineEdit* edit = new QLineEdit(this);
+        edit->setFixedWidth(40);
+        edit->setAlignment(Qt::AlignCenter);
+        edit->setText(QString::number(m_regionPercents[i], 'g', 2));
+        edit->setValidator(new QDoubleValidator(0, 100, 2, edit));
+        connect(edit, &QLineEdit::editingFinished, this, &DensitySlider::onPercentEditChanged);
+        m_percentEdits.push_back(edit);
+    }
 }
 
 QSize DensitySlider::minimumSizeHint() const {
@@ -134,6 +148,33 @@ void DensitySlider::paintEvent(QPaintEvent*) {
         painter.drawLine(gradLeft, y, right, y);
         painter.setPen(Qt::NoPen);
     }
+
+    // パーセント入力欄の位置を更新
+    updatePercentEditPositions();
+}
+
+void DensitySlider::updatePercentEditPositions() {
+    int w = width();
+    int x = w / 2;
+    int sliderWidth = 30;
+    int right = x + sliderWidth / 2;
+    int top = m_margin;
+    int bottom = height() - m_margin;
+    std::vector<int> positions = {top};
+    for (int y : m_handles) positions.push_back(y);
+    positions.push_back(bottom);
+    for (int i = 0; i < 4; ++i) {
+        int yCenter = (positions[i] + positions[i+1]) / 2;
+        int editX = right + 20; // スライダの右側に20px余白
+        int editY = yCenter - m_percentEdits[i]->height() / 2;
+        m_percentEdits[i]->move(editX, editY);
+        m_percentEdits[i]->show();
+    }
+}
+
+void DensitySlider::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    updatePercentEditPositions();
 }
 
 int DensitySlider::handleAtPosition(const QPoint& pos) const {
@@ -167,6 +208,7 @@ void DensitySlider::mouseMoveEvent(QMouseEvent* event) {
             y = std::min(y, m_handles[m_draggedHandle+1] - m_minDistance);
         m_handles[m_draggedHandle] = y;
         clampHandles();
+        updateStressDensityMappings();
         update();
         emit handlePositionsChanged(m_handles);
     }
@@ -186,5 +228,62 @@ void DensitySlider::clampHandles() {
             m_handles[i] = std::clamp(m_handles[i], m_handles[i-1] + m_minDistance, bottom);
         else
             m_handles[i] = std::clamp(m_handles[i], m_handles[i-1] + m_minDistance, m_handles[i+1] - m_minDistance);
+    }
+}
+
+std::vector<double> DensitySlider::regionPercents() const {
+    return m_regionPercents;
+}
+
+void DensitySlider::setRegionPercents(const std::vector<double>& percents) {
+    if (percents.size() == 4) {
+        m_regionPercents = percents;
+        for (int i = 0; i < 4; ++i) {
+            m_percentEdits[i]->setText(QString::number(m_regionPercents[i], 'g', 2));
+        }
+        updateStressDensityMappings();
+        update();
+        emit regionPercentsChanged(m_regionPercents);
+    }
+}
+
+void DensitySlider::onPercentEditChanged() {
+    bool changed = false;
+    for (int i = 0; i < 4; ++i) {
+        bool ok = false;
+        double val = m_percentEdits[i]->text().toDouble(&ok);
+        if (ok && m_regionPercents[i] != val) {
+            m_regionPercents[i] = val;
+            changed = true;
+        }
+    }
+    if (changed) {
+        updateStressDensityMappings();
+        emit regionPercentsChanged(m_regionPercents);
+        update();
+    }
+}
+
+std::vector<StressDensityMapping> DensitySlider::stressDensityMappings() const {
+    return m_stressDensityMappings;
+}
+
+void DensitySlider::updateStressDensityMappings() {
+    // 領域数は4固定
+    assert(m_handles.size() == 3);
+    int top = m_margin;
+    int bottom = height() - m_margin;
+    std::vector<int> positions = {top};
+    for (int y : m_handles) positions.push_back(y);
+    positions.push_back(bottom);
+    m_stressDensityMappings.clear();
+    for (int i = 0; i < 4; ++i) {
+        // y座標を0.0〜1.0に正規化（top=1, bottom=0）
+        double tMin = (double)(positions[i] - bottom) / (top - bottom);
+        double tMax = (double)(positions[i+1] - bottom) / (top - bottom);
+        double stressMin = m_minStress + tMin * (m_maxStress - m_minStress);
+        double stressMax = m_minStress + tMax * (m_maxStress - m_minStress);
+        double density = m_regionPercents[i];
+        m_stressDensityMappings.push_back({stressMin, stressMax, density});
     }
 } 
