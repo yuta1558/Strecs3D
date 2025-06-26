@@ -93,7 +93,7 @@ bool Lib3mfProcessor::setStl(const std::string stlFileName){
     return true;
 }
 
-bool Lib3mfProcessor::setMetaData(double maxStress){
+bool Lib3mfProcessor::setMetaData(double maxStress, const std::vector<StressDensityMapping>& mappings) {
     auto meshIterator = model->GetMeshObjects();
     std::regex filePattern(
         R"(^dividedMesh(\d+)_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)\.stl$)"
@@ -107,33 +107,32 @@ bool Lib3mfProcessor::setMetaData(double maxStress){
             std::string id_str = match[1].str();
             std::string minStress_str = match[2].str();
             std::string maxStress_str = match[3].str();
-            std::cout << "Object name: " << name << std::endl;
-            std::cout << "ID: " << id_str << std::endl;
-            std::cout << "minStress: " << minStress_str << std::endl;
-            std::cout << "maxStress: " << maxStress_str << std::endl;
-            std::cout << "----------------------" << std::endl;  
             FileInfo fileInfo;
             fileInfo.id = std::stoi(id_str);
             fileInfo.name = name;
             fileInfo.minStress = std::stod(minStress_str);
             fileInfo.maxStress = std::stod(maxStress_str);
             fileInfoMap[name] = fileInfo;
-            setMetaDataForInfillMesh(currentMesh, fileInfoMap[name], maxStress);
-        }
-        else{
-            std::cerr << "Process Outline mesh" << std::endl;
+            setMetaDataForInfillMesh(currentMesh, fileInfoMap[name], maxStress, mappings);
+        } else {
             setMetaDataForOutlineMesh(currentMesh);
         }
     }
     return true;
 }
 
-
-bool Lib3mfProcessor::setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress){
+bool Lib3mfProcessor::setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress, const std::vector<StressDensityMapping>& mappings) {
     std::string cura_uri = "http://software.ultimaker.com/xml/cura/3mf/2015/10";
     PMetaDataGroup metadataGroup = Mesh->GetMetaDataGroup();
     double aveStress = (fileInfo.minStress + fileInfo.maxStress) / 2;
-    int density = (aveStress / maxStress) * 100;
+    int density = 0;
+    // Find the mapping whose range includes aveStress
+    for (const auto& mapping : mappings) {
+        if (aveStress >= mapping.stressMin && aveStress < mapping.stressMax) {
+            density = static_cast<int>(mapping.density);
+            break;
+        }
+    }
     std::string density_str = std::to_string(density);
     metadataGroup->AddMetaData(cura_uri, "drop_to_buildplate", "False", "xs:boolean", false);
     metadataGroup->AddMetaData(cura_uri, "infill_mesh", "True", "xs:boolean", false);

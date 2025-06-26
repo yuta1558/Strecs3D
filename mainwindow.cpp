@@ -253,8 +253,12 @@ bool MainWindow::processByMode(Lib3mfProcessor& processor, const QString& mode)
 bool MainWindow::processCuraMode(Lib3mfProcessor& processor)
 {
     std::cout << "Processing in Cura mode" << std::endl;
-    
-    if (!processor.setMetaData(vtkProcessor->getMaxStress())) {
+    auto slider = ui->getSettingsTab()->getRangeSlider();
+    std::vector<StressDensityMapping> mappings;
+    if (slider) {
+        mappings = slider->stressDensityMappings();
+    }
+    if (!processor.setMetaData(vtkProcessor->getMaxStress(), mappings)) {
         throw std::runtime_error("Failed to set metadata");
     }
 

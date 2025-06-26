@@ -47,7 +47,7 @@ private:
     double m_minStress = 0.0;
     double m_maxStress = 1.0;
     std::vector<QLineEdit*> m_percentEdits; // 4つの領域のパーセント入力欄
-    std::vector<double> m_regionPercents = {80, 60, 40, 20}; // デフォルト値
+    std::vector<double> m_regionPercents = {20, 40, 60, 80}; // デフォルト値
     std::vector<StressDensityMapping> m_stressDensityMappings;
     void updateStressDensityMappings();
 }; 

@@ -5,6 +5,8 @@
 using namespace Lib3MF;
 
 #include "utils/xmlConverter.h"
+#include <vector>
+#include "UI/DensitySlider.h" // For StressDensityMapping
 
 struct FileInfo {
     int id;
@@ -25,8 +27,10 @@ class Lib3mfProcessor{
         bool getMeshes();
         bool setStl(const std::string stlFileName);
         bool setMetaData(double maxStress);
+        bool setMetaData(double maxStress, const std::vector<StressDensityMapping>& mappings);
         bool save3mf(const std::string outputFilename);
         bool setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress);
+        bool setMetaDataForInfillMesh(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress, const std::vector<StressDensityMapping>& mappings);
         bool setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh);
         bool assembleObjects();
 

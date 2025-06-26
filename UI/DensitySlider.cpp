@@ -127,9 +127,9 @@ void DensitySlider::paintEvent(QPaintEvent*) {
     painter.drawRect(left, top, sliderWidth, bottom - top);
 
     // 領域の色
-    std::vector<int> positions = {top};
-    for (int y : m_handles) positions.push_back(y);
-    positions.push_back(bottom);
+    std::vector<int> positions = {bottom};
+    for (auto it = m_handles.rbegin(); it != m_handles.rend(); ++it) positions.push_back(*it);
+    positions.push_back(top);
     for (int i = 0; i < 4; ++i) {
         // 領域の中心Y座標
         int yCenter = (positions[i] + positions[i+1]) / 2;
@@ -160,9 +160,9 @@ void DensitySlider::updatePercentEditPositions() {
     int right = x + sliderWidth / 2;
     int top = m_margin;
     int bottom = height() - m_margin;
-    std::vector<int> positions = {top};
-    for (int y : m_handles) positions.push_back(y);
-    positions.push_back(bottom);
+    std::vector<int> positions = {bottom};
+    for (auto it = m_handles.rbegin(); it != m_handles.rend(); ++it) positions.push_back(*it);
+    positions.push_back(top);
     for (int i = 0; i < 4; ++i) {
         int yCenter = (positions[i] + positions[i+1]) / 2;
         int editX = right + 20; // スライダの右側に20px余白
@@ -273,9 +273,9 @@ void DensitySlider::updateStressDensityMappings() {
     assert(m_handles.size() == 3);
     int top = m_margin;
     int bottom = height() - m_margin;
-    std::vector<int> positions = {top};
-    for (int y : m_handles) positions.push_back(y);
-    positions.push_back(bottom);
+    std::vector<int> positions = {bottom};
+    for (auto it = m_handles.rbegin(); it != m_handles.rend(); ++it) positions.push_back(*it);
+    positions.push_back(top);
     m_stressDensityMappings.clear();
     for (int i = 0; i < 4; ++i) {
         // y座標を0.0〜1.0に正規化（top=1, bottom=0）
