@@ -286,4 +286,18 @@ void DensitySlider::updateStressDensityMappings() {
         double density = m_regionPercents[i];
         m_stressDensityMappings.push_back({stressMin, stressMax, density});
     }
+}
+
+std::vector<double> DensitySlider::stressThresholds() const {
+    int top = m_margin;
+    int bottom = height() - m_margin;
+    std::vector<double> thresholds;
+    thresholds.push_back(m_minStress);
+    for (int y : m_handles) {
+        double t = (double)(y - bottom) / (top - bottom);
+        double stress = m_minStress + t * (m_maxStress - m_minStress);
+        thresholds.push_back(stress);
+    }
+    thresholds.push_back(m_maxStress);
+    return thresholds;
 } 
