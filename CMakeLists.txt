@@ -91,9 +91,6 @@ add_executable(Strecs3D
   main.cpp
   mainwindow.cpp
   UI/mainwindowui.cpp
-  UI/ImportTab.cpp
-  UI/SettingsTab.cpp
-  UI/PreviewTab.cpp
   UI/MessageConsole.cpp
   UI/DensitySlider.cpp
   VtkProcessor.cpp
