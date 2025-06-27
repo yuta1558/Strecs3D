@@ -2,10 +2,15 @@
 #define MAINWINDOWUI_H
 
 #include <QWidget>
-#include <QTabWidget>
-#include "ImportTab.h"
-#include "SettingsTab.h"
-#include "PreviewTab.h"
+#include <QPushButton>
+#include <QComboBox>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include "DensitySlider.h"
+#include "MessageConsole.h"
+#include <QVTKOpenGLNativeWidget.h>
+#include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkRenderer.h>
 
 class MainWindow;
 
@@ -16,20 +21,31 @@ public:
 
     void setupUI();
     QWidget* getCentralWidget() const { return centralWidget; }
-    ImportTab* getImportTab() const { return importTab; }
-    SettingsTab* getSettingsTab() const { return settingsTab; }
-    PreviewTab* getPreviewTab() const { return previewTab; }
+    QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
+    vtkSmartPointer<vtkRenderer> getRenderer() const { return renderer; }
+    QPushButton* getOpenStlButton() const { return openStlButton; }
+    QPushButton* getOpenVtkButton() const { return openVtkButton; }
+    QPushButton* getProcessButton() const { return processButton; }
+    QPushButton* getExport3mfButton() const { return export3mfButton; }
+    QComboBox* getModeComboBox() const { return modeComboBox; }
+    DensitySlider* getRangeSlider() const { return rangeSlider; }
+    MessageConsole* getMessageConsole() const { return messageConsole; }
 
 private:
-    void setupTabWidget();
     void setupStyle();
 
     MainWindow* mainWindow;
     QWidget* centralWidget;
-    QTabWidget* tabWidget;
-    ImportTab* importTab;
-    SettingsTab* settingsTab;
-    PreviewTab* previewTab;
+    QVTKOpenGLNativeWidget* vtkWidget;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
+    vtkSmartPointer<vtkRenderer> renderer;
+    QPushButton* openStlButton;
+    QPushButton* openVtkButton;
+    QPushButton* processButton;
+    QPushButton* export3mfButton;
+    QComboBox* modeComboBox;
+    DensitySlider* rangeSlider;
+    MessageConsole* messageConsole;
 };
 
 #endif // MAINWINDOWUI_H 

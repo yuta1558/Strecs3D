@@ -34,40 +34,13 @@ public slots:
 
 private slots:
     bool process3mfFile();
-    void syncMessageConsoles(const QString& message);
 
 private:
-    class CameraCallback : public vtkCommand {
-    public:
-        static CameraCallback* New() { return new CameraCallback; }
-        virtual void Execute(vtkObject* caller, unsigned long, void*);
-        MainWindow* window;
-        bool isImport;
-    };
-
-    void syncCameras(vtkRenderer* source, vtkRenderer* dest);
-    void setupCameraCallbacks();
-    void setupMessageConsoles();
-
     std::unique_ptr<VtkProcessor> vtkProcessor;
     std::unique_ptr<MainWindowUI> ui;
-    vtkSmartPointer<CameraCallback> importCameraCallback;
-    vtkSmartPointer<CameraCallback> settingsCameraCallback;
-
-    QVTKOpenGLNativeWidget* importVtkWidget;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> importRenderWindow;
-    vtkSmartPointer<vtkRenderer> importRenderer;
-
-    QVTKOpenGLNativeWidget* settingsVtkWidget;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> settingsRenderWindow;
-    vtkSmartPointer<vtkRenderer> settingsRenderer;
-
     std::string vtkFile;
     std::string stlFile;
-    QComboBox* modeComboBox;
-
     QString currentStlFilename;
-
     bool loadInputFiles(class Lib3mfProcessor& processor);
     bool processByMode(class Lib3mfProcessor& processor, const QString& mode);
     bool processCuraMode(class Lib3mfProcessor& processor);
