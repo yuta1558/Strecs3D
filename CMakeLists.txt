@@ -27,7 +27,44 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # 必要なパッケージの検索
-find_package(VTK REQUIRED)
+find_package(VTK REQUIRED
+  COMPONENTS
+    CommonCore
+    CommonDataModel
+    FiltersCore
+    FiltersSources
+    FiltersGeometry
+    FiltersGeneral
+    FiltersModeling
+    FiltersExtraction
+    FiltersHybrid
+    FiltersProgrammable
+    FiltersTopology
+    FiltersVerdict
+    IOXML
+    IOImage
+    IOGeometry
+    IOLegacy
+    ImagingCore
+    ImagingGeneral
+    ImagingHybrid
+    ImagingMath
+    ImagingSources
+    RenderingCore
+    RenderingOpenGL2
+    RenderingFreeType
+    RenderingVolume
+    RenderingAnnotation
+    RenderingContext2D
+    RenderingSceneGraph
+    RenderingUI
+    RenderingVtkJS
+    InteractionStyle
+    InteractionWidgets
+    GUISupportQt
+    GUISupportQtQuick
+    GUISupportQtSQL
+)
 
 include(${VTK_USE_FILE})
 
