@@ -59,4 +59,12 @@ private:
     std::vector<double> getStressThresholds(MainWindowUI* ui);
     std::vector<StressDensityMapping> getStressDensityMappings(MainWindowUI* ui);
     QString getCurrentMode(MainWindowUI* ui);
+    
+    // ファイル処理のヘルパーメソッド
+    bool initializeVtkProcessor(MainWindowUI* ui, QWidget* parent);
+    bool processMeshDivision(QWidget* parent);
+    bool process3mfGeneration(MainWindowUI* ui, QWidget* parent);
+    void cleanupTempFiles();
+    void showSuccessMessage(QWidget* parent);
+    void handleProcessingError(const std::exception& e, QWidget* parent);
 }; 
