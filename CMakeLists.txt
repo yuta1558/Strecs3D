@@ -26,6 +26,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 endif()
 
+# Qt6の検索
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+
 # 必要なパッケージの検索
 find_package(VTK REQUIRED
   COMPONENTS
@@ -125,4 +128,27 @@ if(VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
     TARGETS Strecs3D
     MODULES ${VTK_LIBRARIES}
   )
+endif()
+
+# macOSでのQtプラグインパス設定
+if(APPLE)
+  # Qtのプラグインパスを環境変数として設定
+  set_target_properties(Strecs3D PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+  )
+  
+  # Qtプラグインパスを設定
+  set(QT_PLUGIN_PATH "/opt/homebrew/Cellar/qt/6.9.1/share/qt/plugins")
+  if(EXISTS "${QT_PLUGIN_PATH}")
+    message(STATUS "Found Qt plugins at: ${QT_PLUGIN_PATH}")
+  else()
+    # 代替パスを試す
+    set(QT_PLUGIN_PATH "/opt/homebrew/share/qt/plugins")
+    if(EXISTS "${QT_PLUGIN_PATH}")
+      message(STATUS "Found Qt plugins at: ${QT_PLUGIN_PATH}")
+    else()
+      message(WARNING "Qt plugins not found. Please set QT_PLUGIN_PATH manually.")
+    endif()
+  endif()
 endif()
