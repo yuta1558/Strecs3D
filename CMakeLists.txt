@@ -93,8 +93,8 @@ add_executable(Strecs3D
   UI/mainwindowui.cpp
   UI/MessageConsole.cpp
   UI/DensitySlider.cpp
-  VtkProcessor.cpp
-  lib3mfProcessor.cpp
+  core/VtkProcessor.cpp
+  core/lib3mfProcessor.cpp
   utils/fileUtility.cpp
   utils/xmlConverter.cpp
   core/ApplicationController.cpp

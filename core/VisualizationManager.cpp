@@ -1,6 +1,6 @@
 #include "VisualizationManager.h"
 #include "../UI/mainwindowui.h"
-#include "../VtkProcessor.h"
+#include "VtkProcessor.h"
 #include <QMessageBox>
 #include <vtkScalarBarActor.h>
 #include <vtkLookupTable.h>

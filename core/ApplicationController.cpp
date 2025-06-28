@@ -1,7 +1,7 @@
 #include "ApplicationController.h"
 #include "../UI/mainwindowui.h"
 #include "../utils/fileUtility.h"
-#include "../VtkProcessor.h"
+#include "VtkProcessor.h"
 #include <QDir>
 #include <QFileInfo>
 #include <iostream>

@@ -1,6 +1,6 @@
 #include "FileProcessor.h"
-#include "../VtkProcessor.h"
-#include "../lib3mfProcessor.h"
+#include "VtkProcessor.h"
+#include "lib3mfProcessor.h"
 #include "../utils/fileUtility.h"
 #include <QMessageBox>
 #include <iostream>

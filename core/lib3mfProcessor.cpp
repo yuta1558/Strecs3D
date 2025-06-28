@@ -1,5 +1,5 @@
 #include "lib3mfProcessor.h"
-#include "utils/xmlConverter.h"
+#include "../utils/xmlConverter.h"
 
 #include <iostream>
 #include <filesystem>
