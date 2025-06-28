@@ -35,7 +35,7 @@
 
 .vscode/
 build/
-resources/
+test_files/
 .temp/
 result/
 
