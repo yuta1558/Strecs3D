@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 ApplicationController::ApplicationController()
-    : fileProcessor(std::make_unique<FileProcessor>())
+    : fileProcessor(std::make_unique<ProcessPipeline>())
     , visualizationManager(std::make_unique<VisualizationManager>())
     , exportManager(std::make_unique<ExportManager>())
 {

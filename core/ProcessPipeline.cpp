@@ -1,4 +1,4 @@
-#include "FileProcessor.h"
+#include "ProcessPipeline.h"
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
 #include "../utils/fileUtility.h"
@@ -7,13 +7,13 @@
 #include <stdexcept>
 #include <vtkPolyData.h>
 
-FileProcessor::FileProcessor() {
+ProcessPipeline::ProcessPipeline() {
     vtkProcessor = std::make_unique<VtkProcessor>("");
 }
 
-FileProcessor::~FileProcessor() = default;
+ProcessPipeline::~ProcessPipeline() = default;
 
-bool FileProcessor::initializeVtkProcessor(const std::string& vtkFile, const std::string& stlFile, 
+bool ProcessPipeline::initializeVtkProcessor(const std::string& vtkFile, const std::string& stlFile, 
                                           const std::vector<double>& thresholds, QWidget* parent) {
     this->vtkFile = vtkFile;
     this->stlFile = stlFile;
@@ -36,7 +36,7 @@ bool FileProcessor::initializeVtkProcessor(const std::string& vtkFile, const std
     return true;
 }
 
-std::vector<vtkSmartPointer<vtkPolyData>> FileProcessor::processMeshDivision() {
+std::vector<vtkSmartPointer<vtkPolyData>> ProcessPipeline::processMeshDivision() {
     if (!vtkProcessor) {
         throw std::runtime_error("VtkProcessor not initialized");
     }
@@ -47,7 +47,7 @@ std::vector<vtkSmartPointer<vtkPolyData>> FileProcessor::processMeshDivision() {
     return dividedMeshes;
 }
 
-bool FileProcessor::process3mfFile(const std::string& mode, const std::vector<StressDensityMapping>& mappings, 
+bool ProcessPipeline::process3mfFile(const std::string& mode, const std::vector<StressDensityMapping>& mappings, 
                                   double maxStress, QWidget* parent) {
     try {
         Lib3mfProcessor lib3mfProcessor;
@@ -66,7 +66,7 @@ bool FileProcessor::process3mfFile(const std::string& mode, const std::vector<St
     }
 }
 
-bool FileProcessor::loadInputFiles(Lib3mfProcessor& processor, const std::string& stlFile) {
+bool ProcessPipeline::loadInputFiles(Lib3mfProcessor& processor, const std::string& stlFile) {
     if (!processor.getMeshes()) {
         throw std::runtime_error("Failed to load divided meshes");
     }
@@ -76,7 +76,7 @@ bool FileProcessor::loadInputFiles(Lib3mfProcessor& processor, const std::string
     return true;
 }
 
-bool FileProcessor::processByMode(Lib3mfProcessor& processor, const QString& mode, 
+bool ProcessPipeline::processByMode(Lib3mfProcessor& processor, const QString& mode, 
                                  const std::vector<StressDensityMapping>& mappings, double maxStress) {
     if (mode == "cura") {
         return processCuraMode(processor, mappings, maxStress);
@@ -86,7 +86,7 @@ bool FileProcessor::processByMode(Lib3mfProcessor& processor, const QString& mod
     throw std::runtime_error("Unknown mode: " + mode.toStdString());
 }
 
-bool FileProcessor::processCuraMode(Lib3mfProcessor& processor, const std::vector<StressDensityMapping>& mappings, 
+bool ProcessPipeline::processCuraMode(Lib3mfProcessor& processor, const std::vector<StressDensityMapping>& mappings, 
                                    double maxStress) {
     std::cout << "Processing in Cura mode" << std::endl;
     if (!processor.setMetaData(maxStress, mappings)) {
@@ -103,7 +103,7 @@ bool FileProcessor::processCuraMode(Lib3mfProcessor& processor, const std::vecto
     return true;
 }
 
-bool FileProcessor::processBambuMode(Lib3mfProcessor& processor, double maxStress) {
+bool ProcessPipeline::processBambuMode(Lib3mfProcessor& processor, double maxStress) {
     std::cout << "Processing in Bambu mode" << std::endl;
     processor.setMetaDataBambu(maxStress);
     const std::string tempFile = ".temp/result.3mf";
@@ -113,7 +113,7 @@ bool FileProcessor::processBambuMode(Lib3mfProcessor& processor, double maxStres
     return processBambuZipFiles();
 }
 
-bool FileProcessor::processBambuZipFiles() {
+bool ProcessPipeline::processBambuZipFiles() {
     const std::string extractDir = ".temp/3mf";
     const std::string zipFile = ".temp/result.3mf";
     const std::string outputFile = "result/result.3mf";
@@ -127,7 +127,7 @@ bool FileProcessor::processBambuZipFiles() {
     return true;
 }
 
-void FileProcessor::handle3mfError(const std::exception& e, QWidget* parent) {
+void ProcessPipeline::handle3mfError(const std::exception& e, QWidget* parent) {
     std::cerr << "3MF Processing Error: " << e.what() << std::endl;
     if (parent) {
         QMessageBox::critical(parent, 
@@ -136,7 +136,7 @@ void FileProcessor::handle3mfError(const std::exception& e, QWidget* parent) {
     }
 }
 
-double FileProcessor::getMaxStress() const {
+double ProcessPipeline::getMaxStress() const {
     if (vtkProcessor) {
         return vtkProcessor->getMaxStress();
     }

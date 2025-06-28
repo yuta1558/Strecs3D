@@ -7,7 +7,7 @@
 #include <QMessageBox>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
-#include "FileProcessor.h"
+#include "ProcessPipeline.h"
 #include "VisualizationManager.h"
 #include "ExportManager.h"
 #include "../UI/DensitySlider.h"
@@ -41,7 +41,7 @@ public:
     void setCurrentStlFilename(const QString& filename) { currentStlFilename = filename; }
     
     // ゲッター
-    FileProcessor* getFileProcessor() { return fileProcessor.get(); }
+    ProcessPipeline* getFileProcessor() { return fileProcessor.get(); }
     VisualizationManager* getVisualizationManager() { return visualizationManager.get(); }
     ExportManager* getExportManager() { return exportManager.get(); }
 
@@ -50,7 +50,7 @@ private:
     std::string stlFile;
     QString currentStlFilename;
     
-    std::unique_ptr<FileProcessor> fileProcessor;
+    std::unique_ptr<ProcessPipeline> fileProcessor;
     std::unique_ptr<VisualizationManager> visualizationManager;
     std::unique_ptr<ExportManager> exportManager;
     

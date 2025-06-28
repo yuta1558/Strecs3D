@@ -101,7 +101,7 @@ add_executable(Strecs3D
   utils/fileUtility.cpp
   utils/xmlConverter.cpp
   core/ApplicationController.cpp
-  core/FileProcessor.cpp
+  core/ProcessPipeline.cpp
   core/VisualizationManager.cpp
   core/ExportManager.cpp
 )

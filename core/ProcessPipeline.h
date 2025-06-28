@@ -14,10 +14,10 @@ class Lib3mfProcessor;
 class vtkPolyData;
 class StressDensityMapping;
 
-class FileProcessor {
+class ProcessPipeline {
 public:
-    FileProcessor();
-    ~FileProcessor();
+    ProcessPipeline();
+    ~ProcessPipeline();
 
     // VTKファイル処理
     bool initializeVtkProcessor(const std::string& vtkFile, const std::string& stlFile, 
