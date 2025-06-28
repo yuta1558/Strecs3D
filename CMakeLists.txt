@@ -97,6 +97,10 @@ add_executable(Strecs3D
   lib3mfProcessor.cpp
   utils/fileUtility.cpp
   utils/xmlConverter.cpp
+  core/ApplicationController.cpp
+  core/FileProcessor.cpp
+  core/VisualizationManager.cpp
+  core/ExportManager.cpp
 )
 
 # インクルードパスの設定
