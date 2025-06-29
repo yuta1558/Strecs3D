@@ -208,7 +208,10 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
     vtkSmartPointer<vtkActor> actor =
     vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
-    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+    actor->GetProperty()->SetOpacity(1.0); // 不透明に設定
+    actor->GetProperty()->SetEdgeVisibility(1); // エッジを表示
+    actor->GetProperty()->SetEdgeColor(0.1, 0.1, 0.1); // エッジの色を黒に設定
+    actor->GetProperty()->SetLineWidth(1.0); // エッジの線の太さを設定
 
     return actor;
 }
