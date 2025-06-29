@@ -80,6 +80,7 @@ public:
     vtkSmartPointer<vtkActor> getVtuActor(const std::string& fileName);
     vtkSmartPointer<vtkActor> getStlActor(const std::string& fileName);
     vtkSmartPointer<vtkActor> getColoredStlActor(const std::string& fileName, double r, double g, double b);
+    vtkSmartPointer<vtkActor> getColoredStlActorByStress(const std::string& fileName, double stressValue, double minStress, double maxStress);
 
     void saveDividedMeshes(const std::vector<vtkSmartPointer<vtkPolyData>>& dividedMeshes);
     std::string generateMeshFileName(int index,

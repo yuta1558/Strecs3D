@@ -56,18 +56,36 @@ void VisualizationManager::loadAndDisplayTempStlFiles(MainWindowUI* ui, VtkProce
             throw std::runtime_error("No valid STL files found");
         }
         
-        int minNumber = stlFiles.front().second;
-        int maxNumber = stlFiles.back().second;
-        double range = maxNumber - minNumber;
+        // ストレス範囲を取得
+        double minStress = vtkProcessor->getMinStress();
+        double maxStress = vtkProcessor->getMaxStress();
         
         for (const auto& [path, number] : stlFiles) {
-            double r, g, b;
-            double normalizedPos = (number - minNumber) / range;
-            calculateColor(normalizedPos, r, g, b);
+            // ファイル名からストレス値を抽出
+            std::string filename = path.filename().string();
+            std::regex stressPattern(R"(^dividedMesh\d+_([0-9.]+)_([0-9.]+)\.stl$)");
+            std::smatch match;
             
-            auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
-            if (actor) {
-                ui->getRenderer()->AddActor(actor);
+            if (std::regex_search(filename, match, stressPattern)) {
+                double stressMin = std::stod(match[1].str());
+                double stressMax = std::stod(match[2].str());
+                // 領域の中心のストレス値を使用
+                double stressValue = (stressMin + stressMax) / 2.0;
+                
+                auto actor = vtkProcessor->getColoredStlActorByStress(path.string(), stressValue, minStress, maxStress);
+                if (actor) {
+                    ui->getRenderer()->AddActor(actor);
+                }
+            } else {
+                // ファイル名からストレス値が抽出できない場合は、従来の方法を使用
+                double r, g, b;
+                double normalizedPos = static_cast<double>(number) / stlFiles.size();
+                calculateColor(normalizedPos, r, g, b);
+                
+                auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
+                if (actor) {
+                    ui->getRenderer()->AddActor(actor);
+                }
             }
         }
         

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <QColor>
+#include <algorithm>
 
 VtkProcessor::VtkProcessor(const std::string& vtuFileName): vtuFileName(vtuFileName) {
     // renderWindow->AddRenderer(renderer);
@@ -243,7 +245,9 @@ vtkSmartPointer<vtkActor> VtkProcessor::getStlActor(const std::string& fileName)
     vtkSmartPointer<vtkActor> actor =
         vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
-    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+    actor->GetProperty()->SetEdgeVisibility(1); // エッジを表示
+    actor->GetProperty()->SetEdgeColor(0.1, 0.1, 0.1); // エッジの色を黒に設定
+    actor->GetProperty()->SetLineWidth(1.0); // エッジの線の太さを設定
     return actor;
 }
 
@@ -270,6 +274,70 @@ vtkSmartPointer<vtkActor> VtkProcessor::getColoredStlActor(const std::string& fi
     actor->SetMapper(mapper);
     actor->GetProperty()->SetColor(r, g, b); // 指定された色を設定
     actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+    return actor;
+}
+
+// DensitySliderと同じ色計算ロジックを使用する関数
+QColor getGradientColorByStress(double t) {
+    // グラデーションストップの定義（DensitySliderと同じ）
+    static const struct GradStop {
+        double pos;
+        QColor color;
+    } gradStops[] = {
+        {0.0, ColorManager::HIGH_COLOR},   // 赤
+        {0.5, ColorManager::MIDDLE_COLOR}, // 白
+        {1.0, ColorManager::LOW_COLOR}     // 青
+    };
+    
+    if (t <= gradStops[0].pos) return gradStops[0].color;
+    if (t >= gradStops[2].pos) return gradStops[2].color;
+    for (int i = 0; i < 2; ++i) {
+        if (t >= gradStops[i].pos && t <= gradStops[i+1].pos) {
+            double localT = (t - gradStops[i].pos) / (gradStops[i+1].pos - gradStops[i].pos);
+            QColor c1 = gradStops[i].color;
+            QColor c2 = gradStops[i+1].color;
+            int r = c1.red()   + (c2.red()   - c1.red())   * localT;
+            int g = c1.green() + (c2.green() - c1.green()) * localT;
+            int b = c1.blue()  + (c2.blue()  - c1.blue())  * localT;
+            return QColor(r, g, b);
+        }
+    }
+    return QColor(); // fallback
+}
+
+vtkSmartPointer<vtkActor> VtkProcessor::getColoredStlActorByStress(const std::string& fileName, double stressValue, double minStress, double maxStress) {
+    // STLファイルの読み込み
+    vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
+    reader->SetFileName(fileName.c_str());
+    reader->Update();
+
+    // 読み込んだデータセットを取得
+    vtkSmartPointer<vtkPolyData> polyData = reader->GetOutput();
+    if (!polyData) {
+        std::cerr << "Error: Unable to read the STL file." << std::endl;
+        return nullptr;
+    }
+
+    // ストレス値を0.0〜1.0に正規化（DensitySliderと同じ計算）
+    // 高いストレス値をt=0.0（赤）、低いストレス値をt=1.0（青）にする
+    double t = (maxStress - stressValue) / (maxStress - minStress);
+    t = std::clamp(t, 0.0, 1.0); // 範囲を制限
+    
+    // DensitySliderと同じ色計算を使用
+    QColor regionColor = getGradientColorByStress(t);
+    
+    // Mapperの作成
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(polyData);
+    mapper->ScalarVisibilityOff(); // STLファイルは通常スカラー値を持たないため
+
+    // Actorの作成
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(regionColor.redF(), regionColor.greenF(), regionColor.blueF()); // 計算された色を設定
+    actor->GetProperty()->SetEdgeVisibility(1); // エッジを表示
+    actor->GetProperty()->SetEdgeColor(0.1, 0.1, 0.1); // エッジの色を黒に設定
+    actor->GetProperty()->SetLineWidth(1.0); // エッジの線の太さを設定
     return actor;
 }
 
