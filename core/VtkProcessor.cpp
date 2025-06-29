@@ -151,18 +151,23 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
     minStress = stressRange[0];
     maxStress = stressRange[1];
 
-    // LookupTableの作成（青から白を経由して赤へのグラデーション）
+    // LookupTableの作成（ColorManagerで指定された色のグラデーション）
     vtkSmartPointer<vtkLookupTable> lookupTable =
     vtkSmartPointer<vtkLookupTable>::New();
     lookupTable->SetNumberOfTableValues(256);
     lookupTable->SetRange(stressRange);
     
-    // RGB色空間で青→白→赤のグラデーションを設定
+    // ColorManagerの色を使用
     lookupTable->SetTableRange(stressRange);
     lookupTable->SetHueRange(0.0, 0.0); // Hueは使用しない
     lookupTable->SetSaturationRange(0.0, 0.0); // Saturationは使用しない
     lookupTable->SetValueRange(1.0, 1.0); // 明度を1に固定
     lookupTable->SetAlphaRange(1.0, 1.0); // 透明度を1に固定
+    
+    // ColorManagerの色を取得
+    QColor lowColor = ColorManager::LOW_COLOR;
+    QColor middleColor = ColorManager::MIDDLE_COLOR;
+    QColor highColor = ColorManager::HIGH_COLOR;
     
     // カラーテーブルを手動で設定
     for (int i = 0; i < 256; i++) {
@@ -170,17 +175,17 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
         double r, g, b;
         
         if (t < 0.5) {
-            // 青から白へのグラデーション
+            // LOW_COLORからMIDDLE_COLORへのグラデーション
             t = t * 2.0; // 0.0-0.5 を 0.0-1.0 に変換
-            r = t;
-            g = t;
-            b = 1.0;
+            r = lowColor.redF() + (middleColor.redF() - lowColor.redF()) * t;
+            g = lowColor.greenF() + (middleColor.greenF() - lowColor.greenF()) * t;
+            b = lowColor.blueF() + (middleColor.blueF() - lowColor.blueF()) * t;
         } else {
-            // 白から赤へのグラデーション
+            // MIDDLE_COLORからHIGH_COLORへのグラデーション
             t = (t - 0.5) * 2.0; // 0.5-1.0 を 0.0-1.0 に変換
-            r = 1.0;
-            g = 1.0 - t;
-            b = 1.0 - t;
+            r = middleColor.redF() + (highColor.redF() - middleColor.redF()) * t;
+            g = middleColor.greenF() + (highColor.greenF() - middleColor.greenF()) * t;
+            b = middleColor.blueF() + (highColor.blueF() - middleColor.blueF()) * t;
         }
         
         lookupTable->SetTableValue(i, r, g, b, 1.0);
