@@ -96,6 +96,7 @@ add_executable(Strecs3D
   UI/mainwindowui.cpp
   UI/MessageConsole.cpp
   UI/DensitySlider.cpp
+  UI/ColorManager.cpp
   core/VtkProcessor.cpp
   core/lib3mfProcessor.cpp
   utils/fileUtility.cpp

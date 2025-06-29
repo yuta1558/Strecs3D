@@ -1,4 +1,5 @@
 #include "DensitySlider.h"
+#include "ColorManager.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <algorithm>
@@ -7,18 +8,18 @@
 #include <QDoubleValidator>
 #include <cassert>
 
-// グラデーションストップの定義
-static const struct GradStop {
-    double pos;
-    QColor color;
-} gradStops[] = {
-    {0.0, QColor("#FF4D00")}, // 赤
-    {0.5, QColor("#ffffff")}, // 白
-    {1.0, QColor("#004ca1")}  // 青
-};
-
 // 指定した位置（0.0〜1.0）でグラデーション色を線形補間で取得
 QColor getGradientColor(double t) {
+    // グラデーションストップの定義（staticで一度だけ初期化）
+    static const struct GradStop {
+        double pos;
+        QColor color;
+    } gradStops[] = {
+        {0.0, ColorManager::HIGH_COLOR},   // 赤
+        {0.5, ColorManager::MIDDLE_COLOR}, // 白
+        {1.0, ColorManager::LOW_COLOR}     // 青
+    };
+    
     if (t <= gradStops[0].pos) return gradStops[0].color;
     if (t >= gradStops[2].pos) return gradStops[2].color;
     for (int i = 0; i < 2; ++i) {
@@ -91,9 +92,9 @@ void DensitySlider::paintEvent(QPaintEvent*) {
     int gradLeft = left - gradGap - gradWidth; // スライダの中心から左右対称な距離
     int gradRight = gradLeft + gradWidth;
     QLinearGradient gradient(gradLeft, top, gradLeft, bottom);
-    gradient.setColorAt(0.0, QColor("#FF4D00")); // 赤
-    gradient.setColorAt(0.5, QColor("#ffffff")); // 白
-    gradient.setColorAt(1.0, QColor("#004ca1")); // 青
+    gradient.setColorAt(0.0, ColorManager::HIGH_COLOR);   // 赤
+    gradient.setColorAt(0.5, ColorManager::MIDDLE_COLOR); // 白
+    gradient.setColorAt(1.0, ColorManager::LOW_COLOR);    // 青
     painter.setPen(Qt::NoPen);
     painter.setBrush(gradient);
     painter.drawRect(gradLeft, top, gradWidth, bottom - top);
