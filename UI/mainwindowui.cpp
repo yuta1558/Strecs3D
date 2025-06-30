@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QLabel>
 #include <QPixmap>
+#include <QFrame>
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
@@ -23,16 +24,25 @@ void MainWindowUI::setupUI()
     QHBoxLayout* logoRowLayout = new QHBoxLayout();
     QLabel* logoLabel = new QLabel(centralWidget);
     QPixmap logoPixmap(":/resources/white_symbol.png");
-    logoLabel->setPixmap(logoPixmap.scaled(70, 70, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logoLabel->setPixmap(logoPixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     logoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     logoRowLayout->addWidget(logoLabel);
     QLabel* logoTypeLabel = new QLabel(centralWidget);
     QPixmap logoTypePixmap(":/resources/logo_type.png");
-    logoTypeLabel->setPixmap(logoTypePixmap.scaledToHeight(15, Qt::SmoothTransformation));
+    logoTypeLabel->setPixmap(logoTypePixmap.scaledToHeight(19, Qt::SmoothTransformation));
     logoTypeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     logoRowLayout->addWidget(logoTypeLabel);
     logoRowLayout->addStretch(); // 右側にスペース
+    logoRowLayout->setSpacing(15);
+    logoRowLayout->setContentsMargins(0, 0, 0, 3);
     outerLayout->addLayout(logoRowLayout);
+
+    // 横線を追加
+    QFrame* horizontalLine = new QFrame(centralWidget);
+    horizontalLine->setFrameShape(QFrame::HLine);
+    horizontalLine->setFrameShadow(QFrame::Sunken);
+    horizontalLine->setStyleSheet("color: #333; background: #333; min-height: 1px; max-height: 1px;");
+    outerLayout->addWidget(horizontalLine);
 
     // メインの横並びレイアウト
     QHBoxLayout* mainLayout = new QHBoxLayout();
@@ -78,6 +88,7 @@ void MainWindowUI::setupUI()
 
     // mainLayoutをouterLayoutに追加
     outerLayout->addLayout(mainLayout);
+    outerLayout->setSpacing(5);
 
     setupStyle();
 }
