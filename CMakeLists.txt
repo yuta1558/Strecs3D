@@ -105,6 +105,7 @@ add_executable(Strecs3D
   core/ProcessPipeline.cpp
   core/VisualizationManager.cpp
   core/ExportManager.cpp
+  resources/resources.qrc
 )
 
 # インクルードパスの設定

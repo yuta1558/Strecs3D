@@ -4,6 +4,8 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QComboBox>
+#include <QLabel>
+#include <QPixmap>
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
@@ -14,7 +16,26 @@ MainWindowUI::MainWindowUI(MainWindow* mainWindow)
 void MainWindowUI::setupUI()
 {
     centralWidget = new QWidget(mainWindow);
-    QHBoxLayout* mainLayout = new QHBoxLayout(centralWidget);
+    // 新しい全体レイアウト（縦方向）
+    QVBoxLayout* outerLayout = new QVBoxLayout(centralWidget);
+
+    // ロゴ画像（全体の一番上・左寄せ）
+    QHBoxLayout* logoRowLayout = new QHBoxLayout();
+    QLabel* logoLabel = new QLabel(centralWidget);
+    QPixmap logoPixmap(":/resources/white_symbol.png");
+    logoLabel->setPixmap(logoPixmap.scaled(70, 70, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    logoRowLayout->addWidget(logoLabel);
+    QLabel* logoTypeLabel = new QLabel(centralWidget);
+    QPixmap logoTypePixmap(":/resources/logo_type.png");
+    logoTypeLabel->setPixmap(logoTypePixmap.scaledToHeight(15, Qt::SmoothTransformation));
+    logoTypeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    logoRowLayout->addWidget(logoTypeLabel);
+    logoRowLayout->addStretch(); // 右側にスペース
+    outerLayout->addLayout(logoRowLayout);
+
+    // メインの横並びレイアウト
+    QHBoxLayout* mainLayout = new QHBoxLayout();
 
     // 左ペイン
     QVBoxLayout* leftPaneLayout = new QVBoxLayout();
@@ -54,6 +75,9 @@ void MainWindowUI::setupUI()
 
     mainLayout->addWidget(leftPaneWidget, 1);
     mainLayout->addWidget(vtkWidget, 3);
+
+    // mainLayoutをouterLayoutに追加
+    outerLayout->addLayout(mainLayout);
 
     setupStyle();
 }
