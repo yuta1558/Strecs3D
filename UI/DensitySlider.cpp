@@ -39,8 +39,8 @@ QColor getGradientColor(double t) {
 DensitySlider::DensitySlider(QWidget* parent)
     : QWidget(parent)
 {
-    // 初期ハンドル位置（均等分割）
-    m_handles = {50, 100, 150};
+    // コンストラクタで固定値ではなく、後で計算する
+    m_handles = {0, 0, 0}; // 仮の値
     setMinimumWidth(120);
     setMinimumHeight(220);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
@@ -176,6 +176,7 @@ void DensitySlider::updatePercentEditPositions() {
 void DensitySlider::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     updatePercentEditPositions();
+    updateInitialHandles();
 }
 
 int DensitySlider::handleAtPosition(const QPoint& pos) const {
@@ -302,4 +303,15 @@ std::vector<double> DensitySlider::stressThresholds() const {
     thresholds.push_back(m_maxStress);
     std::sort(thresholds.begin(), thresholds.end()); // 昇順にソート
     return thresholds;
+}
+
+void DensitySlider::updateInitialHandles() {
+    int top = m_margin;
+    int bottom = height() - m_margin;
+    int availableHeight = bottom - top;
+    int segmentHeight = availableHeight / 4; // 4つの領域に分割
+    
+    m_handles[0] = top + segmentHeight;     // 1/4位置
+    m_handles[1] = top + 2 * segmentHeight; // 2/4位置  
+    m_handles[2] = top + 3 * segmentHeight; // 3/4位置
 } 

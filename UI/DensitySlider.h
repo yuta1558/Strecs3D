@@ -50,4 +50,5 @@ private:
     std::vector<double> m_regionPercents = {20, 40, 60, 80}; // デフォルト値
     std::vector<StressDensityMapping> m_stressDensityMappings;
     void updateStressDensityMappings();
+    void updateInitialHandles();
 }; 
