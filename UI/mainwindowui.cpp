@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QFrame>
 #include "Button.h"
+#include "ColorManager.h"
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
@@ -20,14 +21,17 @@ void MainWindowUI::setupUI()
     centralWidget = new QWidget(mainWindow);
     // 新しい全体レイアウト（縦方向）
     QVBoxLayout* outerLayout = new QVBoxLayout(centralWidget);
+    outerLayout->setContentsMargins(0, 0, 0, 0); 
 
     // ロゴ画像（全体の一番上・左寄せ）
     QWidget* headerWidget = new QWidget(centralWidget);
-    headerWidget->setFixedHeight(50); // 高さを50pxに固定
+    headerWidget->setFixedHeight(70); 
+    headerWidget->setStyleSheet(QString("background-color: %1;").arg(ColorManager::HEADER_COLOR.name()));
     QHBoxLayout* headerLayout = new QHBoxLayout(headerWidget);
+    headerLayout->setContentsMargins(0, 0, 0, 0); 
     QLabel* logoLabel = new QLabel(centralWidget);
     QPixmap logoPixmap(":/resources/white_symbol.png");
-    logoLabel->setPixmap(logoPixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    logoLabel->setPixmap(logoPixmap.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     logoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     headerLayout->addWidget(logoLabel);
     QLabel* logoTypeLabel = new QLabel(centralWidget);
@@ -37,15 +41,8 @@ void MainWindowUI::setupUI()
     headerLayout->addWidget(logoTypeLabel);
     headerLayout->addStretch(); // 右側にスペース
     headerLayout->setSpacing(15);
-    headerLayout->setContentsMargins(30, 0, 0, 3);
+    headerLayout->setContentsMargins(35, 0, 0, 3);
     outerLayout->addWidget(headerWidget);
-
-    // 横線を追加
-    QFrame* horizontalLine = new QFrame(centralWidget);
-    horizontalLine->setFrameShape(QFrame::HLine);
-    horizontalLine->setFrameShadow(QFrame::Sunken);
-    horizontalLine->setStyleSheet("color: #333; background: #333; min-height: 1px; max-height: 1px;");
-    outerLayout->addWidget(horizontalLine);
 
     // メインの横並びレイアウト
     QHBoxLayout* mainLayout = new QHBoxLayout();

@@ -19,6 +19,7 @@ public:
     static const QColor BUTTON_PRESSED_COLOR; // 押下時のボタン色
     static const QColor BUTTON_TEXT_COLOR;    // ボタンテキスト色
     static const QColor BUTTON_EDGE_COLOR;     // ボタン枠線色
+    static const QColor HEADER_COLOR;         // ヘッダー用色
 };
 
 #endif // COLORMANAGER_H 
