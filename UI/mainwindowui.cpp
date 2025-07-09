@@ -37,7 +37,7 @@ void MainWindowUI::setupUI()
     logoRowLayout->addWidget(logoTypeLabel);
     logoRowLayout->addStretch(); // 右側にスペース
     logoRowLayout->setSpacing(15);
-    logoRowLayout->setContentsMargins(0, 0, 0, 3);
+    logoRowLayout->setContentsMargins(30, 0, 0, 3);
     outerLayout->addWidget(logoRowWidget);
 
     // 横線を追加
