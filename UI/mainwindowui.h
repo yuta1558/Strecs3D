@@ -12,6 +12,7 @@
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
+#include "ModeComboBox.h"
 
 class MainWindow;
 
@@ -28,7 +29,7 @@ public:
     Button* getOpenVtkButton() const { return openVtkButton; }
     Button* getProcessButton() const { return processButton; }
     Button* getExport3mfButton() const { return export3mfButton; }
-    QComboBox* getModeComboBox() const { return modeComboBox; }
+    ModeComboBox* getModeComboBox() const { return modeComboBox; }
     DensitySlider* getRangeSlider() const { return rangeSlider; }
     MessageConsole* getMessageConsole() const { return messageConsole; }
 
@@ -44,7 +45,7 @@ private:
     Button* openVtkButton;
     Button* processButton;
     Button* export3mfButton;
-    QComboBox* modeComboBox;
+    ModeComboBox* modeComboBox;
     DensitySlider* rangeSlider;
     MessageConsole* messageConsole;
 };

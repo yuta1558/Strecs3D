@@ -57,9 +57,7 @@ void MainWindowUI::setupUI()
     openStlButton = new Button("Open STL File", centralWidget);
     openVtkButton = new Button("Open VTK File", centralWidget);
     rangeSlider = new DensitySlider(centralWidget);
-    modeComboBox = new QComboBox(centralWidget);
-    modeComboBox->addItem("cura");
-    modeComboBox->addItem("bambu");
+    modeComboBox = new ModeComboBox(centralWidget);
     
     processButton = new Button("Process", centralWidget);
     export3mfButton = new Button("Export 3MF", centralWidget);
