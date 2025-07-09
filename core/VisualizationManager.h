@@ -17,6 +17,15 @@
 #include <regex>
 #include <algorithm>
 #include <filesystem>
+#include <vtkActor.h>
+
+// 3Dオブジェクトの表示情報を保持する構造体
+struct DisplayObjectInfo {
+    vtkSmartPointer<vtkActor> actor;
+    std::string filename;
+    bool visible;
+    double opacity;
+};
 
 class MainWindowUI;
 class VtkProcessor;
@@ -40,6 +49,7 @@ public:
 
 private:
     MainWindowUI* ui_; //  UIポインタを保持
+    std::vector<DisplayObjectInfo> displayObjects; // 3Dオブジェクト情報リスト
     void calculateColor(double normalizedPos, double& r, double& g, double& b);
     std::vector<std::pair<std::filesystem::path, int>> sortStlFiles(const std::filesystem::path& tempDir);
 }; 
