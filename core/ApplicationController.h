@@ -16,7 +16,7 @@ class MainWindowUI;
 
 class ApplicationController {
 public:
-    ApplicationController();
+    ApplicationController(MainWindowUI* ui);
     ~ApplicationController() = default;
 
     // ファイル操作

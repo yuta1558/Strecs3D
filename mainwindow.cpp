@@ -9,10 +9,10 @@
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
-    , appController(std::make_unique<ApplicationController>())
 {
     setWindowTitle("Strecs3D");
     ui = std::make_unique<MainWindowUI>(this);
+    appController = std::make_unique<ApplicationController>(ui.get());
     setCentralWidget(ui->getCentralWidget());
     resize(1600, 900);
 

@@ -23,23 +23,23 @@ class VtkProcessor;
 
 class VisualizationManager {
 public:
-    VisualizationManager();
+    VisualizationManager(MainWindowUI* ui);
     ~VisualizationManager();
 
     // ファイル表示
-    void displayVtkFile(const std::string& vtkFile, MainWindowUI* ui, VtkProcessor* vtkProcessor);
-    void displayStlFile(const std::string& stlFile, MainWindowUI* ui, VtkProcessor* vtkProcessor);
-    void loadAndDisplayTempStlFiles(MainWindowUI* ui, VtkProcessor* vtkProcessor, QWidget* parent = nullptr);
+    void displayVtkFile(const std::string& vtkFile, VtkProcessor* vtkProcessor);
+    void displayStlFile(const std::string& stlFile, VtkProcessor* vtkProcessor);
+    void loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor, QWidget* parent = nullptr);
 
     // スカラーバー設定
-    void setupScalarBar(MainWindowUI* ui, VtkProcessor* vtkProcessor);
+    void setupScalarBar(VtkProcessor* vtkProcessor);
 
     // レンダラー操作
-    void clearRenderer(MainWindowUI* ui);
-    void resetCamera(MainWindowUI* ui);
+    void clearRenderer();
+    void resetCamera();
 
 private:
-    // ヘルパーメソッド
+    MainWindowUI* ui_; //  UIポインタを保持
     void calculateColor(double normalizedPos, double& r, double& g, double& b);
     std::vector<std::pair<std::filesystem::path, int>> sortStlFiles(const std::filesystem::path& tempDir);
 }; 

@@ -7,9 +7,9 @@
 #include <iostream>
 #include <stdexcept>
 
-ApplicationController::ApplicationController()
+ApplicationController::ApplicationController(MainWindowUI* ui)
     : fileProcessor(std::make_unique<ProcessPipeline>())
-    , visualizationManager(std::make_unique<VisualizationManager>())
+    , visualizationManager(std::make_unique<VisualizationManager>(ui))
     , exportManager(std::make_unique<ExportManager>())
 {
 }
@@ -21,7 +21,7 @@ bool ApplicationController::openVtkFile(const std::string& vtkFile, MainWindowUI
     setVtkFile(vtkFile);
     
     try {
-        visualizationManager->displayVtkFile(vtkFile, ui, fileProcessor->getVtkProcessor().get());
+        visualizationManager->displayVtkFile(vtkFile, fileProcessor->getVtkProcessor().get());
         
         // ストレス範囲をスライダーに設定
         auto slider = ui->getRangeSlider();
@@ -48,7 +48,7 @@ bool ApplicationController::openStlFile(const std::string& stlFile, MainWindowUI
     setCurrentStlFilename(QString::fromStdString(stlFile));
     
     try {
-        visualizationManager->displayStlFile(stlFile, ui, fileProcessor->getVtkProcessor().get());
+        visualizationManager->displayStlFile(stlFile, fileProcessor->getVtkProcessor().get());
         return true;
     }
     catch (const std::exception& e) {
@@ -159,7 +159,7 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
 {
     if (!ui || !fileProcessor->getVtkProcessor()) return;
     
-    visualizationManager->loadAndDisplayTempStlFiles(ui, fileProcessor->getVtkProcessor().get(), parent);
+    visualizationManager->loadAndDisplayTempStlFiles(fileProcessor->getVtkProcessor().get(), parent);
 }
 
 void ApplicationController::cleanupTempFiles()

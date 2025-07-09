@@ -17,39 +17,39 @@
 #include <algorithm>
 #include <filesystem>
 
-VisualizationManager::VisualizationManager() = default;
+VisualizationManager::VisualizationManager(MainWindowUI* ui) : ui_(ui) {}
 
 VisualizationManager::~VisualizationManager() = default;
 
-void VisualizationManager::displayVtkFile(const std::string& vtkFile, MainWindowUI* ui, VtkProcessor* vtkProcessor) {
-    if (!ui || !vtkProcessor) return;
+void VisualizationManager::displayVtkFile(const std::string& vtkFile, VtkProcessor* vtkProcessor) {
+    if (!ui_ || !vtkProcessor) return;
     
-    clearRenderer(ui);
+    clearRenderer();
     auto importActor = vtkProcessor->getVtuActor(vtkFile);
-    ui->getRenderer()->AddActor(importActor);
-    setupScalarBar(ui, vtkProcessor);
-    resetCamera(ui);
-    ui->getVtkWidget()->renderWindow()->Render();
+    ui_->getRenderer()->AddActor(importActor);
+    setupScalarBar(vtkProcessor);
+    resetCamera();
+    ui_->getVtkWidget()->renderWindow()->Render();
 }
 
-void VisualizationManager::displayStlFile(const std::string& stlFile, MainWindowUI* ui, VtkProcessor* vtkProcessor) {
-    if (!ui || !vtkProcessor) return;
+void VisualizationManager::displayStlFile(const std::string& stlFile, VtkProcessor* vtkProcessor) {
+    if (!ui_ || !vtkProcessor) return;
     
-    clearRenderer(ui);
+    clearRenderer();
     auto importActor = vtkProcessor->getStlActor(stlFile);
-    ui->getRenderer()->AddActor(importActor);
-    resetCamera(ui);
-    ui->getVtkWidget()->renderWindow()->Render();
+    ui_->getRenderer()->AddActor(importActor);
+    resetCamera();
+    ui_->getVtkWidget()->renderWindow()->Render();
 }
 
-void VisualizationManager::loadAndDisplayTempStlFiles(MainWindowUI* ui, VtkProcessor* vtkProcessor, QWidget* parent) {
+void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor, QWidget* parent) {
     try {
         std::filesystem::path tempDir = ".temp/div";
         if (!std::filesystem::exists(tempDir)) {
             throw std::runtime_error(".temp directory does not exist");
         }
         
-        clearRenderer(ui);
+        clearRenderer();
         
         auto stlFiles = sortStlFiles(tempDir);
         if (stlFiles.empty()) {
@@ -74,7 +74,7 @@ void VisualizationManager::loadAndDisplayTempStlFiles(MainWindowUI* ui, VtkProce
                 
                 auto actor = vtkProcessor->getColoredStlActorByStress(path.string(), stressValue, minStress, maxStress);
                 if (actor) {
-                    ui->getRenderer()->AddActor(actor);
+                    ui_->getRenderer()->AddActor(actor);
                 }
             } else {
                 // ファイル名からストレス値が抽出できない場合は、従来の方法を使用
@@ -84,13 +84,13 @@ void VisualizationManager::loadAndDisplayTempStlFiles(MainWindowUI* ui, VtkProce
                 
                 auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
                 if (actor) {
-                    ui->getRenderer()->AddActor(actor);
+                    ui_->getRenderer()->AddActor(actor);
                 }
             }
         }
         
-        resetCamera(ui);
-        ui->getVtkWidget()->renderWindow()->Render();
+        resetCamera();
+        ui_->getVtkWidget()->renderWindow()->Render();
     }
     catch (const std::exception& e) {
         std::cerr << "Error loading STL files: " << e.what() << std::endl;
@@ -100,8 +100,8 @@ void VisualizationManager::loadAndDisplayTempStlFiles(MainWindowUI* ui, VtkProce
     }
 }
 
-void VisualizationManager::setupScalarBar(MainWindowUI* ui, VtkProcessor* vtkProcessor) {
-    if (!ui || !vtkProcessor) return;
+void VisualizationManager::setupScalarBar(VtkProcessor* vtkProcessor) {
+    if (!ui_ || !vtkProcessor) return;
     
     auto lookupTable = vtkProcessor->getCurrentLookupTable();
     if (lookupTable) {
@@ -115,19 +115,19 @@ void VisualizationManager::setupScalarBar(MainWindowUI* ui, VtkProcessor* vtkPro
         scalarBar->SetWidth(0.5);
         scalarBar->SetHeight(0.05);
         scalarBar->SetPosition(0.5, 0.05);
-        ui->getRenderer()->AddActor2D(scalarBar);
+        ui_->getRenderer()->AddActor2D(scalarBar);
     }
 }
 
-void VisualizationManager::clearRenderer(MainWindowUI* ui) {
-    if (ui && ui->getRenderer()) {
-        ui->getRenderer()->RemoveAllViewProps();
+void VisualizationManager::clearRenderer() {
+    if (ui_ && ui_->getRenderer()) {
+        ui_->getRenderer()->RemoveAllViewProps();
     }
 }
 
-void VisualizationManager::resetCamera(MainWindowUI* ui) {
-    if (ui && ui->getRenderer()) {
-        ui->getRenderer()->ResetCamera();
+void VisualizationManager::resetCamera() {
+    if (ui_ && ui_->getRenderer()) {
+        ui_->getRenderer()->ResetCamera();
     }
 }
 
