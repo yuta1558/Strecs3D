@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QFrame>
+#include "Button.h"
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
@@ -51,14 +52,17 @@ void MainWindowUI::setupUI()
 
     // 左ペイン
     QVBoxLayout* leftPaneLayout = new QVBoxLayout();
-    openStlButton = new QPushButton("Open STL File", centralWidget);
-    openVtkButton = new QPushButton("Open VTK File", centralWidget);
+    
+    // ボタンを作成
+    openStlButton = new Button("Open STL File", centralWidget);
+    openVtkButton = new Button("Open VTK File", centralWidget);
     rangeSlider = new DensitySlider(centralWidget);
     modeComboBox = new QComboBox(centralWidget);
     modeComboBox->addItem("cura");
     modeComboBox->addItem("bambu");
-    processButton = new QPushButton("Process", centralWidget);
-    export3mfButton = new QPushButton("export 3mf", centralWidget);
+    
+    processButton = new Button("Process", centralWidget);
+    export3mfButton = new Button("Export 3MF", centralWidget);
     messageConsole = new MessageConsole(centralWidget);
     messageConsole->setMinimumHeight(200);
 
@@ -93,7 +97,7 @@ void MainWindowUI::setupUI()
     leftPaneWidget->setParent(vtkWidget);
     leftPaneWidget->adjustSize(); // レイアウト内容に合わせて自動でサイズを決める
     leftPaneWidget->move(20, 20); // 位置だけ指定
-    leftPaneWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 0.35); border-radius: 10px; }");
+    leftPaneWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 0); border-radius: 10px; }");
     leftPaneWidget->raise();
     leftPaneWidget->show();
     // 必要なら: leftPaneWidget->setAttribute(Qt::WA_TransparentForMouseEvents);

@@ -8,6 +8,7 @@
 #include <QHBoxLayout>
 #include "DensitySlider.h"
 #include "MessageConsole.h"
+#include "Button.h"
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
@@ -23,10 +24,10 @@ public:
     QWidget* getCentralWidget() const { return centralWidget; }
     QVTKOpenGLNativeWidget* getVtkWidget() const { return vtkWidget; }
     vtkSmartPointer<vtkRenderer> getRenderer() const { return renderer; }
-    QPushButton* getOpenStlButton() const { return openStlButton; }
-    QPushButton* getOpenVtkButton() const { return openVtkButton; }
-    QPushButton* getProcessButton() const { return processButton; }
-    QPushButton* getExport3mfButton() const { return export3mfButton; }
+    Button* getOpenStlButton() const { return openStlButton; }
+    Button* getOpenVtkButton() const { return openVtkButton; }
+    Button* getProcessButton() const { return processButton; }
+    Button* getExport3mfButton() const { return export3mfButton; }
     QComboBox* getModeComboBox() const { return modeComboBox; }
     DensitySlider* getRangeSlider() const { return rangeSlider; }
     MessageConsole* getMessageConsole() const { return messageConsole; }
@@ -39,10 +40,10 @@ private:
     QVTKOpenGLNativeWidget* vtkWidget;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow;
     vtkSmartPointer<vtkRenderer> renderer;
-    QPushButton* openStlButton;
-    QPushButton* openVtkButton;
-    QPushButton* processButton;
-    QPushButton* export3mfButton;
+    Button* openStlButton;
+    Button* openVtkButton;
+    Button* processButton;
+    Button* export3mfButton;
     QComboBox* modeComboBox;
     DensitySlider* rangeSlider;
     MessageConsole* messageConsole;
