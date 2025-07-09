@@ -27,6 +27,9 @@ void VisualizationManager::displayVtkFile(const std::string& vtkFile, VtkProcess
     clearRenderer();
     auto importActor = vtkProcessor->getVtuActor(vtkFile);
     ui_->getRenderer()->AddActor(importActor);
+    // ObjectInfoを登録
+    ObjectInfo objInfo{importActor, vtkFile, true, 1.0};
+    registerObject(objInfo);
     setupScalarBar(vtkProcessor);
     resetCamera();
     ui_->getVtkWidget()->renderWindow()->Render();
@@ -38,6 +41,9 @@ void VisualizationManager::displayStlFile(const std::string& stlFile, VtkProcess
     clearRenderer();
     auto importActor = vtkProcessor->getStlActor(stlFile);
     ui_->getRenderer()->AddActor(importActor);
+    // ObjectInfoを登録
+    ObjectInfo objInfo{importActor, stlFile, true, 1.0};
+    registerObject(objInfo);
     resetCamera();
     ui_->getVtkWidget()->renderWindow()->Render();
 }
@@ -75,6 +81,9 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
                 auto actor = vtkProcessor->getColoredStlActorByStress(path.string(), stressValue, minStress, maxStress);
                 if (actor) {
                     ui_->getRenderer()->AddActor(actor);
+                    // ObjectInfoを登録
+                    ObjectInfo objInfo{actor, path.string(), true, 1.0};
+                    registerObject(objInfo);
                 }
             } else {
                 // ファイル名からストレス値が抽出できない場合は、従来の方法を使用
@@ -85,6 +94,9 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
                 auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
                 if (actor) {
                     ui_->getRenderer()->AddActor(actor);
+                    // ObjectInfoを登録
+                    ObjectInfo objInfo{actor, path.string(), true, 1.0};
+                    registerObject(objInfo);
                 }
             }
         }
@@ -164,4 +176,8 @@ std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::sortStl
         [](const auto& a, const auto& b) { return a.second < b.second; });
     
     return stlFiles;
+} 
+
+void VisualizationManager::registerObject(const ObjectInfo& objInfo) {
+    objectList.push_back(objInfo);
 } 
