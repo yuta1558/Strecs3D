@@ -21,7 +21,9 @@ void MainWindowUI::setupUI()
     QVBoxLayout* outerLayout = new QVBoxLayout(centralWidget);
 
     // ロゴ画像（全体の一番上・左寄せ）
-    QHBoxLayout* logoRowLayout = new QHBoxLayout();
+    QWidget* logoRowWidget = new QWidget(centralWidget);
+    logoRowWidget->setFixedHeight(50); // 高さを50pxに固定
+    QHBoxLayout* logoRowLayout = new QHBoxLayout(logoRowWidget);
     QLabel* logoLabel = new QLabel(centralWidget);
     QPixmap logoPixmap(":/resources/white_symbol.png");
     logoLabel->setPixmap(logoPixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
@@ -35,7 +37,7 @@ void MainWindowUI::setupUI()
     logoRowLayout->addStretch(); // 右側にスペース
     logoRowLayout->setSpacing(15);
     logoRowLayout->setContentsMargins(0, 0, 0, 3);
-    outerLayout->addLayout(logoRowLayout);
+    outerLayout->addWidget(logoRowWidget);
 
     // 横線を追加
     QFrame* horizontalLine = new QFrame(centralWidget);
@@ -73,7 +75,6 @@ void MainWindowUI::setupUI()
     leftPaneWidget->setLayout(leftPaneLayout);
     leftPaneWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     leftPaneWidget->setMaximumWidth(300);
-    leftPaneWidget->setStyleSheet("QWidget { background-color: #2D2D2D; border-radius: 10px; }");
 
     // 右ペイン（VTKウィジェット）
     vtkWidget = new QVTKOpenGLNativeWidget(centralWidget);
@@ -83,12 +84,19 @@ void MainWindowUI::setupUI()
     renderWindow->AddRenderer(renderer);
     renderer->SetBackground(0.1, 0.1, 0.1);
 
-    mainLayout->addWidget(leftPaneWidget, 1);
-    mainLayout->addWidget(vtkWidget, 3);
-
+    mainLayout->addWidget(vtkWidget, 1); // まずvtkWidgetだけをレイアウトに追加
     // mainLayoutをouterLayoutに追加
     outerLayout->addLayout(mainLayout);
     outerLayout->setSpacing(5);
+
+    // leftPaneWidgetをvtkWidgetの上に重ねて配置
+    leftPaneWidget->setParent(vtkWidget);
+    leftPaneWidget->adjustSize(); // レイアウト内容に合わせて自動でサイズを決める
+    leftPaneWidget->move(20, 20); // 位置だけ指定
+    leftPaneWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 0.35); border-radius: 10px; }");
+    leftPaneWidget->raise();
+    leftPaneWidget->show();
+    // 必要なら: leftPaneWidget->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     setupStyle();
 }
