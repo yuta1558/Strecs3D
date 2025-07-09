@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , appController(std::make_unique<ApplicationController>())
 {
-    setWindowTitle("von Mises Stress Viewer");
+    setWindowTitle("Strecs3D");
     ui = std::make_unique<MainWindowUI>(this);
     setCentralWidget(ui->getCentralWidget());
     resize(1600, 900);
