@@ -12,6 +12,13 @@ public:
     
     // Background color
     static const QColor BACKGROUND_COLOR; // #1a1a1a (dark gray)
+
+    // Button colors
+    static const QColor BUTTON_COLOR;         // 通常時のボタン色
+    static const QColor BUTTON_HOVER_COLOR;   // ホバー時のボタン色
+    static const QColor BUTTON_PRESSED_COLOR; // 押下時のボタン色
+    static const QColor BUTTON_TEXT_COLOR;    // ボタンテキスト色
+    static const QColor BUTTON_EDGE_COLOR;     // ボタン枠線色
 };
 
 #endif // COLORMANAGER_H 

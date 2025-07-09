@@ -5,15 +5,16 @@
 #include <QMouseEvent>
 #include <QPropertyAnimation>
 #include <QGraphicsOpacityEffect>
+#include "ColorManager.h"
 
 Button::Button(const QString& text, QWidget* parent)
     : QPushButton(text, parent)
-    , m_backgroundColor(QColor(42, 42, 42, 150)) // #2a2a2a
-    , m_textColor(Qt::white)
-    , m_hoverColor(QColor(42, 42, 42, 150).lighter(120))
-    , m_pressedColor(QColor(42, 42, 42, 150).darker(120))
+    , m_backgroundColor(ColorManager::BUTTON_COLOR)
+    , m_textColor(ColorManager::BUTTON_TEXT_COLOR)
+    , m_hoverColor(ColorManager::BUTTON_HOVER_COLOR.lighter(120))
+    , m_pressedColor(ColorManager::BUTTON_PRESSED_COLOR.darker(120))
     , m_currentColor(m_backgroundColor)
-    , m_borderRadius(5)
+    , m_borderRadius(3)
     , m_paddingHorizontal(20)
     , m_paddingVertical(12)
     , m_animationEnabled(true)
@@ -30,10 +31,10 @@ Button::Button(const QString& text, const QColor& backgroundColor,
     : QPushButton(text, parent)
     , m_backgroundColor(backgroundColor)
     , m_textColor(textColor)
-    , m_hoverColor(backgroundColor.lighter(120))
-    , m_pressedColor(backgroundColor.darker(120))
+    , m_hoverColor(ColorManager::BUTTON_HOVER_COLOR.lighter(120))
+    , m_pressedColor(ColorManager::BUTTON_PRESSED_COLOR.darker(120))
     , m_currentColor(m_backgroundColor)
-    , m_borderRadius(5)
+    , m_borderRadius(3)
     , m_paddingHorizontal(20)
     , m_paddingVertical(12)
     , m_animationEnabled(true)
@@ -174,9 +175,19 @@ void Button::paintEvent(QPaintEvent* event)
     painter.setRenderHint(QPainter::Antialiasing);
     
     QRect rect = this->rect();
+    // 背景
     painter.setPen(Qt::NoPen);
     painter.setBrush(m_currentColor);
     painter.drawRoundedRect(rect, m_borderRadius, m_borderRadius);
+    
+    // エッジ（枠線）
+    QPen edgePen(ColorManager::BUTTON_EDGE_COLOR);
+    edgePen.setWidth(0); // 枠線の太さ
+    painter.setPen(edgePen);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRoundedRect(rect.adjusted(1, 1, -1, -1), m_borderRadius, m_borderRadius);
+
+    // テキスト
     painter.setPen(m_textColor);
     painter.setFont(font());
     QRect textRect = rect.adjusted(m_paddingHorizontal, m_paddingVertical, 
