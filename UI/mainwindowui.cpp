@@ -22,23 +22,23 @@ void MainWindowUI::setupUI()
     QVBoxLayout* outerLayout = new QVBoxLayout(centralWidget);
 
     // ロゴ画像（全体の一番上・左寄せ）
-    QWidget* logoRowWidget = new QWidget(centralWidget);
-    logoRowWidget->setFixedHeight(50); // 高さを50pxに固定
-    QHBoxLayout* logoRowLayout = new QHBoxLayout(logoRowWidget);
+    QWidget* headerWidget = new QWidget(centralWidget);
+    headerWidget->setFixedHeight(50); // 高さを50pxに固定
+    QHBoxLayout* headerLayout = new QHBoxLayout(headerWidget);
     QLabel* logoLabel = new QLabel(centralWidget);
     QPixmap logoPixmap(":/resources/white_symbol.png");
     logoLabel->setPixmap(logoPixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     logoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    logoRowLayout->addWidget(logoLabel);
+    headerLayout->addWidget(logoLabel);
     QLabel* logoTypeLabel = new QLabel(centralWidget);
     QPixmap logoTypePixmap(":/resources/logo_type.png");
     logoTypeLabel->setPixmap(logoTypePixmap.scaledToHeight(19, Qt::SmoothTransformation));
     logoTypeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    logoRowLayout->addWidget(logoTypeLabel);
-    logoRowLayout->addStretch(); // 右側にスペース
-    logoRowLayout->setSpacing(15);
-    logoRowLayout->setContentsMargins(30, 0, 0, 3);
-    outerLayout->addWidget(logoRowWidget);
+    headerLayout->addWidget(logoTypeLabel);
+    headerLayout->addStretch(); // 右側にスペース
+    headerLayout->setSpacing(15);
+    headerLayout->setContentsMargins(30, 0, 0, 3);
+    outerLayout->addWidget(headerWidget);
 
     // 横線を追加
     QFrame* horizontalLine = new QFrame(centralWidget);
