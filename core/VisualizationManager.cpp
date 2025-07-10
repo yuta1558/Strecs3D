@@ -24,7 +24,6 @@ VisualizationManager::~VisualizationManager() = default;
 void VisualizationManager::displayVtkFile(const std::string& vtkFile, VtkProcessor* vtkProcessor) {
     if (!ui_ || !vtkProcessor) return;
     
-    clearRenderer();
     auto importActor = vtkProcessor->getVtuActor(vtkFile);
     ui_->getRenderer()->AddActor(importActor);
     // ObjectInfoを登録
@@ -32,20 +31,19 @@ void VisualizationManager::displayVtkFile(const std::string& vtkFile, VtkProcess
     registerObject(objInfo);
     setupScalarBar(vtkProcessor);
     resetCamera();
-    ui_->getVtkWidget()->renderWindow()->Render();
+    renderRegisteredObjects();
 }
 
 void VisualizationManager::displayStlFile(const std::string& stlFile, VtkProcessor* vtkProcessor) {
     if (!ui_ || !vtkProcessor) return;
     
-    clearRenderer();
     auto importActor = vtkProcessor->getStlActor(stlFile);
     ui_->getRenderer()->AddActor(importActor);
     // ObjectInfoを登録
     ObjectInfo objInfo{importActor, stlFile, true, 1.0};
     registerObject(objInfo);
     resetCamera();
-    ui_->getVtkWidget()->renderWindow()->Render();
+    renderRegisteredObjects();
 }
 
 void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor, QWidget* parent) {
@@ -55,7 +53,6 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
             throw std::runtime_error(".temp directory does not exist");
         }
         
-        clearRenderer();
         
         auto stlFiles = sortStlFiles(tempDir);
         if (stlFiles.empty()) {
@@ -102,7 +99,7 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
         }
         
         resetCamera();
-        ui_->getVtkWidget()->renderWindow()->Render();
+        renderRegisteredObjects();
     }
     catch (const std::exception& e) {
         std::cerr << "Error loading STL files: " << e.what() << std::endl;
@@ -180,4 +177,20 @@ std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::sortStl
 
 void VisualizationManager::registerObject(const ObjectInfo& objInfo) {
     objectList.push_back(objInfo);
+} 
+
+void VisualizationManager::renderRegisteredObjects() {
+    if (!ui_ || !ui_->getRenderer()) return;
+    clearRenderer();
+    // すべてのObjectInfoのactorをレンダラーに追加
+    for (const auto& obj : objectList) {
+        if (obj.visible && obj.actor) {
+            obj.actor->SetVisibility(1);
+            obj.actor->GetProperty()->SetOpacity(obj.opacity);
+            ui_->getRenderer()->AddActor(obj.actor);
+        }
+    }
+    if (ui_->getVtkWidget() && ui_->getVtkWidget()->renderWindow()) {
+        ui_->getVtkWidget()->renderWindow()->Render();
+    }
 } 

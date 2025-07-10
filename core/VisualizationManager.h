@@ -50,6 +50,8 @@ public:
     // displayObjectsにObjectInfoを追加するメソッド
     void registerObject(const ObjectInfo& objInfo);
 
+    void renderRegisteredObjects();
+
 private:
     MainWindowUI* ui_; //  UIポインタを保持
     std::vector<ObjectInfo> objectList; // 3Dオブジェクト情報リスト
