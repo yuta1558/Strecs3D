@@ -3,6 +3,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSlider>
+#include <QCheckBox>
 
 class ObjectDisplayOptionsWidget : public QWidget {
     Q_OBJECT
@@ -20,7 +21,7 @@ signals:
 
 private:
     QLabel* fileNameLabel;
-    QPushButton* visibilityButton;
+    QCheckBox* visibilityButton;
     QSlider* opacitySlider;
     bool visibleState;
     void updateVisibilityButton();
