@@ -52,6 +52,10 @@ public:
 
     void renderRegisteredObjects();
 
+    // visible, opacityの値をセットするメソッド
+    void setObjectVisible(int index, bool visible);
+    void setObjectOpacity(int index, double opacity);
+
 private:
     MainWindowUI* ui_; //  UIポインタを保持
     std::vector<ObjectInfo> objectList; // 3Dオブジェクト情報リスト
