@@ -10,6 +10,8 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
     opacitySlider = new QSlider(Qt::Horizontal, this);
     opacitySlider->setRange(0, 100);
     opacitySlider->setValue(100);
+    opacitySlider->setMinimumWidth(200); // スライダーの幅を大きく
+    opacitySlider->setFixedHeight(40);   // スライダーの高さを大きく
     
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->addWidget(fileNameLabel);
@@ -24,7 +26,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
         emit visibilityToggled(visibleState);
     });
     connect(opacitySlider, &QSlider::valueChanged, this, [this](int value) {
-        emit opacityChanged(value);
+        emit opacityChanged(value / 100.0); // 0-1の小数でemit
     });
     updateVisibilityButton();
 }
@@ -38,16 +40,17 @@ void ObjectDisplayOptionsWidget::setVisibleState(bool visible) {
     updateVisibilityButton();
 }
 
-void ObjectDisplayOptionsWidget::setOpacity(int opacity) {
-    opacitySlider->setValue(opacity);
+void ObjectDisplayOptionsWidget::setOpacity(double opacity) {
+    int sliderValue = static_cast<int>(opacity * 100.0 + 0.5);
+    opacitySlider->setValue(sliderValue);
 }
 
 bool ObjectDisplayOptionsWidget::isVisibleState() const {
     return visibleState;
 }
 
-int ObjectDisplayOptionsWidget::opacityValue() const {
-    return opacitySlider->value();
+double ObjectDisplayOptionsWidget::opacityValue() const {
+    return opacitySlider->value() / 100.0;
 }
 
 void ObjectDisplayOptionsWidget::updateVisibilityButton() {

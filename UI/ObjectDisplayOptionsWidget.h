@@ -11,13 +11,13 @@ public:
     explicit ObjectDisplayOptionsWidget(const QString& fileName, QWidget* parent = nullptr);
     void setFileName(const QString& fileName);
     void setVisibleState(bool visible);
-    void setOpacity(int opacity);
+    void setOpacity(double opacity);
     bool isVisibleState() const;
-    int opacityValue() const;
+    double opacityValue() const;
 
 signals:
     void visibilityToggled(bool visible);
-    void opacityChanged(int value);
+    void opacityChanged(double value);
 
 private:
     QLabel* fileNameLabel;

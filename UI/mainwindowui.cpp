@@ -102,7 +102,7 @@ void MainWindowUI::setupUI()
 
     // 右ペイン（VTKウィジェットの上に重ねて表示）
     ObjectDisplayOptionsWidget* objectOptions = new ObjectDisplayOptionsWidget("sample.stl", vtkWidget);
-    objectOptions->move(1300, 20); // 右ペイン内の表示位置を調整
+    objectOptions->move(1100, 20); // 右ペイン内の表示位置を調整
     objectOptions->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
     objectOptions->raise();
     objectOptions->show();
