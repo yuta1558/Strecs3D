@@ -9,6 +9,7 @@
 #include <QFrame>
 #include "Button.h"
 #include "ColorManager.h"
+#include "ObjectDisplayOptionsWidget.h"
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
@@ -50,7 +51,9 @@ void MainWindowUI::setupUI()
     // 左ペイン
     QVBoxLayout* leftPaneLayout = new QVBoxLayout();
     
-    // ボタンを作成
+    // 3Dオブジェクト表示オプションウィジェットを追加（左ペインから削除）
+    // ObjectDisplayOptionsWidget* objectOptions = new ObjectDisplayOptionsWidget("sample.stl", centralWidget);
+    // leftPaneLayout->addWidget(objectOptions);
     openStlButton = new Button("Open STL File", centralWidget);
     openVtkButton = new Button("Open VTK File", centralWidget);
     rangeSlider = new DensitySlider(centralWidget);
@@ -96,6 +99,13 @@ void MainWindowUI::setupUI()
     leftPaneWidget->raise();
     leftPaneWidget->show();
     // 必要なら: leftPaneWidget->setAttribute(Qt::WA_TransparentForMouseEvents);
+
+    // 右ペイン（VTKウィジェットの上に重ねて表示）
+    ObjectDisplayOptionsWidget* objectOptions = new ObjectDisplayOptionsWidget("sample.stl", vtkWidget);
+    objectOptions->move(1300, 20); // 右ペイン内の表示位置を調整
+    objectOptions->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    objectOptions->raise();
+    objectOptions->show();
 
     setupStyle();
 }

@@ -99,6 +99,7 @@ add_executable(Strecs3D
   UI/ColorManager.cpp
   UI/Button.cpp
   UI/ModeComboBox.cpp
+  UI/ObjectDisplayOptionsWidget.cpp
   core/VtkProcessor.cpp
   core/lib3mfProcessor.cpp
   utils/fileUtility.cpp
