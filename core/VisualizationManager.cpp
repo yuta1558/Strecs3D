@@ -179,22 +179,30 @@ void VisualizationManager::registerObject(const ObjectInfo& objInfo) {
     objectList.push_back(objInfo);
 } 
 
-void VisualizationManager::setObjectVisible(int index, bool visible) {
-    if (index < 0 || index >= static_cast<int>(objectList.size())) return;
-    objectList[index].visible = visible;
-    if (objectList[index].actor) {
-        objectList[index].actor->SetVisibility(visible ? 1 : 0);
+void VisualizationManager::setObjectVisible(const std::string& filename, bool visible) {
+    for (auto& obj : objectList) {
+        if (obj.filename == filename) {
+            obj.visible = visible;
+            if (obj.actor) {
+                obj.actor->SetVisibility(visible ? 1 : 0);
+            }
+            renderRegisteredObjects();
+            return;
+        }
     }
-    renderRegisteredObjects();
 }
 
-void VisualizationManager::setObjectOpacity(int index, double opacity) {
-    if (index < 0 || index >= static_cast<int>(objectList.size())) return;
-    objectList[index].opacity = opacity;
-    if (objectList[index].actor) {
-        objectList[index].actor->GetProperty()->SetOpacity(opacity);
+void VisualizationManager::setObjectOpacity(const std::string& filename, double opacity) {
+    for (auto& obj : objectList) {
+        if (obj.filename == filename) {
+            obj.opacity = opacity;
+            if (obj.actor) {
+                obj.actor->GetProperty()->SetOpacity(opacity);
+            }
+            renderRegisteredObjects();
+            return;
+        }
     }
-    renderRegisteredObjects();
 }
 
 void VisualizationManager::renderRegisteredObjects() {

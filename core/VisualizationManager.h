@@ -53,8 +53,8 @@ public:
     void renderRegisteredObjects();
 
     // visible, opacityの値をセットするメソッド
-    void setObjectVisible(int index, bool visible);
-    void setObjectOpacity(int index, double opacity);
+    void setObjectVisible(const std::string& filename, bool visible);
+    void setObjectOpacity(const std::string& filename, double opacity);
 
 private:
     MainWindowUI* ui_; //  UIポインタを保持
