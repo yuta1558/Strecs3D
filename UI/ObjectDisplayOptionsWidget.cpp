@@ -4,7 +4,8 @@
 ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, QWidget* parent)
     : QWidget(parent), visibleState(true), fileName(fileName)
 {
-    fileNameLabel = new QLabel(fileName, this);
+    QString displayName = fileName.isEmpty() ? "No file selected" : fileName;
+    fileNameLabel = new QLabel(displayName, this);
     visibilityButton = new QCheckBox("表示", this);
     visibilityButton->setChecked(true);
     opacitySlider = new QSlider(Qt::Horizontal, this);
@@ -33,7 +34,8 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
 
 void ObjectDisplayOptionsWidget::setFileName(const QString& fileName) {
     this->fileName = fileName;
-    fileNameLabel->setText(fileName);
+    QString displayName = fileName.isEmpty() ? "No file selected" : fileName;
+    fileNameLabel->setText(displayName);
 }
 
 QString ObjectDisplayOptionsWidget::getFileName() const {

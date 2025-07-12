@@ -181,7 +181,10 @@ void VisualizationManager::registerObject(const ObjectInfo& objInfo) {
 
 void VisualizationManager::setObjectVisible(const std::string& filename, bool visible) {
     for (auto& obj : objectList) {
-        if (obj.filename == filename) {
+        // 完全なパスとファイル名の両方をチェック
+        if (obj.filename == filename || 
+            obj.filename.find(filename) != std::string::npos ||
+            filename.find(obj.filename) != std::string::npos) {
             obj.visible = visible;
             if (obj.actor) {
                 obj.actor->SetVisibility(visible ? 1 : 0);
@@ -194,7 +197,10 @@ void VisualizationManager::setObjectVisible(const std::string& filename, bool vi
 
 void VisualizationManager::setObjectOpacity(const std::string& filename, double opacity) {
     for (auto& obj : objectList) {
-        if (obj.filename == filename) {
+        // 完全なパスとファイル名の両方をチェック
+        if (obj.filename == filename || 
+            obj.filename.find(filename) != std::string::npos ||
+            filename.find(obj.filename) != std::string::npos) {
             obj.opacity = opacity;
             if (obj.actor) {
                 obj.actor->GetProperty()->SetOpacity(opacity);

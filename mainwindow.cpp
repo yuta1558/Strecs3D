@@ -21,6 +21,15 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->getOpenVtkButton(), &QPushButton::clicked, this, &MainWindow::openVTKFile);
     connect(ui->getProcessButton(), &QPushButton::clicked, this, &MainWindow::processFiles);
     connect(ui->getExport3mfButton(), &QPushButton::clicked, this, &MainWindow::export3mfFile);
+    
+    // ObjectDisplayOptionsWidgetのシグナルをVisualizationManagerに接続
+    auto objectDisplayWidget = ui->getObjectDisplayOptionsWidget();
+    if (objectDisplayWidget) {
+        connect(objectDisplayWidget, &ObjectDisplayOptionsWidget::visibilityToggled, 
+                this, &MainWindow::onObjectVisibilityChanged);
+        connect(objectDisplayWidget, &ObjectDisplayOptionsWidget::opacityChanged, 
+                this, &MainWindow::onObjectOpacityChanged);
+    }
 }
 
 void MainWindow::logMessage(const QString& message)
@@ -101,4 +110,28 @@ QString MainWindow::getCurrentMode() const
 QString MainWindow::getCurrentStlFilename() const
 {
     return appController->getCurrentStlFilename();
+}
+
+void MainWindow::onObjectVisibilityChanged(bool visible)
+{
+    auto objectDisplayWidget = ui->getObjectDisplayOptionsWidget();
+    if (objectDisplayWidget) {
+        QString fileName = objectDisplayWidget->getFileName();
+        auto visualizationManager = appController->getVisualizationManager();
+        if (visualizationManager) {
+            visualizationManager->setObjectVisible(fileName.toStdString(), visible);
+        }
+    }
+}
+
+void MainWindow::onObjectOpacityChanged(double opacity)
+{
+    auto objectDisplayWidget = ui->getObjectDisplayOptionsWidget();
+    if (objectDisplayWidget) {
+        QString fileName = objectDisplayWidget->getFileName();
+        auto visualizationManager = appController->getVisualizationManager();
+        if (visualizationManager) {
+            visualizationManager->setObjectOpacity(fileName.toStdString(), opacity);
+        }
+    }
 }

@@ -29,6 +29,8 @@ public slots:
     void openSTLFile();
     void processFiles();
     void export3mfFile();
+    void onObjectVisibilityChanged(bool visible);
+    void onObjectOpacityChanged(double opacity);
 
 private:
     std::unique_ptr<ApplicationController> appController;
