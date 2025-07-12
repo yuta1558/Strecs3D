@@ -114,6 +114,31 @@ void MainWindowUI::setupUI()
     vtkDisplayOptionsWidget->raise();
     vtkDisplayOptionsWidget->show();
 
+    // 分割されたメッシュ用の表示オプションウィジェット（4つ）
+    dividedMeshWidget1 = new ObjectDisplayOptionsWidget("Divided Mesh 1", vtkWidget);
+    dividedMeshWidget1->move(1100, 220); // VTKウィジェットの下に配置
+    dividedMeshWidget1->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    dividedMeshWidget1->raise();
+    dividedMeshWidget1->show();
+
+    dividedMeshWidget2 = new ObjectDisplayOptionsWidget("Divided Mesh 2", vtkWidget);
+    dividedMeshWidget2->move(1100, 320); // 1番目の下に配置
+    dividedMeshWidget2->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    dividedMeshWidget2->raise();
+    dividedMeshWidget2->show();
+
+    dividedMeshWidget3 = new ObjectDisplayOptionsWidget("Divided Mesh 3", vtkWidget);
+    dividedMeshWidget3->move(1100, 420); // 2番目の下に配置
+    dividedMeshWidget3->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    dividedMeshWidget3->raise();
+    dividedMeshWidget3->show();
+
+    dividedMeshWidget4 = new ObjectDisplayOptionsWidget("Divided Mesh 4", vtkWidget);
+    dividedMeshWidget4->move(1100, 520); // 3番目の下に配置
+    dividedMeshWidget4->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    dividedMeshWidget4->raise();
+    dividedMeshWidget4->show();
+
     setupStyle();
 }
 

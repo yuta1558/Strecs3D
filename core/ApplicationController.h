@@ -67,4 +67,5 @@ private:
     void cleanupTempFiles();
     void showSuccessMessage(QWidget* parent);
     void handleProcessingError(const std::exception& e, QWidget* parent);
+    void resetDividedMeshWidgets(MainWindowUI* ui);
 }; 

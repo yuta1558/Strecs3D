@@ -171,6 +171,9 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
 {
     if (!ui || !fileProcessor->getVtkProcessor()) return;
     
+    // 分割されたメッシュウィジェットをリセット
+    resetDividedMeshWidgets(ui);
+    
     visualizationManager->loadAndDisplayTempStlFiles(fileProcessor->getVtkProcessor().get(), parent);
 }
 
@@ -231,4 +234,20 @@ QString ApplicationController::getCurrentMode(MainWindowUI* ui)
         return comboBox->currentText();
     }
     return "cura";
+}
+
+void ApplicationController::resetDividedMeshWidgets(MainWindowUI* ui)
+{
+    if (!ui) return;
+    
+    // 分割されたメッシュウィジェットをリセット
+    auto widget1 = ui->getDividedMeshWidget1();
+    auto widget2 = ui->getDividedMeshWidget2();
+    auto widget3 = ui->getDividedMeshWidget3();
+    auto widget4 = ui->getDividedMeshWidget4();
+    
+    if (widget1) widget1->setFileName("Divided Mesh 1");
+    if (widget2) widget2->setFileName("Divided Mesh 2");
+    if (widget3) widget3->setFileName("Divided Mesh 3");
+    if (widget4) widget4->setFileName("Divided Mesh 4");
 } 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QObject>
 #include <QWidget>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
@@ -30,7 +31,8 @@ struct ObjectInfo {
 class MainWindowUI;
 class VtkProcessor;
 
-class VisualizationManager {
+class VisualizationManager : public QObject {
+    Q_OBJECT
 public:
     VisualizationManager(MainWindowUI* ui);
     ~VisualizationManager();

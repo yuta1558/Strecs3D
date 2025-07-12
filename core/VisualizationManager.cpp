@@ -2,6 +2,8 @@
 #include "../UI/mainwindowui.h"
 #include "VtkProcessor.h"
 #include <QMessageBox>
+#include <QString>
+#include <QObject>
 #include <vtkScalarBarActor.h>
 #include <vtkLookupTable.h>
 #include <vtkProperty.h>
@@ -17,7 +19,7 @@
 #include <algorithm>
 #include <filesystem>
 
-VisualizationManager::VisualizationManager(MainWindowUI* ui) : ui_(ui) {}
+VisualizationManager::VisualizationManager(MainWindowUI* ui) : QObject(), ui_(ui) {}
 
 VisualizationManager::~VisualizationManager() = default;
 
@@ -63,6 +65,17 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
         double minStress = vtkProcessor->getMinStress();
         double maxStress = vtkProcessor->getMaxStress();
         
+        // 分割されたメッシュウィジェットを更新
+        auto dividedMeshWidget1 = ui_->getDividedMeshWidget1();
+        auto dividedMeshWidget2 = ui_->getDividedMeshWidget2();
+        auto dividedMeshWidget3 = ui_->getDividedMeshWidget3();
+        auto dividedMeshWidget4 = ui_->getDividedMeshWidget4();
+        
+        std::vector<ObjectDisplayOptionsWidget*> widgets = {
+            dividedMeshWidget1, dividedMeshWidget2, dividedMeshWidget3, dividedMeshWidget4
+        };
+        
+        int widgetIndex = 0;
         for (const auto& [path, number] : stlFiles) {
             // ファイル名からストレス値を抽出
             std::string filename = path.filename().string();
@@ -81,6 +94,26 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
                     // ObjectInfoを登録
                     ObjectInfo objInfo{actor, path.string(), true, 1.0};
                     registerObject(objInfo);
+                    
+                    // 対応するウィジェットを更新
+                    if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
+                        QString displayName = QString("Divided Mesh %1 (%2-%3)").arg(widgetIndex + 1).arg(stressMin, 0, 'f', 2).arg(stressMax, 0, 'f', 2);
+                        widgets[widgetIndex]->setFileName(displayName);
+                        
+                        // シグナルを接続
+                        std::string filePath = path.string();
+                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::visibilityToggled,
+                                [this, filePath](bool visible) {
+                                    setObjectVisible(filePath, visible);
+                                });
+                        
+                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::opacityChanged,
+                                [this, filePath](double opacity) {
+                                    setObjectOpacity(filePath, opacity);
+                                });
+                        
+                        widgetIndex++;
+                    }
                 }
             } else {
                 // ファイル名からストレス値が抽出できない場合は、従来の方法を使用
@@ -94,6 +127,26 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
                     // ObjectInfoを登録
                     ObjectInfo objInfo{actor, path.string(), true, 1.0};
                     registerObject(objInfo);
+                    
+                    // 対応するウィジェットを更新
+                    if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
+                        QString displayName = QString("Divided Mesh %1").arg(widgetIndex + 1);
+                        widgets[widgetIndex]->setFileName(displayName);
+                        
+                        // シグナルを接続
+                        std::string filePath = path.string();
+                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::visibilityToggled,
+                                [this, filePath](bool visible) {
+                                    setObjectVisible(filePath, visible);
+                                });
+                        
+                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::opacityChanged,
+                                [this, filePath](double opacity) {
+                                    setObjectOpacity(filePath, opacity);
+                                });
+                        
+                        widgetIndex++;
+                    }
                 }
             }
         }

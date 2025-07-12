@@ -35,6 +35,12 @@ public:
     MessageConsole* getMessageConsole() const { return messageConsole; }
     ObjectDisplayOptionsWidget* getObjectDisplayOptionsWidget() const { return objectDisplayOptionsWidget; }
     ObjectDisplayOptionsWidget* getVtkDisplayOptionsWidget() const { return vtkDisplayOptionsWidget; }
+    
+    // Divided mesh display widgets
+    ObjectDisplayOptionsWidget* getDividedMeshWidget1() const { return dividedMeshWidget1; }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget2() const { return dividedMeshWidget2; }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget3() const { return dividedMeshWidget3; }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget4() const { return dividedMeshWidget4; }
 
 private:
     void setupStyle();
@@ -53,6 +59,12 @@ private:
     MessageConsole* messageConsole;
     ObjectDisplayOptionsWidget* objectDisplayOptionsWidget;
     ObjectDisplayOptionsWidget* vtkDisplayOptionsWidget;
+    
+    // Divided mesh display widgets
+    ObjectDisplayOptionsWidget* dividedMeshWidget1;
+    ObjectDisplayOptionsWidget* dividedMeshWidget2;
+    ObjectDisplayOptionsWidget* dividedMeshWidget3;
+    ObjectDisplayOptionsWidget* dividedMeshWidget4;
 };
 
 #endif // MAINWINDOWUI_H 
