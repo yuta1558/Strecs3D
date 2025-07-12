@@ -20,6 +20,12 @@ bool ApplicationController::openVtkFile(const std::string& vtkFile, MainWindowUI
     
     setVtkFile(vtkFile);
     
+    // VTK用ObjectDisplayOptionsWidgetのファイル名を更新
+    auto vtkDisplayWidget = ui->getVtkDisplayOptionsWidget();
+    if (vtkDisplayWidget) {
+        vtkDisplayWidget->setFileName(QString::fromStdString(vtkFile));
+    }
+    
     try {
         visualizationManager->displayVtkFile(vtkFile, fileProcessor->getVtkProcessor().get());
         

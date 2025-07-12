@@ -34,6 +34,7 @@ public:
     DensitySlider* getRangeSlider() const { return rangeSlider; }
     MessageConsole* getMessageConsole() const { return messageConsole; }
     ObjectDisplayOptionsWidget* getObjectDisplayOptionsWidget() const { return objectDisplayOptionsWidget; }
+    ObjectDisplayOptionsWidget* getVtkDisplayOptionsWidget() const { return vtkDisplayOptionsWidget; }
 
 private:
     void setupStyle();
@@ -51,6 +52,7 @@ private:
     DensitySlider* rangeSlider;
     MessageConsole* messageConsole;
     ObjectDisplayOptionsWidget* objectDisplayOptionsWidget;
+    ObjectDisplayOptionsWidget* vtkDisplayOptionsWidget;
 };
 
 #endif // MAINWINDOWUI_H 

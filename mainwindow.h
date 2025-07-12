@@ -31,6 +31,8 @@ public slots:
     void export3mfFile();
     void onObjectVisibilityChanged(bool visible);
     void onObjectOpacityChanged(double opacity);
+    void onVtkObjectVisibilityChanged(bool visible);
+    void onVtkObjectOpacityChanged(double opacity);
 
 private:
     std::unique_ptr<ApplicationController> appController;

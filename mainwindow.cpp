@@ -30,6 +30,15 @@ MainWindow::MainWindow(QWidget* parent)
         connect(objectDisplayWidget, &ObjectDisplayOptionsWidget::opacityChanged, 
                 this, &MainWindow::onObjectOpacityChanged);
     }
+
+    // VTK用ObjectDisplayOptionsWidgetのシグナルをVisualizationManagerに接続
+    auto vtkDisplayWidget = ui->getVtkDisplayOptionsWidget();
+    if (vtkDisplayWidget) {
+        connect(vtkDisplayWidget, &ObjectDisplayOptionsWidget::visibilityToggled, 
+                this, &MainWindow::onVtkObjectVisibilityChanged);
+        connect(vtkDisplayWidget, &ObjectDisplayOptionsWidget::opacityChanged, 
+                this, &MainWindow::onVtkObjectOpacityChanged);
+    }
 }
 
 void MainWindow::logMessage(const QString& message)
@@ -129,6 +138,30 @@ void MainWindow::onObjectOpacityChanged(double opacity)
     auto objectDisplayWidget = ui->getObjectDisplayOptionsWidget();
     if (objectDisplayWidget) {
         QString fileName = objectDisplayWidget->getFileName();
+        auto visualizationManager = appController->getVisualizationManager();
+        if (visualizationManager) {
+            visualizationManager->setObjectOpacity(fileName.toStdString(), opacity);
+        }
+    }
+}
+
+void MainWindow::onVtkObjectVisibilityChanged(bool visible)
+{
+    auto vtkDisplayWidget = ui->getVtkDisplayOptionsWidget();
+    if (vtkDisplayWidget) {
+        QString fileName = vtkDisplayWidget->getFileName();
+        auto visualizationManager = appController->getVisualizationManager();
+        if (visualizationManager) {
+            visualizationManager->setObjectVisible(fileName.toStdString(), visible);
+        }
+    }
+}
+
+void MainWindow::onVtkObjectOpacityChanged(double opacity)
+{
+    auto vtkDisplayWidget = ui->getVtkDisplayOptionsWidget();
+    if (vtkDisplayWidget) {
+        QString fileName = vtkDisplayWidget->getFileName();
         auto visualizationManager = appController->getVisualizationManager();
         if (visualizationManager) {
             visualizationManager->setObjectOpacity(fileName.toStdString(), opacity);

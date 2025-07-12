@@ -107,6 +107,13 @@ void MainWindowUI::setupUI()
     objectDisplayOptionsWidget->raise();
     objectDisplayOptionsWidget->show();
 
+    // VTKファイル用の表示オプションウィジェット
+    vtkDisplayOptionsWidget = new ObjectDisplayOptionsWidget("No vtk file selected", vtkWidget);
+    vtkDisplayOptionsWidget->move(1100, 120); // STLウィジェットの下に配置
+    vtkDisplayOptionsWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    vtkDisplayOptionsWidget->raise();
+    vtkDisplayOptionsWidget->show();
+
     setupStyle();
 }
 
