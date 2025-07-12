@@ -14,6 +14,7 @@
 #include <vtkRenderer.h>
 #include "ModeComboBox.h"
 #include "ObjectDisplayOptionsWidget.h"
+#include "DisplayOptionsContainer.h"
 
 class MainWindow;
 
@@ -33,14 +34,15 @@ public:
     ModeComboBox* getModeComboBox() const { return modeComboBox; }
     DensitySlider* getRangeSlider() const { return rangeSlider; }
     MessageConsole* getMessageConsole() const { return messageConsole; }
-    ObjectDisplayOptionsWidget* getObjectDisplayOptionsWidget() const { return objectDisplayOptionsWidget; }
-    ObjectDisplayOptionsWidget* getVtkDisplayOptionsWidget() const { return vtkDisplayOptionsWidget; }
+    DisplayOptionsContainer* getDisplayOptionsContainer() const { return displayOptionsContainer; }
     
-    // Divided mesh display widgets
-    ObjectDisplayOptionsWidget* getDividedMeshWidget1() const { return dividedMeshWidget1; }
-    ObjectDisplayOptionsWidget* getDividedMeshWidget2() const { return dividedMeshWidget2; }
-    ObjectDisplayOptionsWidget* getDividedMeshWidget3() const { return dividedMeshWidget3; }
-    ObjectDisplayOptionsWidget* getDividedMeshWidget4() const { return dividedMeshWidget4; }
+    // 個別のウィジェットへのアクセサー（後方互換性のため）
+    ObjectDisplayOptionsWidget* getObjectDisplayOptionsWidget() const { return displayOptionsContainer->getStlDisplayWidget(); }
+    ObjectDisplayOptionsWidget* getVtkDisplayOptionsWidget() const { return displayOptionsContainer->getVtkDisplayWidget(); }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget1() const { return displayOptionsContainer->getDividedMeshWidget1(); }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget2() const { return displayOptionsContainer->getDividedMeshWidget2(); }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget3() const { return displayOptionsContainer->getDividedMeshWidget3(); }
+    ObjectDisplayOptionsWidget* getDividedMeshWidget4() const { return displayOptionsContainer->getDividedMeshWidget4(); }
 
 private:
     void setupStyle();
@@ -57,14 +59,7 @@ private:
     ModeComboBox* modeComboBox;
     DensitySlider* rangeSlider;
     MessageConsole* messageConsole;
-    ObjectDisplayOptionsWidget* objectDisplayOptionsWidget;
-    ObjectDisplayOptionsWidget* vtkDisplayOptionsWidget;
-    
-    // Divided mesh display widgets
-    ObjectDisplayOptionsWidget* dividedMeshWidget1;
-    ObjectDisplayOptionsWidget* dividedMeshWidget2;
-    ObjectDisplayOptionsWidget* dividedMeshWidget3;
-    ObjectDisplayOptionsWidget* dividedMeshWidget4;
+    DisplayOptionsContainer* displayOptionsContainer;
 };
 
 #endif // MAINWINDOWUI_H 

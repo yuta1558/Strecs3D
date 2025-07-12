@@ -10,6 +10,7 @@
 #include "Button.h"
 #include "ColorManager.h"
 #include "ObjectDisplayOptionsWidget.h"
+#include "DisplayOptionsContainer.h"
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
@@ -100,44 +101,13 @@ void MainWindowUI::setupUI()
     leftPaneWidget->show();
     // 必要なら: leftPaneWidget->setAttribute(Qt::WA_TransparentForMouseEvents);
 
-    // 右ペイン（VTKウィジェットの上に重ねて表示）
-    objectDisplayOptionsWidget = new ObjectDisplayOptionsWidget("No stl file selected", vtkWidget);
-    objectDisplayOptionsWidget->move(1100, 20); // 右ペイン内の表示位置を調整
-    objectDisplayOptionsWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    objectDisplayOptionsWidget->raise();
-    objectDisplayOptionsWidget->show();
-
-    // VTKファイル用の表示オプションウィジェット
-    vtkDisplayOptionsWidget = new ObjectDisplayOptionsWidget("No vtk file selected", vtkWidget);
-    vtkDisplayOptionsWidget->move(1100, 120); // STLウィジェットの下に配置
-    vtkDisplayOptionsWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    vtkDisplayOptionsWidget->raise();
-    vtkDisplayOptionsWidget->show();
-
-    // 分割されたメッシュ用の表示オプションウィジェット（4つ）
-    dividedMeshWidget1 = new ObjectDisplayOptionsWidget("Divided Mesh 1", vtkWidget);
-    dividedMeshWidget1->move(1100, 220); // VTKウィジェットの下に配置
-    dividedMeshWidget1->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    dividedMeshWidget1->raise();
-    dividedMeshWidget1->show();
-
-    dividedMeshWidget2 = new ObjectDisplayOptionsWidget("Divided Mesh 2", vtkWidget);
-    dividedMeshWidget2->move(1100, 320); // 1番目の下に配置
-    dividedMeshWidget2->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    dividedMeshWidget2->raise();
-    dividedMeshWidget2->show();
-
-    dividedMeshWidget3 = new ObjectDisplayOptionsWidget("Divided Mesh 3", vtkWidget);
-    dividedMeshWidget3->move(1100, 420); // 2番目の下に配置
-    dividedMeshWidget3->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    dividedMeshWidget3->raise();
-    dividedMeshWidget3->show();
-
-    dividedMeshWidget4 = new ObjectDisplayOptionsWidget("Divided Mesh 4", vtkWidget);
-    dividedMeshWidget4->move(1100, 520); // 3番目の下に配置
-    dividedMeshWidget4->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    dividedMeshWidget4->raise();
-    dividedMeshWidget4->show();
+    // 表示オプションコンテナ（VTKウィジェットの上に重ねて表示）
+    displayOptionsContainer = new DisplayOptionsContainer(vtkWidget);
+    displayOptionsContainer->move(1100, 20); // 右ペイン内の表示位置を調整
+    displayOptionsContainer->setFixedWidth(600); // 幅を固定
+    displayOptionsContainer->setMaximumHeight(600); // 最大高さを制限
+    displayOptionsContainer->raise();
+    displayOptionsContainer->show();
 
     setupStyle();
 }
