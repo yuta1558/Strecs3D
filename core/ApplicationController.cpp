@@ -47,6 +47,12 @@ bool ApplicationController::openStlFile(const std::string& stlFile, MainWindowUI
     setStlFile(stlFile);
     setCurrentStlFilename(QString::fromStdString(stlFile));
     
+    // ObjectDisplayOptionsWidgetのファイル名を更新
+    auto objectDisplayWidget = ui->getObjectDisplayOptionsWidget();
+    if (objectDisplayWidget) {
+        objectDisplayWidget->setFileName(QString::fromStdString(stlFile));
+    }
+    
     try {
         visualizationManager->displayStlFile(stlFile, fileProcessor->getVtkProcessor().get());
         return true;

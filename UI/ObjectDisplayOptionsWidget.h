@@ -14,6 +14,7 @@ public:
     void setOpacity(double opacity);
     bool isVisibleState() const;
     double opacityValue() const;
+    QString getFileName() const;
 
 signals:
     void visibilityToggled(bool visible);
@@ -24,5 +25,6 @@ private:
     QCheckBox* visibilityButton;
     QSlider* opacitySlider;
     bool visibleState;
+    QString fileName;
     void updateVisibilityButton();
 }; 

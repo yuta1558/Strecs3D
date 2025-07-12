@@ -2,7 +2,7 @@
 #include <QHBoxLayout>
 
 ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, QWidget* parent)
-    : QWidget(parent), visibleState(true)
+    : QWidget(parent), visibleState(true), fileName(fileName)
 {
     fileNameLabel = new QLabel(fileName, this);
     visibilityButton = new QCheckBox("表示", this);
@@ -32,7 +32,12 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
 }
 
 void ObjectDisplayOptionsWidget::setFileName(const QString& fileName) {
+    this->fileName = fileName;
     fileNameLabel->setText(fileName);
+}
+
+QString ObjectDisplayOptionsWidget::getFileName() const {
+    return fileName;
 }
 
 void ObjectDisplayOptionsWidget::setVisibleState(bool visible) {

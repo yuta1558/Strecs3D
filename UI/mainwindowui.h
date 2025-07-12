@@ -13,6 +13,7 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
 #include "ModeComboBox.h"
+#include "ObjectDisplayOptionsWidget.h"
 
 class MainWindow;
 
@@ -32,6 +33,7 @@ public:
     ModeComboBox* getModeComboBox() const { return modeComboBox; }
     DensitySlider* getRangeSlider() const { return rangeSlider; }
     MessageConsole* getMessageConsole() const { return messageConsole; }
+    ObjectDisplayOptionsWidget* getObjectDisplayOptionsWidget() const { return objectDisplayOptionsWidget; }
 
 private:
     void setupStyle();
@@ -48,6 +50,7 @@ private:
     ModeComboBox* modeComboBox;
     DensitySlider* rangeSlider;
     MessageConsole* messageConsole;
+    ObjectDisplayOptionsWidget* objectDisplayOptionsWidget;
 };
 
 #endif // MAINWINDOWUI_H 

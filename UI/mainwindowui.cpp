@@ -101,11 +101,11 @@ void MainWindowUI::setupUI()
     // 必要なら: leftPaneWidget->setAttribute(Qt::WA_TransparentForMouseEvents);
 
     // 右ペイン（VTKウィジェットの上に重ねて表示）
-    ObjectDisplayOptionsWidget* objectOptions = new ObjectDisplayOptionsWidget("sample.stl", vtkWidget);
-    objectOptions->move(1100, 20); // 右ペイン内の表示位置を調整
-    objectOptions->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
-    objectOptions->raise();
-    objectOptions->show();
+    objectDisplayOptionsWidget = new ObjectDisplayOptionsWidget("No stl file selected", vtkWidget);
+    objectDisplayOptionsWidget->move(1100, 20); // 右ペイン内の表示位置を調整
+    objectDisplayOptionsWidget->setStyleSheet("QWidget { background-color:rgba(45, 45, 45, 200); border-radius: 10px; }");
+    objectDisplayOptionsWidget->raise();
+    objectDisplayOptionsWidget->show();
 
     setupStyle();
 }
