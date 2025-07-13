@@ -1,10 +1,11 @@
 #include "ObjectDisplayOptionsWidget.h"
 #include <QHBoxLayout>
+#include <QFileInfo>
 
 ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, QWidget* parent)
     : QWidget(parent), visibleState(true), fileName(fileName)
 {
-    QString displayName = fileName.isEmpty() ? "No file selected" : fileName;
+    QString displayName = fileName.isEmpty() ? "No file selected" : QFileInfo(fileName).fileName();
     fileNameLabel = new QLabel(displayName, this);
     visibilityButton = new QCheckBox("表示", this);
     visibilityButton->setChecked(true);
@@ -34,7 +35,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
 
 void ObjectDisplayOptionsWidget::setFileName(const QString& fileName) {
     this->fileName = fileName;
-    QString displayName = fileName.isEmpty() ? "No file selected" : fileName;
+    QString displayName = fileName.isEmpty() ? "No file selected" : QFileInfo(fileName).fileName();
     fileNameLabel->setText(displayName);
 }
 
