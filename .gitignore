@@ -40,3 +40,4 @@ test_files/
 result/
 
 .DS_Store
+.md
