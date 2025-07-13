@@ -97,9 +97,7 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
                     
                     // 対応するウィジェットを更新
                     if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
-                        QString displayName = QString("Divided Mesh %1 (%2-%3)").arg(widgetIndex + 1).arg(stressMin, 0, 'f', 2).arg(stressMax, 0, 'f', 2);
-                        widgets[widgetIndex]->setFileName(displayName);
-                        
+                        widgets[widgetIndex]->setFileName(QString::fromStdString(filename));
                         // シグナルを接続
                         std::string filePath = path.string();
                         connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::visibilityToggled,
@@ -130,9 +128,7 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
                     
                     // 対応するウィジェットを更新
                     if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
-                        QString displayName = QString("Divided Mesh %1").arg(widgetIndex + 1);
-                        widgets[widgetIndex]->setFileName(displayName);
-                        
+                        widgets[widgetIndex]->setFileName(QString::fromStdString(filename));
                         // シグナルを接続
                         std::string filePath = path.string();
                         connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::visibilityToggled,
