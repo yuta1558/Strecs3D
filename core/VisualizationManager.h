@@ -58,6 +58,8 @@ public:
     void setObjectVisible(const std::string& filename, bool visible);
     void setObjectOpacity(const std::string& filename, double opacity);
 
+    void removeDividedStlActors();
+
 private:
     MainWindowUI* ui_; //  UIポインタを保持
     std::vector<ObjectInfo> objectList; // 3Dオブジェクト情報リスト

@@ -275,3 +275,29 @@ void VisualizationManager::renderRegisteredObjects() {
         ui_->getVtkWidget()->renderWindow()->Render();
     }
 } 
+
+void VisualizationManager::removeDividedStlActors() {
+    // dividedMesh*.stl にマッチするものを削除
+    std::regex dividedStlPattern(R"(dividedMesh\d+_[-0-9.]+_[-0-9.]+\.stl$)");
+    if (!ui_ || !ui_->getRenderer()) return;
+    
+    // Remove actors from renderer first
+    for (const auto& obj : objectList) {
+        if (std::regex_search(obj.filename, dividedStlPattern)) {
+            if (obj.actor) {
+                ui_->getRenderer()->RemoveActor(obj.actor);
+            }
+        }
+    }
+    // Remove from objectList
+    objectList.erase(
+        std::remove_if(
+            objectList.begin(), objectList.end(),
+            [&](const ObjectInfo& obj) {
+                return std::regex_search(obj.filename, dividedStlPattern);
+            }
+        ),
+        objectList.end()
+    );
+    renderRegisteredObjects();
+} 

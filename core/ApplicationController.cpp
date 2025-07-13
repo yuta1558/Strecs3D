@@ -171,6 +171,8 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
 {
     if (!ui || !fileProcessor->getVtkProcessor()) return;
     
+    // 分割STL Actorを削除
+    visualizationManager->removeDividedStlActors();
     // 分割されたメッシュウィジェットをリセット
     resetDividedMeshWidgets(ui);
     
