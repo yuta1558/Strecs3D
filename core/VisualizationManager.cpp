@@ -284,6 +284,45 @@ void VisualizationManager::removeDividedStlActors() {
     renderRegisteredObjects();
 } 
 
+// ==================== オブジェクト一括制御 ====================
+
+void VisualizationManager::hideAllStlObjects() {
+    for (const auto& obj : objectList) {
+        if (obj.filename.size() >= 4 && obj.filename.substr(obj.filename.size() - 4) == ".stl") {
+            setObjectVisible(obj.filename, false);
+        }
+    }
+}
+
+void VisualizationManager::hideVtkObject() {
+    for (const auto& obj : objectList) {
+        if ((obj.filename.size() >= 4 && obj.filename.substr(obj.filename.size() - 4) == ".vtu") ||
+            (obj.filename.size() >= 4 && obj.filename.substr(obj.filename.size() - 4) == ".vtk")) {
+            setObjectVisible(obj.filename, false);
+        }
+    }
+}
+
+std::vector<std::string> VisualizationManager::getAllStlFilenames() const {
+    std::vector<std::string> result;
+    for (const auto& obj : objectList) {
+        if (obj.filename.size() >= 4 && obj.filename.substr(obj.filename.size() - 4) == ".stl") {
+            result.push_back(obj.filename);
+        }
+    }
+    return result;
+}
+
+std::string VisualizationManager::getVtkFilename() const {
+    for (const auto& obj : objectList) {
+        if ((obj.filename.size() >= 4 && obj.filename.substr(obj.filename.size() - 4) == ".vtu") ||
+            (obj.filename.size() >= 4 && obj.filename.substr(obj.filename.size() - 4) == ".vtk")) {
+            return obj.filename;
+        }
+    }
+    return "";
+}
+
 // ==================== ユーティリティ系 ====================
 
 void VisualizationManager::setupScalarBar(VtkProcessor* vtkProcessor) {

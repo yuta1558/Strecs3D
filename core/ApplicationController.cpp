@@ -24,8 +24,16 @@ bool ApplicationController::openVtkFile(const std::string& vtkFile, MainWindowUI
     auto vtkDisplayWidget = ui->getVtkDisplayOptionsWidget();
     if (vtkDisplayWidget) {
         vtkDisplayWidget->setFileName(QString::fromStdString(vtkFile));
+        vtkDisplayWidget->setOpacity(1.0); // 追加: 不透明
     }
-    
+    // --- 追加: STLを非表示にし、チェックボックスもオフ ---
+    auto stlWidget = ui->getObjectDisplayOptionsWidget();
+    if (stlWidget) {
+        stlWidget->setVisibleState(false);
+        stlWidget->setOpacity(1.0); // 追加: 不透明
+    }
+    visualizationManager->hideAllStlObjects();
+    // --- ここまで追加 ---
     try {
         visualizationManager->displayVtkFile(vtkFile, fileProcessor->getVtkProcessor().get());
         
@@ -176,6 +184,23 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
     // 分割されたメッシュウィジェットをリセット
     resetDividedMeshWidgets(ui);
     
+    // --- 追加: VTKを非表示にし、チェックボックスもオフ ---
+    auto vtkWidget = ui->getVtkDisplayOptionsWidget();
+    if (vtkWidget) {
+        vtkWidget->setVisibleState(false);
+        vtkWidget->setOpacity(1.0); // 追加: 不透明
+    }
+    visualizationManager->hideVtkObject();
+    // 分割STLウィジェットのチェックボックスをオン
+    auto d1 = ui->getDividedMeshWidget1();
+    auto d2 = ui->getDividedMeshWidget2();
+    auto d3 = ui->getDividedMeshWidget3();
+    auto d4 = ui->getDividedMeshWidget4();
+    if (d1) { d1->setVisibleState(true); d1->setOpacity(1.0); }
+    if (d2) { d2->setVisibleState(true); d2->setOpacity(1.0); }
+    if (d3) { d3->setVisibleState(true); d3->setOpacity(1.0); }
+    if (d4) { d4->setVisibleState(true); d4->setOpacity(1.0); }
+    // --- ここまで追加 ---
     visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), parent);
 }
 
@@ -248,8 +273,8 @@ void ApplicationController::resetDividedMeshWidgets(MainWindowUI* ui)
     auto widget3 = ui->getDividedMeshWidget3();
     auto widget4 = ui->getDividedMeshWidget4();
     
-    if (widget1) widget1->setFileName("Divided Mesh 1");
-    if (widget2) widget2->setFileName("Divided Mesh 2");
-    if (widget3) widget3->setFileName("Divided Mesh 3");
-    if (widget4) widget4->setFileName("Divided Mesh 4");
+    if (widget1) { widget1->setFileName("Divided Mesh 1"); widget1->setOpacity(1.0); }
+    if (widget2) { widget2->setFileName("Divided Mesh 2"); widget2->setOpacity(1.0); }
+    if (widget3) { widget3->setFileName("Divided Mesh 3"); widget3->setOpacity(1.0); }
+    if (widget4) { widget4->setFileName("Divided Mesh 4"); widget4->setOpacity(1.0); }
 } 

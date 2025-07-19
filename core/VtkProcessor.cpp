@@ -273,7 +273,7 @@ vtkSmartPointer<vtkActor> VtkProcessor::getColoredStlActor(const std::string& fi
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
     actor->GetProperty()->SetColor(r, g, b); // 指定された色を設定
-    actor->GetProperty()->SetOpacity(0.8); // 透明度80%
+    actor->GetProperty()->SetOpacity(1.0); // 透明度100%（完全不透明）
     return actor;
 }
 

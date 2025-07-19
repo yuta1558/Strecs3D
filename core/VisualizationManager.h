@@ -62,6 +62,13 @@ public:
 
     void removeDividedStlActors();
 
+    // 追加: STL/VTK一括非表示
+    void hideAllStlObjects();
+    void hideVtkObject();
+    // 追加: STL/VTKファイル名取得
+    std::vector<std::string> getAllStlFilenames() const;
+    std::string getVtkFilename() const;
+
 private:
     MainWindowUI* ui_; //  UIポインタを保持
     std::vector<ObjectInfo> objectList; // 3Dオブジェクト情報リスト
