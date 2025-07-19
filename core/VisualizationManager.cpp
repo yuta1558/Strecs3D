@@ -50,13 +50,7 @@ void VisualizationManager::displayStlFile(const std::string& stlFile, VtkProcess
 
 void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor, QWidget* parent) {
     try {
-        std::filesystem::path tempDir = ".temp/div";
-        if (!std::filesystem::exists(tempDir)) {
-            throw std::runtime_error(".temp directory does not exist");
-        }
-        
-        
-        auto stlFiles = sortStlFiles(tempDir);
+        auto stlFiles = loadStlFilesFromTempDirectory();
         if (stlFiles.empty()) {
             throw std::runtime_error("No valid STL files found");
         }
@@ -65,96 +59,145 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
         double minStress = vtkProcessor->getMinStress();
         double maxStress = vtkProcessor->getMaxStress();
         
-        // 分割されたメッシュウィジェットを更新
-        auto dividedMeshWidget1 = ui_->getDividedMeshWidget1();
-        auto dividedMeshWidget2 = ui_->getDividedMeshWidget2();
-        auto dividedMeshWidget3 = ui_->getDividedMeshWidget3();
-        auto dividedMeshWidget4 = ui_->getDividedMeshWidget4();
+        // 分割されたメッシュウィジェットを取得
+        auto widgets = getDividedMeshWidgets();
         
-        std::vector<ObjectDisplayOptionsWidget*> widgets = {
-            dividedMeshWidget1, dividedMeshWidget2, dividedMeshWidget3, dividedMeshWidget4
-        };
-        
-        int widgetIndex = 0;
-        for (const auto& [path, number] : stlFiles) {
-            // ファイル名からストレス値を抽出
-            std::string filename = path.filename().string();
-            std::regex stressPattern(R"(^dividedMesh\d+_([0-9.]+)_([0-9.]+)\.stl$)");
-            std::smatch match;
-            
-            if (std::regex_search(filename, match, stressPattern)) {
-                double stressMin = std::stod(match[1].str());
-                double stressMax = std::stod(match[2].str());
-                // 領域の中心のストレス値を使用
-                double stressValue = (stressMin + stressMax) / 2.0;
-                
-                auto actor = vtkProcessor->getColoredStlActorByStress(path.string(), stressValue, minStress, maxStress);
-                if (actor) {
-                    ui_->getRenderer()->AddActor(actor);
-                    // ObjectInfoを登録
-                    ObjectInfo objInfo{actor, path.string(), true, 1.0};
-                    registerObject(objInfo);
-                    
-                    // 対応するウィジェットを更新
-                    if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
-                        widgets[widgetIndex]->setFileName(QString::fromStdString(filename));
-                        // シグナルを接続
-                        std::string filePath = path.string();
-                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::visibilityToggled,
-                                [this, filePath](bool visible) {
-                                    setObjectVisible(filePath, visible);
-                                });
-                        
-                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::opacityChanged,
-                                [this, filePath](double opacity) {
-                                    setObjectOpacity(filePath, opacity);
-                                });
-                        
-                        widgetIndex++;
-                    }
-                }
-            } else {
-                // ファイル名からストレス値が抽出できない場合は、従来の方法を使用
-                double r, g, b;
-                double normalizedPos = static_cast<double>(number) / stlFiles.size();
-                calculateColor(normalizedPos, r, g, b);
-                
-                auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
-                if (actor) {
-                    ui_->getRenderer()->AddActor(actor);
-                    // ObjectInfoを登録
-                    ObjectInfo objInfo{actor, path.string(), true, 1.0};
-                    registerObject(objInfo);
-                    
-                    // 対応するウィジェットを更新
-                    if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
-                        widgets[widgetIndex]->setFileName(QString::fromStdString(filename));
-                        // シグナルを接続
-                        std::string filePath = path.string();
-                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::visibilityToggled,
-                                [this, filePath](bool visible) {
-                                    setObjectVisible(filePath, visible);
-                                });
-                        
-                        connect(widgets[widgetIndex], &ObjectDisplayOptionsWidget::opacityChanged,
-                                [this, filePath](double opacity) {
-                                    setObjectOpacity(filePath, opacity);
-                                });
-                        
-                        widgetIndex++;
-                    }
-                }
-            }
-        }
+        processStlFiles(stlFiles, vtkProcessor, minStress, maxStress, widgets);
         
         resetCamera();
         renderRegisteredObjects();
     }
     catch (const std::exception& e) {
-        std::cerr << "Error loading STL files: " << e.what() << std::endl;
-        if (parent) {
-            QMessageBox::critical(parent, "Error", QString("Failed to load STL files: ") + e.what());
+        handleStlFileLoadError(e, parent);
+    }
+}
+
+std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::loadStlFilesFromTempDirectory() {
+    std::filesystem::path tempDir = ".temp/div";
+    if (!std::filesystem::exists(tempDir)) {
+        throw std::runtime_error(".temp directory does not exist");
+    }
+    
+    return sortStlFiles(tempDir);
+}
+
+std::vector<ObjectDisplayOptionsWidget*> VisualizationManager::getDividedMeshWidgets() {
+    return {
+        ui_->getDividedMeshWidget1(),
+        ui_->getDividedMeshWidget2(),
+        ui_->getDividedMeshWidget3(),
+        ui_->getDividedMeshWidget4()
+    };
+}
+
+void VisualizationManager::processStlFiles(
+    const std::vector<std::pair<std::filesystem::path, int>>& stlFiles,
+    VtkProcessor* vtkProcessor,
+    double minStress,
+    double maxStress,
+    const std::vector<ObjectDisplayOptionsWidget*>& widgets) {
+    
+    int widgetIndex = 0;
+    for (const auto& [path, number] : stlFiles) {
+        std::string filename = path.filename().string();
+        
+        if (auto stressValues = extractStressValuesFromFilename(filename)) {
+            processStlFileWithStress(path, filename, *stressValues, minStress, maxStress, 
+                                   vtkProcessor, widgets, widgetIndex);
+        } else {
+            processStlFileWithColor(path, filename, number, stlFiles.size(), 
+                                  vtkProcessor, widgets, widgetIndex);
         }
+    }
+}
+
+std::optional<std::pair<double, double>> VisualizationManager::extractStressValuesFromFilename(const std::string& filename) {
+    std::regex stressPattern(R"(^dividedMesh\d+_([0-9.]+)_([0-9.]+)\.stl$)");
+    std::smatch match;
+    
+    if (std::regex_search(filename, match, stressPattern)) {
+        double stressMin = std::stod(match[1].str());
+        double stressMax = std::stod(match[2].str());
+        return std::make_pair(stressMin, stressMax);
+    }
+    return std::nullopt;
+}
+
+void VisualizationManager::processStlFileWithStress(
+    const std::filesystem::path& path,
+    const std::string& filename,
+    const std::pair<double, double>& stressValues,
+    double minStress,
+    double maxStress,
+    VtkProcessor* vtkProcessor,
+    const std::vector<ObjectDisplayOptionsWidget*>& widgets,
+    int& widgetIndex) {
+    
+    // 領域の中心のストレス値を使用
+    double stressValue = (stressValues.first + stressValues.second) / 2.0;
+    
+    auto actor = vtkProcessor->getColoredStlActorByStress(path.string(), stressValue, minStress, maxStress);
+    if (actor) {
+        addActorToRenderer(actor, path.string());
+        updateWidgetAndConnectSignals(widgets, widgetIndex, filename, path.string());
+    }
+}
+
+void VisualizationManager::processStlFileWithColor(
+    const std::filesystem::path& path,
+    const std::string& filename,
+    int number,
+    size_t totalFiles,
+    VtkProcessor* vtkProcessor,
+    const std::vector<ObjectDisplayOptionsWidget*>& widgets,
+    int& widgetIndex) {
+    
+    double r, g, b;
+    double normalizedPos = static_cast<double>(number) / totalFiles;
+    calculateColor(normalizedPos, r, g, b);
+    
+    auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
+    if (actor) {
+        addActorToRenderer(actor, path.string());
+        updateWidgetAndConnectSignals(widgets, widgetIndex, filename, path.string());
+    }
+}
+
+void VisualizationManager::addActorToRenderer(vtkSmartPointer<vtkActor> actor, const std::string& filePath) {
+    ui_->getRenderer()->AddActor(actor);
+    ObjectInfo objInfo{actor, filePath, true, 1.0};
+    registerObject(objInfo);
+}
+
+void VisualizationManager::updateWidgetAndConnectSignals(
+    const std::vector<ObjectDisplayOptionsWidget*>& widgets,
+    int& widgetIndex,
+    const std::string& filename,
+    const std::string& filePath) {
+    
+    if (widgetIndex < widgets.size() && widgets[widgetIndex]) {
+        widgets[widgetIndex]->setFileName(QString::fromStdString(filename));
+        connectWidgetSignals(widgets[widgetIndex], filePath);
+        widgetIndex++;
+    }
+}
+
+void VisualizationManager::connectWidgetSignals(ObjectDisplayOptionsWidget* widget, const std::string& filePath) {
+    connect(widget, &ObjectDisplayOptionsWidget::visibilityToggled,
+            [this, filePath](bool visible) {
+                setObjectVisible(filePath, visible);
+            });
+    
+    connect(widget, &ObjectDisplayOptionsWidget::opacityChanged,
+            [this, filePath](double opacity) {
+                setObjectOpacity(filePath, opacity);
+            });
+}
+
+void VisualizationManager::handleStlFileLoadError(const std::exception& e, QWidget* parent) {
+    std::cerr << "Error loading STL files: " << e.what() << std::endl;
+    if (parent) {
+        QMessageBox::critical(parent, "Error", QString("Failed to load STL files: ") + e.what());
     }
 }
 

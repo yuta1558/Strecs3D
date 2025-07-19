@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <vtkActor.h>
+#include <optional>
 
 // 3Dオブジェクトの表示情報を保持する構造体
 struct ObjectInfo {
@@ -30,6 +31,7 @@ struct ObjectInfo {
 
 class MainWindowUI;
 class VtkProcessor;
+class ObjectDisplayOptionsWidget;
 
 class VisualizationManager : public QObject {
     Q_OBJECT
@@ -65,4 +67,40 @@ private:
     std::vector<ObjectInfo> objectList; // 3Dオブジェクト情報リスト
     void calculateColor(double normalizedPos, double& r, double& g, double& b);
     std::vector<std::pair<std::filesystem::path, int>> sortStlFiles(const std::filesystem::path& tempDir);
+    
+    // リファクタリングで追加されたメソッド
+    std::vector<std::pair<std::filesystem::path, int>> loadStlFilesFromTempDirectory();
+    std::vector<ObjectDisplayOptionsWidget*> getDividedMeshWidgets();
+    void processStlFiles(
+        const std::vector<std::pair<std::filesystem::path, int>>& stlFiles,
+        VtkProcessor* vtkProcessor,
+        double minStress,
+        double maxStress,
+        const std::vector<ObjectDisplayOptionsWidget*>& widgets);
+    std::optional<std::pair<double, double>> extractStressValuesFromFilename(const std::string& filename);
+    void processStlFileWithStress(
+        const std::filesystem::path& path,
+        const std::string& filename,
+        const std::pair<double, double>& stressValues,
+        double minStress,
+        double maxStress,
+        VtkProcessor* vtkProcessor,
+        const std::vector<ObjectDisplayOptionsWidget*>& widgets,
+        int& widgetIndex);
+    void processStlFileWithColor(
+        const std::filesystem::path& path,
+        const std::string& filename,
+        int number,
+        size_t totalFiles,
+        VtkProcessor* vtkProcessor,
+        const std::vector<ObjectDisplayOptionsWidget*>& widgets,
+        int& widgetIndex);
+    void addActorToRenderer(vtkSmartPointer<vtkActor> actor, const std::string& filePath);
+    void updateWidgetAndConnectSignals(
+        const std::vector<ObjectDisplayOptionsWidget*>& widgets,
+        int& widgetIndex,
+        const std::string& filename,
+        const std::string& filePath);
+    void connectWidgetSignals(ObjectDisplayOptionsWidget* widget, const std::string& filePath);
+    void handleStlFileLoadError(const std::exception& e, QWidget* parent);
 }; 
