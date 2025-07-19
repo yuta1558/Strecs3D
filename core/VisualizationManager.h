@@ -42,7 +42,7 @@ public:
     // ファイル表示
     void displayVtkFile(const std::string& vtkFile, VtkProcessor* vtkProcessor);
     void displayStlFile(const std::string& stlFile, VtkProcessor* vtkProcessor);
-    void loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor, QWidget* parent = nullptr);
+    void showTempDividedStl(VtkProcessor* vtkProcessor, QWidget* parent = nullptr);
 
     // スカラーバー設定
     void setupScalarBar(VtkProcessor* vtkProcessor);
@@ -69,16 +69,16 @@ private:
     std::vector<std::pair<std::filesystem::path, int>> sortStlFiles(const std::filesystem::path& tempDir);
     
     // リファクタリングで追加されたメソッド
-    std::vector<std::pair<std::filesystem::path, int>> loadStlFilesFromTempDirectory();
-    std::vector<ObjectDisplayOptionsWidget*> getDividedMeshWidgets();
-    void processStlFiles(
+    std::vector<std::pair<std::filesystem::path, int>> fetchDividedStlFiles();
+    std::vector<ObjectDisplayOptionsWidget*> fetchMeshDisplayWidgets();
+    void showDividedStlFiles(
         const std::vector<std::pair<std::filesystem::path, int>>& stlFiles,
         VtkProcessor* vtkProcessor,
         double minStress,
         double maxStress,
         const std::vector<ObjectDisplayOptionsWidget*>& widgets);
-    std::optional<std::pair<double, double>> extractStressValuesFromFilename(const std::string& filename);
-    void processStlFileWithStress(
+    std::optional<std::pair<double, double>> parseStressRange(const std::string& filename);
+    void showStlWithStress(
         const std::filesystem::path& path,
         const std::string& filename,
         const std::pair<double, double>& stressValues,
@@ -87,7 +87,7 @@ private:
         VtkProcessor* vtkProcessor,
         const std::vector<ObjectDisplayOptionsWidget*>& widgets,
         int& widgetIndex);
-    void processStlFileWithColor(
+    void showStlWithColor(
         const std::filesystem::path& path,
         const std::string& filename,
         int number,

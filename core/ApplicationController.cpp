@@ -176,7 +176,7 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
     // 分割されたメッシュウィジェットをリセット
     resetDividedMeshWidgets(ui);
     
-    visualizationManager->loadAndDisplayTempStlFiles(fileProcessor->getVtkProcessor().get(), parent);
+    visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), parent);
 }
 
 void ApplicationController::cleanupTempFiles()

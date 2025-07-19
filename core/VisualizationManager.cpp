@@ -48,22 +48,16 @@ void VisualizationManager::displayStlFile(const std::string& stlFile, VtkProcess
     renderRegisteredObjects();
 }
 
-void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor, QWidget* parent) {
+void VisualizationManager::showTempDividedStl(VtkProcessor* vtkProcessor, QWidget* parent) {
     try {
-        auto stlFiles = loadStlFilesFromTempDirectory();
+        auto stlFiles = fetchDividedStlFiles();
         if (stlFiles.empty()) {
             throw std::runtime_error("No valid STL files found");
         }
-        
-        // ストレス範囲を取得
         double minStress = vtkProcessor->getMinStress();
         double maxStress = vtkProcessor->getMaxStress();
-        
-        // 分割されたメッシュウィジェットを取得
-        auto widgets = getDividedMeshWidgets();
-        
-        processStlFiles(stlFiles, vtkProcessor, minStress, maxStress, widgets);
-        
+        auto widgets = fetchMeshDisplayWidgets();
+        showDividedStlFiles(stlFiles, vtkProcessor, minStress, maxStress, widgets);
         resetCamera();
         renderRegisteredObjects();
     }
@@ -72,16 +66,15 @@ void VisualizationManager::loadAndDisplayTempStlFiles(VtkProcessor* vtkProcessor
     }
 }
 
-std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::loadStlFilesFromTempDirectory() {
+std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::fetchDividedStlFiles() {
     std::filesystem::path tempDir = ".temp/div";
     if (!std::filesystem::exists(tempDir)) {
         throw std::runtime_error(".temp directory does not exist");
     }
-    
     return sortStlFiles(tempDir);
 }
 
-std::vector<ObjectDisplayOptionsWidget*> VisualizationManager::getDividedMeshWidgets() {
+std::vector<ObjectDisplayOptionsWidget*> VisualizationManager::fetchMeshDisplayWidgets() {
     return {
         ui_->getDividedMeshWidget1(),
         ui_->getDividedMeshWidget2(),
@@ -90,31 +83,26 @@ std::vector<ObjectDisplayOptionsWidget*> VisualizationManager::getDividedMeshWid
     };
 }
 
-void VisualizationManager::processStlFiles(
+void VisualizationManager::showDividedStlFiles(
     const std::vector<std::pair<std::filesystem::path, int>>& stlFiles,
     VtkProcessor* vtkProcessor,
     double minStress,
     double maxStress,
     const std::vector<ObjectDisplayOptionsWidget*>& widgets) {
-    
     int widgetIndex = 0;
     for (const auto& [path, number] : stlFiles) {
         std::string filename = path.filename().string();
-        
-        if (auto stressValues = extractStressValuesFromFilename(filename)) {
-            processStlFileWithStress(path, filename, *stressValues, minStress, maxStress, 
-                                   vtkProcessor, widgets, widgetIndex);
+        if (auto stressValues = parseStressRange(filename)) {
+            showStlWithStress(path, filename, *stressValues, minStress, maxStress, vtkProcessor, widgets, widgetIndex);
         } else {
-            processStlFileWithColor(path, filename, number, stlFiles.size(), 
-                                  vtkProcessor, widgets, widgetIndex);
+            showStlWithColor(path, filename, number, stlFiles.size(), vtkProcessor, widgets, widgetIndex);
         }
     }
 }
 
-std::optional<std::pair<double, double>> VisualizationManager::extractStressValuesFromFilename(const std::string& filename) {
+std::optional<std::pair<double, double>> VisualizationManager::parseStressRange(const std::string& filename) {
     std::regex stressPattern(R"(^dividedMesh\d+_([0-9.]+)_([0-9.]+)\.stl$)");
     std::smatch match;
-    
     if (std::regex_search(filename, match, stressPattern)) {
         double stressMin = std::stod(match[1].str());
         double stressMax = std::stod(match[2].str());
@@ -123,7 +111,7 @@ std::optional<std::pair<double, double>> VisualizationManager::extractStressValu
     return std::nullopt;
 }
 
-void VisualizationManager::processStlFileWithStress(
+void VisualizationManager::showStlWithStress(
     const std::filesystem::path& path,
     const std::string& filename,
     const std::pair<double, double>& stressValues,
@@ -132,10 +120,7 @@ void VisualizationManager::processStlFileWithStress(
     VtkProcessor* vtkProcessor,
     const std::vector<ObjectDisplayOptionsWidget*>& widgets,
     int& widgetIndex) {
-    
-    // 領域の中心のストレス値を使用
     double stressValue = (stressValues.first + stressValues.second) / 2.0;
-    
     auto actor = vtkProcessor->getColoredStlActorByStress(path.string(), stressValue, minStress, maxStress);
     if (actor) {
         addActorToRenderer(actor, path.string());
@@ -143,7 +128,7 @@ void VisualizationManager::processStlFileWithStress(
     }
 }
 
-void VisualizationManager::processStlFileWithColor(
+void VisualizationManager::showStlWithColor(
     const std::filesystem::path& path,
     const std::string& filename,
     int number,
@@ -151,11 +136,9 @@ void VisualizationManager::processStlFileWithColor(
     VtkProcessor* vtkProcessor,
     const std::vector<ObjectDisplayOptionsWidget*>& widgets,
     int& widgetIndex) {
-    
     double r, g, b;
     double normalizedPos = static_cast<double>(number) / totalFiles;
     calculateColor(normalizedPos, r, g, b);
-    
     auto actor = vtkProcessor->getColoredStlActor(path.string(), r, g, b);
     if (actor) {
         addActorToRenderer(actor, path.string());
