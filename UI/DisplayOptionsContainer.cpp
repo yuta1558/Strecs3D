@@ -18,39 +18,22 @@ void DisplayOptionsContainer::setupUI()
     containerLayout->setContentsMargins(10, 10, 10, 10);
     containerLayout->setSpacing(10);
 
-    // スクロールエリアを作成
-    scrollArea = new QScrollArea(this);
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setFrameShape(QFrame::NoFrame);
-
-    // スクロールエリア内のコンテンツウィジェット
-    scrollContent = new QWidget();
-    mainLayout = new QVBoxLayout(scrollContent);
-    mainLayout->setContentsMargins(5, 5, 5, 5);
-    mainLayout->setSpacing(8);
-
     // 各表示オプションウィジェットを作成
-    stlDisplayWidget = new ObjectDisplayOptionsWidget("No STL file selected", scrollContent);
-    vtkDisplayWidget = new ObjectDisplayOptionsWidget("No VTK file selected", scrollContent);
-    dividedMeshWidget1 = new ObjectDisplayOptionsWidget("Divided Mesh 1", scrollContent);
-    dividedMeshWidget2 = new ObjectDisplayOptionsWidget("Divided Mesh 2", scrollContent);
-    dividedMeshWidget3 = new ObjectDisplayOptionsWidget("Divided Mesh 3", scrollContent);
-    dividedMeshWidget4 = new ObjectDisplayOptionsWidget("Divided Mesh 4", scrollContent);
+    stlDisplayWidget = new ObjectDisplayOptionsWidget("No STL file selected", this);
+    vtkDisplayWidget = new ObjectDisplayOptionsWidget("No VTK file selected", this);
+    dividedMeshWidget1 = new ObjectDisplayOptionsWidget("Divided Mesh 1", this);
+    dividedMeshWidget2 = new ObjectDisplayOptionsWidget("Divided Mesh 2", this);
+    dividedMeshWidget3 = new ObjectDisplayOptionsWidget("Divided Mesh 3", this);
+    dividedMeshWidget4 = new ObjectDisplayOptionsWidget("Divided Mesh 4", this);
 
     // レイアウトに追加
-    mainLayout->addWidget(stlDisplayWidget);
-    mainLayout->addWidget(vtkDisplayWidget);
-    mainLayout->addWidget(dividedMeshWidget1);
-    mainLayout->addWidget(dividedMeshWidget2);
-    mainLayout->addWidget(dividedMeshWidget3);
-    mainLayout->addWidget(dividedMeshWidget4);
-    mainLayout->addStretch(); // 下部にスペースを追加
-
-    // スクロールエリアにコンテンツを設定
-    scrollArea->setWidget(scrollContent);
-    containerLayout->addWidget(scrollArea);
+    containerLayout->addWidget(stlDisplayWidget);
+    containerLayout->addWidget(vtkDisplayWidget);
+    containerLayout->addWidget(dividedMeshWidget1);
+    containerLayout->addWidget(dividedMeshWidget2);
+    containerLayout->addWidget(dividedMeshWidget3);
+    containerLayout->addWidget(dividedMeshWidget4);
+    containerLayout->addStretch(); // 下部にスペースを追加
 }
 
 void DisplayOptionsContainer::setupStyle()

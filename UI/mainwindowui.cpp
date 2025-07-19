@@ -104,8 +104,8 @@ void MainWindowUI::setupUI()
     // 表示オプションコンテナ（VTKウィジェットの上に重ねて表示）
     displayOptionsContainer = new DisplayOptionsContainer(vtkWidget);
     displayOptionsContainer->move(1100, 20); // 右ペイン内の表示位置を調整
-    displayOptionsContainer->setFixedWidth(600); // 幅を固定
-    displayOptionsContainer->setMaximumHeight(600); // 最大高さを制限
+    displayOptionsContainer->setFixedWidth(300); // 幅を固定
+    displayOptionsContainer->setMaximumHeight(1000); // 最大高さを制限
     displayOptionsContainer->raise();
     displayOptionsContainer->show();
 
