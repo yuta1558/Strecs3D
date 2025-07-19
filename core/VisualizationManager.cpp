@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <filesystem>
 
+// ==================== ファイル表示系 ====================
+
 VisualizationManager::VisualizationManager(MainWindowUI* ui) : QObject(), ui_(ui) {}
 
 VisualizationManager::~VisualizationManager() = default;
@@ -66,21 +68,14 @@ void VisualizationManager::showTempDividedStl(VtkProcessor* vtkProcessor, QWidge
     }
 }
 
+// ==================== STL分割表示系 ====================
+
 std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::fetchDividedStlFiles() {
     std::filesystem::path tempDir = ".temp/div";
     if (!std::filesystem::exists(tempDir)) {
         throw std::runtime_error(".temp directory does not exist");
     }
     return sortStlFiles(tempDir);
-}
-
-std::vector<ObjectDisplayOptionsWidget*> VisualizationManager::fetchMeshDisplayWidgets() {
-    return {
-        ui_->getDividedMeshWidget1(),
-        ui_->getDividedMeshWidget2(),
-        ui_->getDividedMeshWidget3(),
-        ui_->getDividedMeshWidget4()
-    };
 }
 
 void VisualizationManager::showDividedStlFiles(
@@ -146,10 +141,36 @@ void VisualizationManager::showStlWithColor(
     }
 }
 
-void VisualizationManager::addActorToRenderer(vtkSmartPointer<vtkActor> actor, const std::string& filePath) {
-    ui_->getRenderer()->AddActor(actor);
-    ObjectInfo objInfo{actor, filePath, true, 1.0};
-    registerObject(objInfo);
+std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::sortStlFiles(const std::filesystem::path& tempDir) {
+    std::vector<std::pair<std::filesystem::path, int>> stlFiles;
+    std::regex filePattern(R"(^dividedMesh(\d+)_)");
+    
+    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
+        if (entry.path().extension() == ".stl") {
+            std::string filename = entry.path().filename().string();
+            std::smatch match;
+            if (std::regex_search(filename, match, filePattern)) {
+                int number = std::stoi(match[1].str());
+                stlFiles.push_back({entry.path(), number});
+            }
+        }
+    }
+    
+    std::sort(stlFiles.begin(), stlFiles.end(),
+        [](const auto& a, const auto& b) { return a.second < b.second; });
+    
+    return stlFiles;
+} 
+
+// ==================== UI/Widget連携系 ====================
+
+std::vector<ObjectDisplayOptionsWidget*> VisualizationManager::fetchMeshDisplayWidgets() {
+    return {
+        ui_->getDividedMeshWidget1(),
+        ui_->getDividedMeshWidget2(),
+        ui_->getDividedMeshWidget3(),
+        ui_->getDividedMeshWidget4()
+    };
 }
 
 void VisualizationManager::updateWidgetAndConnectSignals(
@@ -177,12 +198,93 @@ void VisualizationManager::connectWidgetSignals(ObjectDisplayOptionsWidget* widg
             });
 }
 
-void VisualizationManager::handleStlFileLoadError(const std::exception& e, QWidget* parent) {
-    std::cerr << "Error loading STL files: " << e.what() << std::endl;
-    if (parent) {
-        QMessageBox::critical(parent, "Error", QString("Failed to load STL files: ") + e.what());
+// ==================== オブジェクト管理系 ====================
+
+void VisualizationManager::registerObject(const ObjectInfo& objInfo) {
+    objectList.push_back(objInfo);
+} 
+
+void VisualizationManager::setObjectVisible(const std::string& filename, bool visible) {
+    for (auto& obj : objectList) {
+        // 完全なパスとファイル名の両方をチェック
+        if (obj.filename == filename || 
+            obj.filename.find(filename) != std::string::npos ||
+            filename.find(obj.filename) != std::string::npos) {
+            obj.visible = visible;
+            if (obj.actor) {
+                obj.actor->SetVisibility(visible ? 1 : 0);
+            }
+            renderRegisteredObjects();
+            return;
+        }
     }
 }
+
+void VisualizationManager::setObjectOpacity(const std::string& filename, double opacity) {
+    for (auto& obj : objectList) {
+        // 完全なパスとファイル名の両方をチェック
+        if (obj.filename == filename || 
+            obj.filename.find(filename) != std::string::npos ||
+            filename.find(obj.filename) != std::string::npos) {
+            obj.opacity = opacity;
+            if (obj.actor) {
+                obj.actor->GetProperty()->SetOpacity(opacity);
+            }
+            renderRegisteredObjects();
+            return;
+        }
+    }
+}
+
+void VisualizationManager::addActorToRenderer(vtkSmartPointer<vtkActor> actor, const std::string& filePath) {
+    ui_->getRenderer()->AddActor(actor);
+    ObjectInfo objInfo{actor, filePath, true, 1.0};
+    registerObject(objInfo);
+}
+
+void VisualizationManager::renderRegisteredObjects() {
+    if (!ui_ || !ui_->getRenderer()) return;
+    clearRenderer();
+    // すべてのObjectInfoのactorをレンダラーに追加
+    for (const auto& obj : objectList) {
+        if (obj.visible && obj.actor) {
+            obj.actor->SetVisibility(1);
+            obj.actor->GetProperty()->SetOpacity(obj.opacity);
+            ui_->getRenderer()->AddActor(obj.actor);
+        }
+    }
+    if (ui_->getVtkWidget() && ui_->getVtkWidget()->renderWindow()) {
+        ui_->getVtkWidget()->renderWindow()->Render();
+    }
+} 
+
+void VisualizationManager::removeDividedStlActors() {
+    // dividedMesh*.stl にマッチするものを削除
+    std::regex dividedStlPattern(R"(dividedMesh\d+_[-0-9.]+_[-0-9.]+\.stl$)");
+    if (!ui_ || !ui_->getRenderer()) return;
+    
+    // Remove actors from renderer first
+    for (const auto& obj : objectList) {
+        if (std::regex_search(obj.filename, dividedStlPattern)) {
+            if (obj.actor) {
+                ui_->getRenderer()->RemoveActor(obj.actor);
+            }
+        }
+    }
+    // Remove from objectList
+    objectList.erase(
+        std::remove_if(
+            objectList.begin(), objectList.end(),
+            [&](const ObjectInfo& obj) {
+                return std::regex_search(obj.filename, dividedStlPattern);
+            }
+        ),
+        objectList.end()
+    );
+    renderRegisteredObjects();
+} 
+
+// ==================== ユーティリティ系 ====================
 
 void VisualizationManager::setupScalarBar(VtkProcessor* vtkProcessor) {
     if (!ui_ || !vtkProcessor) return;
@@ -229,101 +331,9 @@ void VisualizationManager::calculateColor(double normalizedPos, double& r, doubl
     }
 }
 
-std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::sortStlFiles(const std::filesystem::path& tempDir) {
-    std::vector<std::pair<std::filesystem::path, int>> stlFiles;
-    std::regex filePattern(R"(^dividedMesh(\d+)_)");
-    
-    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
-        if (entry.path().extension() == ".stl") {
-            std::string filename = entry.path().filename().string();
-            std::smatch match;
-            if (std::regex_search(filename, match, filePattern)) {
-                int number = std::stoi(match[1].str());
-                stlFiles.push_back({entry.path(), number});
-            }
-        }
+void VisualizationManager::handleStlFileLoadError(const std::exception& e, QWidget* parent) {
+    std::cerr << "Error loading STL files: " << e.what() << std::endl;
+    if (parent) {
+        QMessageBox::critical(parent, "Error", QString("Failed to load STL files: ") + e.what());
     }
-    
-    std::sort(stlFiles.begin(), stlFiles.end(),
-        [](const auto& a, const auto& b) { return a.second < b.second; });
-    
-    return stlFiles;
-} 
-
-void VisualizationManager::registerObject(const ObjectInfo& objInfo) {
-    objectList.push_back(objInfo);
-} 
-
-void VisualizationManager::setObjectVisible(const std::string& filename, bool visible) {
-    for (auto& obj : objectList) {
-        // 完全なパスとファイル名の両方をチェック
-        if (obj.filename == filename || 
-            obj.filename.find(filename) != std::string::npos ||
-            filename.find(obj.filename) != std::string::npos) {
-            obj.visible = visible;
-            if (obj.actor) {
-                obj.actor->SetVisibility(visible ? 1 : 0);
-            }
-            renderRegisteredObjects();
-            return;
-        }
-    }
-}
-
-void VisualizationManager::setObjectOpacity(const std::string& filename, double opacity) {
-    for (auto& obj : objectList) {
-        // 完全なパスとファイル名の両方をチェック
-        if (obj.filename == filename || 
-            obj.filename.find(filename) != std::string::npos ||
-            filename.find(obj.filename) != std::string::npos) {
-            obj.opacity = opacity;
-            if (obj.actor) {
-                obj.actor->GetProperty()->SetOpacity(opacity);
-            }
-            renderRegisteredObjects();
-            return;
-        }
-    }
-}
-
-void VisualizationManager::renderRegisteredObjects() {
-    if (!ui_ || !ui_->getRenderer()) return;
-    clearRenderer();
-    // すべてのObjectInfoのactorをレンダラーに追加
-    for (const auto& obj : objectList) {
-        if (obj.visible && obj.actor) {
-            obj.actor->SetVisibility(1);
-            obj.actor->GetProperty()->SetOpacity(obj.opacity);
-            ui_->getRenderer()->AddActor(obj.actor);
-        }
-    }
-    if (ui_->getVtkWidget() && ui_->getVtkWidget()->renderWindow()) {
-        ui_->getVtkWidget()->renderWindow()->Render();
-    }
-} 
-
-void VisualizationManager::removeDividedStlActors() {
-    // dividedMesh*.stl にマッチするものを削除
-    std::regex dividedStlPattern(R"(dividedMesh\d+_[-0-9.]+_[-0-9.]+\.stl$)");
-    if (!ui_ || !ui_->getRenderer()) return;
-    
-    // Remove actors from renderer first
-    for (const auto& obj : objectList) {
-        if (std::regex_search(obj.filename, dividedStlPattern)) {
-            if (obj.actor) {
-                ui_->getRenderer()->RemoveActor(obj.actor);
-            }
-        }
-    }
-    // Remove from objectList
-    objectList.erase(
-        std::remove_if(
-            objectList.begin(), objectList.end(),
-            [&](const ObjectInfo& obj) {
-                return std::regex_search(obj.filename, dividedStlPattern);
-            }
-        ),
-        objectList.end()
-    );
-    renderRegisteredObjects();
 } 
