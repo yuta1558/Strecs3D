@@ -38,13 +38,14 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
 
     // 右側：ファイル名とスライダーを縦に並べる
     QVBoxLayout* rightLayout = new QVBoxLayout();
-    rightLayout->setContentsMargins(0, 0, 0, 0);
+    rightLayout->setContentsMargins(0, 10, 0, 0); // 上側に10pxの余白を追加
     rightLayout->setSpacing(6);
     rightLayout->addWidget(fileNameLabel, 0, Qt::AlignLeft);
     rightLayout->addWidget(opacitySlider);
     mainLayout->addLayout(rightLayout, 1);
 
     setLayout(mainLayout);
+    setMinimumHeight(70); // ここを追加
 
     connect(visibilityButton, &CustomCheckBox::toggled, this, [this](bool checked) {
         visibleState = checked;
