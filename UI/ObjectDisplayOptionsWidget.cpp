@@ -2,6 +2,9 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileInfo>
+#include <QPainter>
+#include <QPen>
+#include "ColorManager.h"
 
 ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, QWidget* parent)
     : QWidget(parent), visibleState(true), fileName(fileName)
@@ -14,6 +17,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
     QFontMetrics metrics(fileNameLabel->font());
     QString elided = metrics.elidedText(displayName, Qt::ElideMiddle, fileNameLabel->maximumWidth());
     fileNameLabel->setText(elided);
+    fileNameLabel->setStyleSheet("background: transparent;");
     visibilityButton = new CustomCheckBox(this);
     visibilityButton->setChecked(true);
     opacitySlider = new QSlider(Qt::Horizontal, this);
@@ -22,6 +26,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
     // スライダーの幅を自動調整（必要なら最大幅を指定）
     opacitySlider->setMaximumWidth(180); // 例: 最大180pxまで
     opacitySlider->setFixedHeight(32);   // 高さはやや小さめ
+    opacitySlider->setStyleSheet("background: transparent;");
     
     // 新しいレイアウト構成
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
@@ -85,4 +90,22 @@ double ObjectDisplayOptionsWidget::opacityValue() const {
 
 void ObjectDisplayOptionsWidget::updateVisibilityButton() {
     visibilityButton->setChecked(visibleState);
+} 
+
+void ObjectDisplayOptionsWidget::paintEvent(QPaintEvent* event) {
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QRect rect = this->rect();
+    // 背景
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(ColorManager::BUTTON_COLOR);
+    painter.drawRoundedRect(rect, m_borderRadius, m_borderRadius);
+    // 枠線
+    QPen edgePen(ColorManager::BUTTON_EDGE_COLOR);
+    edgePen.setWidth(0);
+    painter.setPen(edgePen);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRoundedRect(rect.adjusted(1, 1, -1, -1), m_borderRadius, m_borderRadius);
+    // QWidgetのデフォルト描画（子ウィジェットなど）
+    QWidget::paintEvent(event);
 } 

@@ -21,7 +21,11 @@ signals:
     void visibilityToggled(bool visible);
     void opacityChanged(double value);
 
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
 private:
+    int m_borderRadius = 3;
     QLabel* fileNameLabel;
     CustomCheckBox* visibilityButton;
     QSlider* opacitySlider;
