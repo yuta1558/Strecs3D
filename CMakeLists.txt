@@ -101,6 +101,7 @@ add_executable(Strecs3D
   UI/ModeComboBox.cpp
   UI/ObjectDisplayOptionsWidget.cpp
   UI/DisplayOptionsContainer.cpp
+  UI/CustomCheckBox.cpp
   core/VtkProcessor.cpp
   core/lib3mfProcessor.cpp
   utils/fileUtility.cpp

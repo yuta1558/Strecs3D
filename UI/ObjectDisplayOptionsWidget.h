@@ -4,6 +4,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QCheckBox>
+#include "CustomCheckBox.h"
 
 class ObjectDisplayOptionsWidget : public QWidget {
     Q_OBJECT
@@ -22,7 +23,7 @@ signals:
 
 private:
     QLabel* fileNameLabel;
-    QCheckBox* visibilityButton;
+    CustomCheckBox* visibilityButton;
     QSlider* opacitySlider;
     bool visibleState;
     QString fileName;

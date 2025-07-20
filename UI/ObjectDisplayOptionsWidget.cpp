@@ -14,7 +14,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
     QFontMetrics metrics(fileNameLabel->font());
     QString elided = metrics.elidedText(displayName, Qt::ElideMiddle, fileNameLabel->maximumWidth());
     fileNameLabel->setText(elided);
-    visibilityButton = new QCheckBox("表示", this);
+    visibilityButton = new CustomCheckBox(this);
     visibilityButton->setChecked(true);
     opacitySlider = new QSlider(Qt::Horizontal, this);
     opacitySlider->setRange(0, 100);
@@ -41,7 +41,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
 
     setLayout(mainLayout);
 
-    connect(visibilityButton, &QCheckBox::toggled, this, [this](bool checked) {
+    connect(visibilityButton, &CustomCheckBox::toggled, this, [this](bool checked) {
         visibleState = checked;
         updateVisibilityButton();
         emit visibilityToggled(visibleState);
@@ -84,6 +84,5 @@ double ObjectDisplayOptionsWidget::opacityValue() const {
 }
 
 void ObjectDisplayOptionsWidget::updateVisibilityButton() {
-    visibilityButton->setText(visibleState ? "表示" : "非表示");
     visibilityButton->setChecked(visibleState);
 } 
