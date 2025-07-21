@@ -15,10 +15,12 @@
 #include "ModeComboBox.h"
 #include "ObjectDisplayOptionsWidget.h"
 #include "DisplayOptionsContainer.h"
+#include <QObject>
 
 class MainWindow;
 
-class MainWindowUI {
+class MainWindowUI : public QObject {
+    Q_OBJECT
 public:
     explicit MainWindowUI(MainWindow* mainWindow);
     ~MainWindowUI() = default;
@@ -43,6 +45,11 @@ public:
     ObjectDisplayOptionsWidget* getDividedMeshWidget2() const { return displayOptionsContainer->getDividedMeshWidget2(); }
     ObjectDisplayOptionsWidget* getDividedMeshWidget3() const { return displayOptionsContainer->getDividedMeshWidget3(); }
     ObjectDisplayOptionsWidget* getDividedMeshWidget4() const { return displayOptionsContainer->getDividedMeshWidget4(); }
+
+public slots:
+    void resizeDisplayOptionsContainer();
+    void resizeEvent(QResizeEvent* event);
+    bool eventFilter(QObject* watched, QEvent* event);
 
 private:
     void setupStyle();

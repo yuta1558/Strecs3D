@@ -103,13 +103,38 @@ void MainWindowUI::setupUI()
 
     // 表示オプションコンテナ（VTKウィジェットの上に重ねて表示）
     displayOptionsContainer = new DisplayOptionsContainer(vtkWidget);
-    displayOptionsContainer->move(1100, 20); // 右ペイン内の表示位置を調整
     displayOptionsContainer->setFixedWidth(300); // 幅を固定
     displayOptionsContainer->setMaximumHeight(1000); // 最大高さを制限
     displayOptionsContainer->raise();
     displayOptionsContainer->show();
 
+    vtkWidget->installEventFilter(this);
+
+    resizeDisplayOptionsContainer();
     setupStyle();
+}
+
+bool MainWindowUI::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == vtkWidget && event->type() == QEvent::Resize) {
+        resizeDisplayOptionsContainer();
+    }
+    return false;
+}
+
+void MainWindowUI::resizeEvent(QResizeEvent* event)
+{
+    // QWidget::resizeEvent(event); // 呼び出しを削除またはコメントアウト
+    resizeDisplayOptionsContainer();
+}
+
+void MainWindowUI::resizeDisplayOptionsContainer()
+{
+    if (!displayOptionsContainer || !vtkWidget) return;
+    int margin = 20;
+    int x = vtkWidget->width() - displayOptionsContainer->width() - margin;
+    int y = margin;
+    displayOptionsContainer->move(x, y);
 }
 
 void MainWindowUI::setupStyle()
