@@ -11,7 +11,7 @@ MessageConsole::MessageConsole(QWidget* parent)
     textEdit->setReadOnly(true);
     textEdit->setStyleSheet(R"(
         QTextEdit {
-            background-color: #1e1e1e;
+            background-color: rgba(26, 26, 26, 180);
             color: #ffffff;
             border: 1px solid #444;
             border-radius: 4px;
@@ -19,6 +19,9 @@ MessageConsole::MessageConsole(QWidget* parent)
             font-size: 12px;
         }
     )");
+    // スクロールバーを非表示に
+    textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     layout->addWidget(textEdit);
     setLayout(layout);
