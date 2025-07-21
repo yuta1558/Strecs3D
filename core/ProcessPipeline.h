@@ -38,7 +38,7 @@ public:
                       const std::vector<StressDensityMapping>& mappings, double maxStress);
     bool processCuraMode(Lib3mfProcessor& processor, const std::vector<StressDensityMapping>& mappings, 
                         double maxStress);
-    bool processBambuMode(Lib3mfProcessor& processor, double maxStress);
+    bool processBambuMode(Lib3mfProcessor& processor, double maxStress, const std::vector<StressDensityMapping>& mappings);
     bool processBambuZipFiles();
     
     // エラーハンドリング

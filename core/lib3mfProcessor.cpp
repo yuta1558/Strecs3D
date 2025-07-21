@@ -193,7 +193,12 @@ bool Lib3mfProcessor::save3mf(const std::string outputFilename){
 }
 
 
-bool Lib3mfProcessor::setMetaDataBambu(double maxStress){
+bool Lib3mfProcessor::setMetaDataBambu(double maxStress) {
+    std::vector<StressDensityMapping> emptyMappings;
+    return setMetaDataBambu(maxStress, emptyMappings);
+}
+
+bool Lib3mfProcessor::setMetaDataBambu(double maxStress, const std::vector<StressDensityMapping>& mappings){
     auto meshIterator = model->GetMeshObjects();
     std::regex filePattern(
         R"(^dividedMesh(\d+)_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)\.stl$)"
@@ -203,30 +208,21 @@ bool Lib3mfProcessor::setMetaDataBambu(double maxStress){
         auto name = currentMesh->GetName();
         currentMesh->SetType(Lib3MF::eObjectType::Other);
 
-        std::cout << "Object name: " << name << std::endl;
-        std::cout << "Object type: " << static_cast<Lib3MF_int32>(currentMesh->GetType())<< std::endl;
-
         std::map<std::string, FileInfo> fileInfoMap;
         std::smatch match;
         if (std::regex_match(name, match, filePattern)) {
             std::string id_str = match[1].str();
             std::string minStress_str = match[2].str();
             std::string maxStress_str = match[3].str();
-            std::cout << "Object name: " << name << std::endl;
-            std::cout << "ID: " << id_str << std::endl;
-            std::cout << "minStress: " << minStress_str << std::endl;
-            std::cout << "maxStress: " << maxStress_str << std::endl;
-            std::cout << "----------------------" << std::endl;  
             FileInfo fileInfo;
             fileInfo.id = std::stoi(id_str);
             fileInfo.name = name;
             fileInfo.minStress = std::stod(minStress_str);
             fileInfo.maxStress = std::stod(maxStress_str);
             fileInfoMap[name] = fileInfo;
-            setMetaDataForInfillMeshBambu(currentMesh, fileInfoMap[name], maxStress);
+            setMetaDataForInfillMeshBambu(currentMesh, fileInfoMap[name], maxStress, mappings);
         }
         else{
-            std::cerr << "Process Outline mesh" << std::endl;
             setMetaDataForOutlineMeshBambu(currentMesh);
         }
     }
@@ -238,14 +234,22 @@ bool Lib3mfProcessor::setMetaDataBambu(double maxStress){
     return true;
 }
 
+bool Lib3mfProcessor::setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress) {
+    std::vector<StressDensityMapping> emptyMappings;
+    return setMetaDataForInfillMeshBambu(Mesh, fileInfo, maxStress, emptyMappings);
+}
 
-bool Lib3mfProcessor::setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress){
+bool Lib3mfProcessor::setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress, const std::vector<StressDensityMapping>& mappings){
     xmlconverter::Part part;
-
     double aveStress = (fileInfo.minStress + fileInfo.maxStress) / 2;
-    int density = aveStress / maxStress * 100;
+    int density = 0;
+    for (const auto& mapping : mappings) {
+        if (aveStress >= mapping.stressMin && aveStress < mapping.stressMax) {
+            density = static_cast<int>(mapping.density);
+            break;
+        }
+    }
     std::string density_str = std::to_string(density);
-
     part.id = fileInfo.id;
     part.subtype = "modifier_part";
     part.metadata.push_back({"name", fileInfo.name});
@@ -261,7 +265,6 @@ bool Lib3mfProcessor::setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, Fi
     part.metadata.push_back({"sparse_infill_anchor_max", "5"});
     part.metadata.push_back({"sparse_infill_density", density_str});
     part.mesh_stat = {0, 0, 0, 0, 0};
-
     object.parts.push_back(part);
     return true;
 }

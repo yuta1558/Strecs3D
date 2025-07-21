@@ -35,7 +35,9 @@ class Lib3mfProcessor{
         bool assembleObjects();
 
         bool setMetaDataBambu(double maxStress);
+        bool setMetaDataBambu(double maxStress, const std::vector<StressDensityMapping>& mappings);
         bool setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress);
+        bool setMetaDataForInfillMeshBambu(Lib3MF::PMeshObject Mesh, FileInfo fileInfo, double maxStress, const std::vector<StressDensityMapping>& mappings);
         bool setMetaDataForOutlineMeshBambu(Lib3MF::PMeshObject Mesh);
 
         bool setObjectDataBambu(int meshCount);

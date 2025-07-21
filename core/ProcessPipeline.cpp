@@ -81,7 +81,7 @@ bool ProcessPipeline::processByMode(Lib3mfProcessor& processor, const QString& m
     if (mode == "cura") {
         return processCuraMode(processor, mappings, maxStress);
     } else if (mode == "bambu") {
-        return processBambuMode(processor, maxStress);
+        return processBambuMode(processor, maxStress, mappings);
     }
     throw std::runtime_error("Unknown mode: " + mode.toStdString());
 }
@@ -103,9 +103,9 @@ bool ProcessPipeline::processCuraMode(Lib3mfProcessor& processor, const std::vec
     return true;
 }
 
-bool ProcessPipeline::processBambuMode(Lib3mfProcessor& processor, double maxStress) {
+bool ProcessPipeline::processBambuMode(Lib3mfProcessor& processor, double maxStress, const std::vector<StressDensityMapping>& mappings) {
     std::cout << "Processing in Bambu mode" << std::endl;
-    processor.setMetaDataBambu(maxStress);
+    processor.setMetaDataBambu(maxStress, mappings);
     const std::string tempFile = ".temp/result.3mf";
     if (!processor.save3mf(tempFile)) {
         throw std::runtime_error("Failed to save temporary 3MF file");
