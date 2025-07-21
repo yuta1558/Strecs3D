@@ -54,6 +54,8 @@ DensitySlider::DensitySlider(QWidget* parent)
         connect(edit, &QLineEdit::editingFinished, this, &DensitySlider::onPercentEditChanged);
         m_percentEdits.push_back(edit);
     }
+    updateInitialHandles();
+    updateStressDensityMappings();
 }
 
 QSize DensitySlider::minimumSizeHint() const {
@@ -71,6 +73,8 @@ std::vector<int> DensitySlider::handlePositions() const {
 void DensitySlider::setStressRange(double minStress, double maxStress) {
     m_minStress = minStress;
     m_maxStress = maxStress;
+    updateInitialHandles();
+    updateStressDensityMappings();
     update();
 }
 
@@ -210,6 +214,7 @@ void DensitySlider::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     updatePercentEditPositions();
     updateInitialHandles();
+    updateStressDensityMappings();
 }
 
 int DensitySlider::handleAtPosition(const QPoint& pos) const {
