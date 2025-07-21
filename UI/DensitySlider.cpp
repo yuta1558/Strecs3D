@@ -152,6 +152,39 @@ void DensitySlider::paintEvent(QPaintEvent*) {
 
     // パーセント入力欄の位置を更新
     updatePercentEditPositions();
+
+    // スライダー右側に-90度回転した「von Mises Stress[Pa]」ラベルを描画
+    painter.save();
+    QFont labelFont = painter.font();
+    labelFont.setPointSize(11); // お好みで調整
+    labelFont.setBold(true);
+    painter.setFont(labelFont);
+    painter.setPen(Qt::white);
+    // 描画位置を決める
+    int labelY = top + (bottom - top) / 2; // スライダー中央
+    int verticalLabelX = gradLeft - 60; // グラデーションバーより左に50px余白（必要に応じて調整）
+    painter.translate(verticalLabelX, labelY);
+    painter.rotate(-90);
+    QString verticalLabel = "von Mises Stress[Pa]";
+    QRect textRect(- (bottom - top) / 2, -40, (bottom - top), 80); // 幅・高さは調整
+    painter.drawText(textRect, Qt::AlignCenter, verticalLabel);
+    painter.restore();
+
+    // スライダー右側に-90度回転した「Infill Density [%]」ラベルを描画
+    painter.save();
+    QFont rightLabelFont = painter.font();
+    rightLabelFont.setPointSize(11);
+    rightLabelFont.setBold(true);
+    painter.setFont(rightLabelFont);
+    painter.setPen(Qt::white);
+    int rightLabelY = top + (bottom - top) / 2;
+    int rightLabelX = right + 70; // パーセント欄よりさらに右
+    painter.translate(rightLabelX, rightLabelY);
+    painter.rotate(-90);
+    QString rightVerticalLabel = "Infill Density [%]";
+    QRect rightTextRect(- (bottom - top) / 2, -40, (bottom - top), 80);
+    painter.drawText(rightTextRect, Qt::AlignCenter, rightVerticalLabel);
+    painter.restore();
 }
 
 void DensitySlider::updatePercentEditPositions() {
