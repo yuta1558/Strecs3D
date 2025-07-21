@@ -26,13 +26,39 @@ void DisplayOptionsContainer::setupUI()
     dividedMeshWidget3 = new ObjectDisplayOptionsWidget("Divided Mesh 3", this);
     dividedMeshWidget4 = new ObjectDisplayOptionsWidget("Divided Mesh 4", this);
 
+    // 4分割メッシュウィジェットのサイズを小さくする
+    int dividedWidgetHeight = 50; // 小さめの高さ
+    dividedMeshWidget1->setMinimumHeight(dividedWidgetHeight);
+    dividedMeshWidget2->setMinimumHeight(dividedWidgetHeight);
+    dividedMeshWidget3->setMinimumHeight(dividedWidgetHeight);
+    dividedMeshWidget4->setMinimumHeight(dividedWidgetHeight);
+
+    // 4つのウィジェットをQFrameで囲む
+    QFrame* dividedFrame = new QFrame(this);
+    dividedFrame->setFrameShape(QFrame::StyledPanel);
+    dividedFrame->setFrameShadow(QFrame::Raised);
+    dividedFrame->setStyleSheet(
+        "QFrame {"
+        "  border: 1px solid rgba(200,200,200,0.3);"
+        "  border-radius: 4px;"
+        "  background: transparent;"
+        "  margin-top: 4px;"
+        "  margin-bottom: 4px;"
+        "}"
+    );
+    QVBoxLayout* dividedLayout = new QVBoxLayout(dividedFrame);
+    dividedLayout->setContentsMargins(8, 8, 8, 8);
+    dividedLayout->setSpacing(6);
+    dividedLayout->addWidget(dividedMeshWidget1);
+    dividedLayout->addWidget(dividedMeshWidget2);
+    dividedLayout->addWidget(dividedMeshWidget3);
+    dividedLayout->addWidget(dividedMeshWidget4);
+
     // レイアウトに追加
     containerLayout->addWidget(stlDisplayWidget);
     containerLayout->addWidget(vtkDisplayWidget);
-    containerLayout->addWidget(dividedMeshWidget1);
-    containerLayout->addWidget(dividedMeshWidget2);
-    containerLayout->addWidget(dividedMeshWidget3);
-    containerLayout->addWidget(dividedMeshWidget4);
+    containerLayout->addSpacing(100); // 上2つと4つのフレームの間に隙間を追加
+    containerLayout->addWidget(dividedFrame);
     containerLayout->addStretch(); // 下部にスペースを追加
 }
 

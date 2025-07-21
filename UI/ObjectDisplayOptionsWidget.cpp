@@ -17,7 +17,7 @@ ObjectDisplayOptionsWidget::ObjectDisplayOptionsWidget(const QString& fileName, 
     QFontMetrics metrics(fileNameLabel->font());
     QString elided = metrics.elidedText(displayName, Qt::ElideMiddle, fileNameLabel->maximumWidth());
     fileNameLabel->setText(elided);
-    fileNameLabel->setStyleSheet("background: transparent;");
+    fileNameLabel->setStyleSheet("background: transparent; border: none;");
     visibilityButton = new CustomCheckBox(this);
     visibilityButton->setChecked(true);
     opacitySlider = new QSlider(Qt::Horizontal, this);
