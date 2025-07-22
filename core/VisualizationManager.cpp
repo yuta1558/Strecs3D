@@ -1,6 +1,6 @@
 #include "VisualizationManager.h"
-#include "../UI/mainwindowui.h"
 #include "VtkProcessor.h"
+#include "../UI/mainwindowui.h"
 #include <QMessageBox>
 #include <QString>
 #include <QObject>
@@ -332,7 +332,7 @@ void VisualizationManager::setupScalarBar(VtkProcessor* vtkProcessor) {
     if (lookupTable) {
         vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
         scalarBar->SetLookupTable(lookupTable);
-        scalarBar->SetTitle("von Mises Stress");
+        scalarBar->SetTitle(VtkProcessor::VON_MISES_STRESS_LABEL);
         scalarBar->GetLabelTextProperty()->SetColor(1, 1, 1);
         scalarBar->GetTitleTextProperty()->SetColor(1, 1, 1);
         scalarBar->SetNumberOfLabels(5);

@@ -51,6 +51,9 @@
 
 class VtkProcessor{
 
+public:
+    static constexpr const char* VON_MISES_STRESS_LABEL = "von Mises Stress";
+
 private:
     std::string vtuFileName;
     vtkSmartPointer<vtkUnstructuredGrid> vtuData;

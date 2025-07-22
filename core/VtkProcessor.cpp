@@ -28,7 +28,7 @@ bool VtkProcessor:: LoadAndPrepareData() {
     }
 
     vtkPointData* pointData = vtuData->GetPointData();
-    pointData->SetActiveScalars("von Mises Stress");
+    pointData->SetActiveScalars(VON_MISES_STRESS_LABEL);
     vtuData->GetScalarRange(stressRange);
 
     minStress = stressRange[0];
@@ -42,7 +42,7 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::extractRegionInRange(double lowerBoun
     clip_min->SetInputData(vtuData);
     clip_min->SetValue(lowerBound);
     clip_min->SetInsideOut(false);  // min_val より大きい領域を保持
-    clip_min->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "von Mises Stress");
+    clip_min->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, VON_MISES_STRESS_LABEL);
     clip_min->Update();
 
     // 3. クリップフィルタ2: max_val 以下の領域を抽出
@@ -50,7 +50,7 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::extractRegionInRange(double lowerBoun
     clip_max->SetInputConnection(clip_min->GetOutputPort());
     clip_max->SetValue(upperBound);
     clip_max->SetInsideOut(true);  // max_val より小さい領域を保持
-    clip_max->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, "von Mises Stress");
+    clip_max->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, VON_MISES_STRESS_LABEL);
     clip_max->Update();
 
     // 最終的な結果: min_val と max_val の間の値を持つ領域
@@ -145,7 +145,7 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
     std::cerr << "Error: No point data found in the file." << std::endl;
         return nullptr;
     }
-    pointData->SetActiveScalars("von Mises Stress");
+    pointData->SetActiveScalars(VON_MISES_STRESS_LABEL);
 
     // ストレスのレンジを取得
     double stressRange[2];
