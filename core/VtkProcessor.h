@@ -51,8 +51,6 @@
 
 class VtkProcessor{
 
-public:
-    static constexpr const char* VON_MISES_STRESS_LABEL = "von Mises Stress";
 
 private:
     std::string vtuFileName;
@@ -64,6 +62,7 @@ private:
     std::vector<float> stressValues;
     std::vector<vtkSmartPointer<vtkPolyData>> dividedMeshes;
     vtkSmartPointer<vtkLookupTable> currentLookupTable;
+    std::string detectedStressLabel; // 検出されたストレスラベルを保存
 
 public:
     VtkProcessor(const std::string& vtuFileName);
@@ -90,6 +89,14 @@ public:
         float minValue,
         float maxValue) const;
     vtkSmartPointer<vtkLookupTable> getCurrentLookupTable() const { return currentLookupTable; }
+    
+    // 新しいメソッド: ストレスラベルを検出
+    std::string detectStressLabel();
+    std::string getDetectedStressLabel() const { return detectedStressLabel; }
+    
+    // ファイル名を設定するメソッド
+    void setVtuFileName(const std::string& fileName) { vtuFileName = fileName; }
+
 };
 
 #endif

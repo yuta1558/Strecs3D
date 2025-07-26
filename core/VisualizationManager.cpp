@@ -332,7 +332,7 @@ void VisualizationManager::setupScalarBar(VtkProcessor* vtkProcessor) {
     if (lookupTable) {
         vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
         scalarBar->SetLookupTable(lookupTable);
-        scalarBar->SetTitle(VtkProcessor::VON_MISES_STRESS_LABEL);
+        scalarBar->SetTitle(vtkProcessor->getDetectedStressLabel().c_str());
         scalarBar->GetLabelTextProperty()->SetColor(1, 1, 1);
         scalarBar->GetTitleTextProperty()->SetColor(1, 1, 1);
         scalarBar->SetNumberOfLabels(5);

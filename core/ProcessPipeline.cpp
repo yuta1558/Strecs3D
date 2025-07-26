@@ -31,6 +31,16 @@ bool ProcessPipeline::initializeVtkProcessor(const std::string& vtkFile, const s
         }
         return false;
     }
+    
+    // VtkProcessorにファイル名を設定し、データを読み込む
+    vtkProcessor->setVtuFileName(vtkFile);
+    if (!vtkProcessor->LoadAndPrepareData()) {
+        if (parent) {
+            QMessageBox::critical(parent, "Error", "Failed to load VTK file: " + QString::fromStdString(vtkFile));
+        }
+        return false;
+    }
+    
     vtkProcessor->showInfo();
     vtkProcessor->prepareStressValues(thresholds);
     return true;

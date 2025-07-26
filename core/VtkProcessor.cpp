@@ -5,6 +5,7 @@
 #include <sstream>
 #include <QColor>
 #include <algorithm>
+#include <vector>
 
 VtkProcessor::VtkProcessor(const std::string& vtuFileName): vtuFileName(vtuFileName) {
     // renderWindow->AddRenderer(renderer);
@@ -13,6 +14,62 @@ VtkProcessor::VtkProcessor(const std::string& vtuFileName): vtuFileName(vtuFileN
 
 void VtkProcessor::showInfo(){
     std::cout << "VTK file: " << vtuFileName << std::endl;
+}
+
+std::string VtkProcessor::detectStressLabel() {
+    if (!vtuData) {
+        std::cerr << "Error: No VTU data available for label detection." << std::endl;
+        return "";
+    }
+
+    vtkPointData* pointData = vtuData->GetPointData();
+    int numArrays = pointData->GetNumberOfArrays();
+    
+    // 候補となるラベル名
+    std::vector<std::string> candidateLabels = {
+        "von Mises Stress",
+        "Stress:von Mises",
+        "von Mises",
+        "Stress"
+    };
+    
+    // 利用可能な配列名をチェック
+    for (const auto& candidate : candidateLabels) {
+        for (int i = 0; i < numArrays; ++i) {
+            const char* arrayName = pointData->GetArrayName(i);
+            if (arrayName && std::string(arrayName) == candidate) {
+                std::cout << "Detected stress label: " << candidate << std::endl;
+                return candidate;
+            }
+        }
+    }
+    
+    // 完全一致が見つからない場合、部分一致を試す
+    for (int i = 0; i < numArrays; ++i) {
+        const char* arrayName = pointData->GetArrayName(i);
+        if (arrayName) {
+            std::string name(arrayName);
+            if (name.find("von") != std::string::npos || 
+                name.find("Mises") != std::string::npos ||
+                name.find("stress") != std::string::npos ||
+                name.find("Stress") != std::string::npos) {
+                std::cout << "Detected stress label (partial match): " << name << std::endl;
+                return name;
+            }
+        }
+    }
+    
+    // デフォルトとして最初のスカラー配列を使用
+    if (numArrays > 0) {
+        const char* defaultName = pointData->GetArrayName(0);
+        if (defaultName) {
+            std::cout << "Using default array as stress label: " << defaultName << std::endl;
+            return std::string(defaultName);
+        }
+    }
+    
+    std::cerr << "Error: No suitable stress label found." << std::endl;
+    return "";
 }
 
 bool VtkProcessor:: LoadAndPrepareData() {
@@ -27,8 +84,15 @@ bool VtkProcessor:: LoadAndPrepareData() {
         return false;
     }
 
+    // ストレスラベルを動的に検出
+    detectedStressLabel = detectStressLabel();
+    if (detectedStressLabel.empty()) {
+        std::cerr << "Error: Could not detect stress label." << std::endl;
+        return false;
+    }
+
     vtkPointData* pointData = vtuData->GetPointData();
-    pointData->SetActiveScalars(VON_MISES_STRESS_LABEL);
+    pointData->SetActiveScalars(detectedStressLabel.c_str());
     vtuData->GetScalarRange(stressRange);
 
     minStress = stressRange[0];
@@ -42,7 +106,7 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::extractRegionInRange(double lowerBoun
     clip_min->SetInputData(vtuData);
     clip_min->SetValue(lowerBound);
     clip_min->SetInsideOut(false);  // min_val より大きい領域を保持
-    clip_min->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, VON_MISES_STRESS_LABEL);
+    clip_min->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, detectedStressLabel.c_str());
     clip_min->Update();
 
     // 3. クリップフィルタ2: max_val 以下の領域を抽出
@@ -50,7 +114,7 @@ vtkSmartPointer<vtkPolyData> VtkProcessor::extractRegionInRange(double lowerBoun
     clip_max->SetInputConnection(clip_min->GetOutputPort());
     clip_max->SetValue(upperBound);
     clip_max->SetInsideOut(true);  // max_val より小さい領域を保持
-    clip_max->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, VON_MISES_STRESS_LABEL);
+    clip_max->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, detectedStressLabel.c_str());
     clip_max->Update();
 
     // 最終的な結果: min_val と max_val の間の値を持つ領域
@@ -128,24 +192,34 @@ vtkSmartPointer<vtkActor> VtkProcessor::getVtuActor(const std::string& fileName)
     reader->Update();
 
     // 読み込んだデータセットを取得
-    vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid =
-    vtuData = reader->GetOutput();
+    vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = reader->GetOutput();
     if (!unstructuredGrid){
-    std::cerr << "Error: Unable to read the VTK file." << std::endl;
-        return nullptr;
-    }
-    if (!vtuData) {
         std::cerr << "Error: Unable to read the VTK file." << std::endl;
         return nullptr;
     }
 
-    // "von Mises Stress" をアクティブスカラーとして設定
-    vtkPointData* pointData = unstructuredGrid->GetPointData();
-    if (!pointData){
-    std::cerr << "Error: No point data found in the file." << std::endl;
+    // 一時的にvtuDataを設定してラベル検出を行う
+    vtkSmartPointer<vtkUnstructuredGrid> originalVtuData = vtuData;
+    vtuData = unstructuredGrid;
+    
+    // ストレスラベルを検出
+    std::string stressLabel = detectStressLabel();
+    if (stressLabel.empty()) {
+        std::cerr << "Error: Could not detect stress label." << std::endl;
+        vtuData = originalVtuData;
         return nullptr;
     }
-    pointData->SetActiveScalars(VON_MISES_STRESS_LABEL);
+    
+    // 元のvtuDataを復元
+    vtuData = originalVtuData;
+
+    // ストレスラベルをアクティブスカラーとして設定
+    vtkPointData* pointData = unstructuredGrid->GetPointData();
+    if (!pointData){
+        std::cerr << "Error: No point data found in the file." << std::endl;
+        return nullptr;
+    }
+    pointData->SetActiveScalars(stressLabel.c_str());
 
     // ストレスのレンジを取得
     double stressRange[2];
