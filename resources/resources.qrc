@@ -4,5 +4,6 @@
         <file>logo_type.png</file>
         <file>eye.png</file>
         <file>eye_slash.png</file>
+        <file>strecs_icon.png</file>
     </qresource>
 </RCC> 
