@@ -2,6 +2,7 @@
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
 #include "../utils/fileUtility.h"
+#include "../utils/tempPathUtility.h"
 #include <QMessageBox>
 #include <iostream>
 #include <stdexcept>
@@ -105,7 +106,7 @@ bool ProcessPipeline::processCuraMode(Lib3mfProcessor& processor, const std::vec
     if (!processor.assembleObjects()) {
         throw std::runtime_error("Failed to assemble objects");
     }
-    const std::string outputPath = ".temp/result/result.3mf";
+    const std::string outputPath = TempPathUtility::getTempFilePath("result/result.3mf").toStdString();
     if (!processor.save3mf(outputPath)) {
         throw std::runtime_error("Failed to save 3MF file");
     }
@@ -116,7 +117,7 @@ bool ProcessPipeline::processCuraMode(Lib3mfProcessor& processor, const std::vec
 bool ProcessPipeline::processBambuMode(Lib3mfProcessor& processor, double maxStress, const std::vector<StressDensityMapping>& mappings) {
     std::cout << "Processing in Bambu mode" << std::endl;
     processor.setMetaDataBambu(maxStress, mappings);
-    const std::string tempFile = ".temp/result.3mf";
+    const std::string tempFile = TempPathUtility::getTempFilePath("result.3mf").toStdString();
     if (!processor.save3mf(tempFile)) {
         throw std::runtime_error("Failed to save temporary 3MF file");
     }
@@ -124,9 +125,9 @@ bool ProcessPipeline::processBambuMode(Lib3mfProcessor& processor, double maxStr
 }
 
 bool ProcessPipeline::processBambuZipFiles() {
-    const std::string extractDir = ".temp/3mf";
-    const std::string zipFile = ".temp/result.3mf";
-    const std::string outputFile = ".temp/result/result.3mf";
+    const std::string extractDir = TempPathUtility::getTempSubDirPath("3mf").string();
+    const std::string zipFile = TempPathUtility::getTempFilePath("result.3mf").toStdString();
+    const std::string outputFile = TempPathUtility::getTempFilePath("result/result.3mf").toStdString();
     if (!FileUtility::unzipFile(zipFile, extractDir)) {
         throw std::runtime_error("Failed to extract ZIP file");
     }

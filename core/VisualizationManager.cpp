@@ -1,6 +1,7 @@
 #include "VisualizationManager.h"
 #include "VtkProcessor.h"
 #include "../UI/mainwindowui.h"
+#include "../utils/tempPathUtility.h"
 #include <QMessageBox>
 #include <QString>
 #include <QObject>
@@ -71,7 +72,7 @@ void VisualizationManager::showTempDividedStl(VtkProcessor* vtkProcessor, QWidge
 // ==================== STL分割表示系 ====================
 
 std::vector<std::pair<std::filesystem::path, int>> VisualizationManager::fetchDividedStlFiles() {
-    std::filesystem::path tempDir = ".temp/div";
+    std::filesystem::path tempDir = TempPathUtility::getTempSubDirPath("div");
     if (!std::filesystem::exists(tempDir)) {
         throw std::runtime_error(".temp directory does not exist");
     }

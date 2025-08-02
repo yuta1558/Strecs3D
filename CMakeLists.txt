@@ -106,6 +106,7 @@ add_executable(Strecs3D
   core/lib3mfProcessor.cpp
   utils/fileUtility.cpp
   utils/xmlConverter.cpp
+  utils/tempPathUtility.cpp
   core/ApplicationController.cpp
   core/ProcessPipeline.cpp
   core/VisualizationManager.cpp

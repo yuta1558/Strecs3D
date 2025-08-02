@@ -1,4 +1,5 @@
 #include "VtkProcessor.h"
+#include "../utils/tempPathUtility.h"
 #include <filesystem>
 #include <iostream>
 #include <iomanip>
@@ -157,8 +158,7 @@ void VtkProcessor::prepareStressValues(const std::vector<double>& thresholds) {
 }
 
 void VtkProcessor::savePolyDataAsSTL(vtkPolyData* polyData, const std::string& fileName) {
-    std::filesystem::path currentPath = std::filesystem::current_path();
-    std::filesystem::path tempDirPath = currentPath / ".temp/div";
+    std::filesystem::path tempDirPath = TempPathUtility::getTempSubDirPath("div");
     // .tempディレクトリが存在しなければ作成
     if (!std::filesystem::exists(tempDirPath)) {
         try {

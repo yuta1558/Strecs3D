@@ -1,6 +1,6 @@
 #include "ExportManager.h"
+#include "../utils/tempPathUtility.h"
 
-const QString ExportManager::SOURCE_PATH = QDir::currentPath() + "/.temp/result/result.3mf";
 const QString ExportManager::FILE_FILTER = "3MF Files (*.3mf)";
 
 ExportManager::ExportManager() = default;
@@ -8,7 +8,8 @@ ExportManager::ExportManager() = default;
 ExportManager::~ExportManager() = default;
 
 bool ExportManager::export3mfFile(const std::string& stlFile, QWidget* parent) {
-    if (!check3mfFileExists()) {
+    QString sourcePath = TempPathUtility::getTempFilePath("result/result.3mf");
+    if (!check3mfFileExists(sourcePath)) {
         if (parent) {
             QMessageBox::warning(parent, "Error", "No 3MF file found in result directory.");
         }
@@ -39,7 +40,7 @@ bool ExportManager::export3mfFile(const std::string& stlFile, QWidget* parent) {
         }
     }
     
-    if (QFile::copy(SOURCE_PATH, savePath)) {
+    if (QFile::copy(sourcePath, savePath)) {
         if (parent) {
             QMessageBox::information(parent, "Success", "3MF file exported successfully.");
         }
@@ -52,8 +53,8 @@ bool ExportManager::export3mfFile(const std::string& stlFile, QWidget* parent) {
     }
 }
 
-bool ExportManager::check3mfFileExists() const {
-    return QFile::exists(SOURCE_PATH);
+bool ExportManager::check3mfFileExists(const QString& sourcePath) const {
+    return QFile::exists(sourcePath);
 }
 
 QString ExportManager::generateDefaultFileName(const std::string& stlFile) const {

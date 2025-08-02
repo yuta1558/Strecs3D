@@ -1,6 +1,7 @@
 #include "ApplicationController.h"
 #include "../UI/mainwindowui.h"
 #include "../utils/fileUtility.h"
+#include "../utils/tempPathUtility.h"
 #include "VtkProcessor.h"
 #include <QDir>
 #include <QFileInfo>
@@ -206,7 +207,7 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
 
 void ApplicationController::cleanupTempFiles()
 {
-    std::filesystem::path tempFiledir = ".temp/div";
+    std::filesystem::path tempFiledir = TempPathUtility::getTempSubDirPath("div");
     FileUtility::clearDirectoryContents(tempFiledir);
 }
 

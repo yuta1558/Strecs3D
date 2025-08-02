@@ -1,5 +1,6 @@
 #include "lib3mfProcessor.h"
 #include "../utils/xmlConverter.h"
+#include "../utils/tempPathUtility.h"
 
 #include <iostream>
 #include <filesystem>
@@ -12,7 +13,7 @@ namespace fs = std::filesystem;
 
 
 bool Lib3mfProcessor::getMeshes(){
-    std::string directoryPath = "./.temp/div";
+    std::string directoryPath = TempPathUtility::getTempSubDirPath("div").string();
     try {
         // ディレクトリの存在確認
         fs::path dirPath(directoryPath);
@@ -382,7 +383,7 @@ bool Lib3mfProcessor::setupBuildObjects(){
 
 bool Lib3mfProcessor::exportConfig(){
     // 出力先ディレクトリを指定
-    const std::string outputDir = ".temp/3mf/Metadata";
+    const std::string outputDir = TempPathUtility::getTempSubDirPath("3mf/Metadata").string();
     // ディレクトリが存在しなければ作成する
     std::filesystem::create_directories(outputDir);
 
