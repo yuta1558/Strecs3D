@@ -14,6 +14,17 @@ namespace fs = std::filesystem;
 bool Lib3mfProcessor::getMeshes(){
     std::string directoryPath = "./.temp/div";
     try {
+        // ディレクトリの存在確認
+        fs::path dirPath(directoryPath);
+        if (!fs::exists(dirPath)) {
+            std::cerr << "Directory does not exist: " << directoryPath << std::endl;
+            return false;
+        }
+        if (!fs::is_directory(dirPath)) {
+            std::cerr << "Path is not a directory: " << directoryPath << std::endl;
+            return false;
+        }
+        
         std::vector<fs::directory_entry> files;
 
         // ディレクトリ内のエントリを走査し、通常ファイルの場合のみ vector に追加
@@ -21,6 +32,12 @@ bool Lib3mfProcessor::getMeshes(){
             if (entry.is_regular_file()) {
                 files.push_back(entry);
             }
+        }
+
+        // ファイルが見つからない場合
+        if (files.empty()) {
+            std::cerr << "No files found in directory: " << directoryPath << std::endl;
+            return false;
         }
 
         // ファイル名で昇順にソート
@@ -39,6 +56,7 @@ bool Lib3mfProcessor::getMeshes(){
         }
     } catch (const std::filesystem::filesystem_error& e) {
         std::cerr << "file system error: " << e.what() << "\n";
+        return false;
     }
     return true;
 }
@@ -185,6 +203,18 @@ bool Lib3mfProcessor::assembleObjects(){
 
 
 bool Lib3mfProcessor::save3mf(const std::string outputFilename){
+    // 出力ディレクトリを作成
+    std::filesystem::path outputPath(outputFilename);
+    std::filesystem::path outputDir = outputPath.parent_path();
+    if (!outputDir.empty()) {
+        try {
+            std::filesystem::create_directories(outputDir);
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "Failed to create output directory: " << e.what() << std::endl;
+            return false;
+        }
+    }
+    
     PWriter writer = model->QueryWriter("3mf");
     std::cout << "Writing " << outputFilename << "..." << std::endl;
     writer->WriteToFile(outputFilename);

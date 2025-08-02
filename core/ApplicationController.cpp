@@ -206,7 +206,7 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
 
 void ApplicationController::cleanupTempFiles()
 {
-    std::filesystem::path tempFiledir = ".temp";
+    std::filesystem::path tempFiledir = ".temp/div";
     FileUtility::clearDirectoryContents(tempFiledir);
 }
 

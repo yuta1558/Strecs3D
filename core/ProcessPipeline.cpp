@@ -105,7 +105,7 @@ bool ProcessPipeline::processCuraMode(Lib3mfProcessor& processor, const std::vec
     if (!processor.assembleObjects()) {
         throw std::runtime_error("Failed to assemble objects");
     }
-    const std::string outputPath = "result/result.3mf";
+    const std::string outputPath = ".temp/result/result.3mf";
     if (!processor.save3mf(outputPath)) {
         throw std::runtime_error("Failed to save 3MF file");
     }
@@ -126,7 +126,7 @@ bool ProcessPipeline::processBambuMode(Lib3mfProcessor& processor, double maxStr
 bool ProcessPipeline::processBambuZipFiles() {
     const std::string extractDir = ".temp/3mf";
     const std::string zipFile = ".temp/result.3mf";
-    const std::string outputFile = "result/result.3mf";
+    const std::string outputFile = ".temp/result/result.3mf";
     if (!FileUtility::unzipFile(zipFile, extractDir)) {
         throw std::runtime_error("Failed to extract ZIP file");
     }

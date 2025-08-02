@@ -1,6 +1,6 @@
 #include "ExportManager.h"
 
-const QString ExportManager::SOURCE_PATH = QDir::currentPath() + "/result/result.3mf";
+const QString ExportManager::SOURCE_PATH = QDir::currentPath() + "/.temp/result/result.3mf";
 const QString ExportManager::FILE_FILTER = "3MF Files (*.3mf)";
 
 ExportManager::ExportManager() = default;

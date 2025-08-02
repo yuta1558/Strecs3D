@@ -9,6 +9,18 @@
 namespace fs = std::filesystem;
 
 bool FileUtility::zipDirectory(const std::string& directoryPath, const std::string& zipFilePath) {
+    // 出力ディレクトリを作成
+    fs::path zipPath(zipFilePath);
+    fs::path outputDir = zipPath.parent_path();
+    if (!outputDir.empty()) {
+        try {
+            fs::create_directories(outputDir);
+        } catch (const fs::filesystem_error& e) {
+            std::cerr << "出力ディレクトリの作成に失敗: " << e.what() << std::endl;
+            return false;
+        }
+    }
+    
     int errorp;
     // ZIPファイル作成（既存の場合は上書き）
     zip_t *archive = zip_open(zipFilePath.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &errorp);
