@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QDebug>
+#include <QDir> // Added for QDir
 
 QString TempPathUtility::getApplicationDir() {
     // アプリケーションの実行ファイルのディレクトリを取得
@@ -21,8 +22,17 @@ QString TempPathUtility::getApplicationDir() {
 }
 
 QString TempPathUtility::getTempDir() {
-    QString appDir = getApplicationDir();
-    return appDir + "/.temp";
+    // QStandardPaths::TempLocationを使用して書き込み可能な一時ディレクトリを取得
+    QString tempLocation = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    QString tempDir = tempLocation + "/Strecs3D.temp";
+    
+    // ディレクトリが存在しない場合は作成
+    QDir dir;
+    if (!dir.exists(tempDir)) {
+        dir.mkpath(tempDir);
+    }
+    
+    return tempDir;
 }
 
 QString TempPathUtility::getTempSubDir(const QString& subDir) {
