@@ -29,6 +29,16 @@ bool ExportManager::export3mfFile(const std::string& stlFile, QWidget* parent) {
         savePath += ".3mf";
     }
     
+    // 既存のファイルがある場合は削除
+    if (QFile::exists(savePath)) {
+        if (!QFile::remove(savePath)) {
+            if (parent) {
+                QMessageBox::critical(parent, "Error", "Failed to overwrite existing file.");
+            }
+            return false;
+        }
+    }
+    
     if (QFile::copy(SOURCE_PATH, savePath)) {
         if (parent) {
             QMessageBox::information(parent, "Success", "3MF file exported successfully.");
