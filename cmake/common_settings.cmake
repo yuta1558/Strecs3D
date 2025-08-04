@@ -9,6 +9,13 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# vcpkgの設定確認
+if(DEFINED CMAKE_TOOLCHAIN_FILE)
+  message(STATUS "Using vcpkg toolchain: ${CMAKE_TOOLCHAIN_FILE}")
+else()
+  message(WARNING "vcpkg toolchain not found. Please set VCPKG_ROOT environment variable.")
+endif()
+
 # Qt6の検索
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
@@ -21,7 +28,23 @@ else()
   message(FATAL_ERROR "Qt6 not found. Please install Qt6 development libraries.")
 endif()
 
-# 必要なパッケージの検索
+# vcpkgからlibzipを検索
+find_package(libzip REQUIRED)
+if(libzip_FOUND)
+  message(STATUS "libzip found: ${libzip_VERSION}")
+else()
+  message(FATAL_ERROR "libzip not found. Please install via vcpkg: vcpkg install libzip")
+endif()
+
+# vcpkgからlib3mfを検索
+find_package(lib3mf REQUIRED)
+if(lib3mf_FOUND)
+  message(STATUS "lib3mf found: ${lib3mf_VERSION}")
+else()
+  message(FATAL_ERROR "lib3mf not found. Please install via vcpkg: vcpkg install lib3mf")
+endif()
+
+# vcpkgからVTKを検索（Qtサポート付き）
 find_package(VTK REQUIRED
   COMPONENTS
     CommonCore
@@ -57,11 +80,15 @@ find_package(VTK REQUIRED
     InteractionStyle
     InteractionWidgets
     GUISupportQt
-    GUISupportQtQuick
     GUISupportQtSQL
 )
 
-include(${VTK_USE_FILE})
+if(VTK_FOUND)
+  message(STATUS "VTK found: ${VTK_VERSION}")
+  include(${VTK_USE_FILE})
+else()
+  message(FATAL_ERROR "VTK not found. Please install via vcpkg: vcpkg install vtk[qt]")
+endif()
 
 # 実行可能ファイルの生成
 add_executable(Strecs3D
