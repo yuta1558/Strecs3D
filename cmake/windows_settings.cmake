@@ -23,21 +23,9 @@ if(MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQT_DEPRECATED_WARNINGS")
 endif()
 
-# Windows環境でのlib3mf設定
+# Windows環境でのlib3mf設定（common_settings.cmakeで検索されるため、ここでは設定のみ）
 set(LIB3MF_ROOT "$ENV{USERPROFILE}/libs/lib3mf/lib3mf-2.3.2-Windows" CACHE PATH "Path to lib3mf installation")
-find_library(LIB3MF_LIB NAMES 3mf PATHS "${LIB3MF_ROOT}/lib" "${LIB3MF_ROOT}/lib/x64" NO_DEFAULT_PATH)
-if(NOT LIB3MF_LIB)
-  # vcpkgからlib3mfを検索
-  find_package(lib3mf CONFIG QUIET)
-  if(lib3mf_FOUND)
-    message(STATUS "Found lib3mf via vcpkg")
-    set(LIB3MF_LIB lib3mf::lib3mf)
-  else()
-    message(FATAL_ERROR "lib3mf library not found. Please install via vcpkg: vcpkg install lib3mf")
-  endif()
-else()
-  message(STATUS "Found lib3mf library: ${LIB3MF_LIB}")
-endif()
+set(LIB3MF_LIB lib3mf::lib3mf)
 
 # Windows環境でのlibzip設定
 find_package(libzip CONFIG QUIET)
@@ -59,12 +47,7 @@ endif()
 # Windows用の設定を適用する関数
 function(apply_windows_settings TARGET_NAME)
   # Windows用のインクルードパス設定
-  if(NOT lib3mf_FOUND)
-    target_include_directories(${TARGET_NAME} PRIVATE
-      "${LIB3MF_ROOT}/include"
-      "${LIB3MF_ROOT}/include/Bindings/Cpp"
-    )
-  endif()
+  # lib3mfはcommon_settings.cmakeで検索済みのため、vcpkgの設定を使用
   if(NOT libzip_FOUND)
     target_include_directories(${TARGET_NAME} PRIVATE
       ${LIBZIP_INCLUDE_DIRS}
