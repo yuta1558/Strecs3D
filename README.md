@@ -6,6 +6,8 @@
 
 ---
 
+[日本語はこちら](README_JP.md)
+
 ## Overview
 
 Strecs3D is a preprocessing software that generates optimized infill for 3D printing based on structural analysis results. It automatically sets dense infill for areas under stress and sparse infill for areas without stress, achieving both material savings and strength optimization.

@@ -5,6 +5,8 @@
 [![Build Status](https://img.shields.io/badge/build-CMake-brightgreen.svg)](CMakeLists.txt)
 
 
+[English version is here](README.md)
+
 ## 概要
 
 Strecs3Dは、構造解析結果に基づいて3Dプリント用の効率化されたインフィルを生成する前処理ソフトウェアです。力がかかる部分には密なインフィル、かからない部分には疎なインフィルを自動的に設定し、材料の節約と強度の最適化を両立させます。
