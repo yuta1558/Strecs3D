@@ -1,0 +1,71 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cmake:
+    name: ${{ matrix.os }} | ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+            build_type: Release
+            qt_arch: win64_msvc2022_64
+          - os: ubuntu-latest
+            triplet: x64-linux
+            build_type: Release
+          - os: macos-14
+            triplet: arm64-osx
+            build_type: Release
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Get CMake + Ninja
+        uses: lukka/get-cmake@v3.30
+
+      - name: Install Qt 6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          target: 'desktop'
+          cache: 'true'
+          arch: ${{ contains(matrix.os, 'windows') && matrix.qt_arch || '' }}
+
+      - name: Setup vcpkg (manifest)
+        uses: lukka/run-vcpkg@v11
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }}"
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} -- -v
+
+      # 成果物を拾いたい場合（任意）
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-${{ matrix.build_type }}-binaries
+          path: |
+            build/**
+            !build/**/CMakeFiles/**
+            !build/**/Testing/**
