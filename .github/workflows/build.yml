@@ -36,7 +36,11 @@ jobs:
 
       # ★ここを修正
       - name: Get CMake + Ninja
-        uses: lukka/get-cmake@v3
+      - uses: lukka/get-cmake@v3
+      + uses: lukka/get-cmake@latest
+      # 必要ならバージョン固定も可
+      # uses: lukka/get-cmake@v3.26.0
+
 
       - name: Install Qt 6
         uses: jurplel/install-qt-action@v4
