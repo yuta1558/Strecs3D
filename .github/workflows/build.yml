@@ -6,6 +6,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 古い実行を自動キャンセル（無駄な並列を避ける）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cmake:
     name: ${{ matrix.os }} | ${{ matrix.build_type }}
@@ -14,19 +19,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            triplet: x64-windows
-            build_type: Release
-            qt_arch: win64_msvc2022_64
           - os: ubuntu-latest
             triplet: x64-linux
             build_type: Release
-          - os: macos-14
+          - os: windows-latest
+            triplet: x64-windows
+            build_type: Release
+          - os: macos-14        # Apple Silicon
             triplet: arm64-osx
             build_type: Release
 
+    # vcpkg を Release のみ & GHAキャッシュ使用に
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_BUILD_TYPE: release
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     steps:
       - name: Checkout
@@ -34,22 +41,16 @@ jobs:
         with:
           submodules: recursive
 
-      # CMake + Ninja を取得（最新版）。固定したければ @v3.27.9 などに変更可
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # Qt 6 を導入
-      - name: Install Qt 6
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.8.3'
-          target: 'desktop'
-          cache: 'true'
-          arch: ${{ contains(matrix.os, 'windows') && matrix.qt_arch || '' }}
+      # Qt は vcpkg に統一するため、install-qt-action は使わない
 
-      # vcpkg（manifest）をセットアップ
       - name: Setup vcpkg (manifest)
         uses: lukka/run-vcpkg@v11
+        with:
+          # OS・triplet・vcpkg.jsonの変更でキャッシュを分ける
+          appendedCacheKey: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Configure (CMake + Ninja)
         run: >
@@ -57,11 +58,10 @@ jobs:
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
-          -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }}"
 
-      # Ninjaは単一構成なので --config は不要
+      # Ninja は単一構成なので --config は不要
       - name: Build
-        run: cmake --build build -- -v
+        run: cmake --build build
 
       # 成果物（任意）
       - name: Upload build artifacts
