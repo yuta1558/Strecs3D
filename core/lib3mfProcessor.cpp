@@ -173,6 +173,40 @@ bool Lib3mfProcessor::setMetaDataForOutlineMesh(Lib3MF::PMeshObject Mesh){
     return true;
 }
 
+bool Lib3mfProcessor::setMeshNamesPrusa(const std::vector<StressDensityMapping>& mappings,
+                               const std::vector<std::pair<std::string, int>>& zones) {
+    auto meshIterator = model->GetMeshObjects();
+    std::regex filePattern(
+        R"(^dividedMesh(\d+)_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)\.stl$)"
+    );
+    for (; meshIterator->MoveNext(); ) {
+        Lib3MF::PMeshObject currentMesh = meshIterator->GetCurrentMeshObject();
+        auto name = currentMesh->GetName();
+        std::smatch match;
+        if (std::regex_match(name, match, filePattern)) {
+            double minStress = std::stod(match[2].str());
+            double maxStress = std::stod(match[3].str());
+            double aveStress = (minStress + maxStress) / 2.0;
+            int density = 0;
+            for (const auto& mapping : mappings) {
+                if (aveStress >= mapping.stressMin && aveStress < mapping.stressMax) {
+                    density = static_cast<int>(mapping.density);
+                    break;
+                }
+            }
+            std::string zoneName = "UNKNOWN";
+            for (const auto& zone : zones) {
+                if (zone.second == density) {
+                    zoneName = zone.first;
+                    break;
+                }
+            }
+            currentMesh->SetName("ZONE_" + zoneName + "__infill=" + std::to_string(density));
+        }
+    }
+    return true;
+}
+
 bool Lib3mfProcessor::assembleObjects(){
     sTransform identityTransform;
     auto transform = lib3mf_getidentitytransform(&identityTransform);

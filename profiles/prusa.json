@@ -1,0 +1,7 @@
+{
+  "zones": {
+    "HIGH": { "fill_density": "50%", "fill_pattern": "gyroid" },
+    "MID":  { "fill_density": "25%", "fill_pattern": "gyroid" },
+    "LOW":  { "fill_density": "15%", "fill_pattern": "grid" }
+  }
+}

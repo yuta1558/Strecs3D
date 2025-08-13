@@ -11,6 +11,7 @@
 #include "VisualizationManager.h"
 #include "ExportManager.h"
 #include "../UI/DensitySlider.h"
+#include "Mode.h"
 
 class MainWindowUI;
 
@@ -58,7 +59,7 @@ private:
     bool validateFiles(QWidget* parent);
     std::vector<double> getStressThresholds(MainWindowUI* ui);
     std::vector<StressDensityMapping> getStressDensityMappings(MainWindowUI* ui);
-    QString getCurrentMode(MainWindowUI* ui);
+    SliceMode getCurrentMode(MainWindowUI* ui);
     
     // ファイル処理のヘルパーメソッド
     bool initializeVtkProcessor(MainWindowUI* ui, QWidget* parent);

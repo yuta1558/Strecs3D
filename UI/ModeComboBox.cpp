@@ -8,8 +8,9 @@
 ModeComboBox::ModeComboBox(QWidget* parent)
     : QComboBox(parent)
 {
-    addItem("cura");
-    addItem("bambu");
+    addItem("cura", QVariant::fromValue(static_cast<int>(SliceMode::Cura)));
+    addItem("bambu", QVariant::fromValue(static_cast<int>(SliceMode::Bambu)));
+    addItem("prusa", QVariant::fromValue(static_cast<int>(SliceMode::Prusa)));
     setMinimumHeight(40); // Buttonと同じ高さ
     setEditable(false); // どこをクリックしてもドロップダウン
     setStyleSheet(
@@ -17,6 +18,10 @@ ModeComboBox::ModeComboBox(QWidget* parent)
         "QComboBox::drop-down { subcontrol-position: right center; right: 12px; }"
     );
     m_currentColor = ColorManager::BUTTON_COLOR;
+}
+
+SliceMode ModeComboBox::currentMode() const {
+    return static_cast<SliceMode>(currentData().toInt());
 }
 
 void ModeComboBox::enterEvent(QEnterEvent* event)
