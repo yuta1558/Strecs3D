@@ -34,14 +34,11 @@ jobs:
         with:
           submodules: recursive
 
-      # ★ここを修正
+      # CMake + Ninja を取得（最新版）。固定したければ @v3.27.9 などに変更可
       - name: Get CMake + Ninja
-      - uses: lukka/get-cmake@v3
-      + uses: lukka/get-cmake@latest
-      # 必要ならバージョン固定も可
-      # uses: lukka/get-cmake@v3.26.0
+        uses: lukka/get-cmake@latest
 
-
+      # Qt 6 を導入
       - name: Install Qt 6
         uses: jurplel/install-qt-action@v4
         with:
@@ -50,10 +47,11 @@ jobs:
           cache: 'true'
           arch: ${{ contains(matrix.os, 'windows') && matrix.qt_arch || '' }}
 
+      # vcpkg（manifest）をセットアップ
       - name: Setup vcpkg (manifest)
         uses: lukka/run-vcpkg@v11
 
-      - name: Configure
+      - name: Configure (CMake + Ninja)
         run: >
           cmake -S . -B build
           -G Ninja
@@ -61,10 +59,11 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
           -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }}"
 
-      # ★Ninjaは単一構成なので --config を外す
+      # Ninjaは単一構成なので --config は不要
       - name: Build
         run: cmake --build build -- -v
 
+      # 成果物（任意）
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
