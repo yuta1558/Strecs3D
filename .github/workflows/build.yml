@@ -34,8 +34,9 @@ jobs:
         with:
           submodules: recursive
 
+      # ★ここを修正
       - name: Get CMake + Ninja
-        uses: lukka/get-cmake@v3.30
+        uses: lukka/get-cmake@v3
 
       - name: Install Qt 6
         uses: jurplel/install-qt-action@v4
@@ -56,10 +57,10 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
           -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }}"
 
+      # ★Ninjaは単一構成なので --config を外す
       - name: Build
-        run: cmake --build build --config ${{ matrix.build_type }} -- -v
+        run: cmake --build build -- -v
 
-      # 成果物を拾いたい場合（任意）
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
