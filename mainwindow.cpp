@@ -111,9 +111,9 @@ void MainWindow::export3mfFile()
     }
 }
 
-QString MainWindow::getCurrentMode() const
+SliceMode MainWindow::getCurrentMode() const
 {
-    return ui->getModeComboBox()->currentText();
+    return ui->getModeComboBox()->currentMode();
 }
 
 QString MainWindow::getCurrentStlFilename() const

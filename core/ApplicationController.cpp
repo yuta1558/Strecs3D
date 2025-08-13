@@ -166,8 +166,8 @@ bool ApplicationController::process3mfGeneration(MainWindowUI* ui, QWidget* pare
     auto mappings = getStressDensityMappings(ui);
     auto currentMode = getCurrentMode(ui);
     double maxStress = fileProcessor->getMaxStress();
-    
-    if (!fileProcessor->process3mfFile(currentMode.toStdString(), mappings, maxStress, parent)) {
+
+    if (!fileProcessor->process3mfFile(currentMode, mappings, maxStress, parent)) {
         if (parent) {
             QMessageBox::critical(parent, "Error", "Failed to process 3MF file");
         }
@@ -253,15 +253,15 @@ std::vector<StressDensityMapping> ApplicationController::getStressDensityMapping
     return {};
 }
 
-QString ApplicationController::getCurrentMode(MainWindowUI* ui)
+SliceMode ApplicationController::getCurrentMode(MainWindowUI* ui)
 {
-    if (!ui) return "cura";
-    
+    if (!ui) return SliceMode::Cura;
+
     auto comboBox = ui->getModeComboBox();
     if (comboBox) {
-        return comboBox->currentText();
+        return comboBox->currentMode();
     }
-    return "cura";
+    return SliceMode::Cura;
 }
 
 void ApplicationController::resetDividedMeshWidgets(MainWindowUI* ui)

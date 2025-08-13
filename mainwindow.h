@@ -12,6 +12,7 @@
 #include "UI/mainwindowui.h"
 #include "UI/MessageConsole.h"
 #include <QString>
+#include "core/Mode.h"
 
 class MainWindow : public QMainWindow
 {
@@ -20,7 +21,7 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
     
-    QString getCurrentMode() const;
+    SliceMode getCurrentMode() const;
     QString getCurrentStlFilename() const;
     void logMessage(const QString& message);
 

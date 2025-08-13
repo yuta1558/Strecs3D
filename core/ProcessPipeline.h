@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <vtkSmartPointer.h>
 #include "../UI/DensitySlider.h"
+#include "Mode.h"
+#include <utility>
 
 class VtkProcessor;
 class Lib3mfProcessor;
@@ -27,18 +29,20 @@ public:
     std::vector<vtkSmartPointer<vtkPolyData>> processMeshDivision();
     
     // 3MFファイル処理
-    bool process3mfFile(const std::string& mode, const std::vector<StressDensityMapping>& mappings, 
+    bool process3mfFile(SliceMode mode, const std::vector<StressDensityMapping>& mappings,
                        double maxStress, QWidget* parent = nullptr);
     
     // ファイル読み込み
     bool loadInputFiles(Lib3mfProcessor& processor, const std::string& stlFile);
     
     // モード別処理
-    bool processByMode(Lib3mfProcessor& processor, const QString& mode, 
+    bool processByMode(Lib3mfProcessor& processor, SliceMode mode,
                       const std::vector<StressDensityMapping>& mappings, double maxStress);
-    bool processCuraMode(Lib3mfProcessor& processor, const std::vector<StressDensityMapping>& mappings, 
+    bool processCuraMode(Lib3mfProcessor& processor, const std::vector<StressDensityMapping>& mappings,
                         double maxStress);
     bool processBambuMode(Lib3mfProcessor& processor, double maxStress, const std::vector<StressDensityMapping>& mappings);
+    bool processPrusaMode(Lib3mfProcessor& processor, const std::vector<StressDensityMapping>& mappings,
+                          double maxStress);
     bool processBambuZipFiles();
     
     // エラーハンドリング
@@ -52,4 +56,6 @@ private:
     std::unique_ptr<VtkProcessor> vtkProcessor;
     std::string vtkFile;
     std::string stlFile;
-}; 
+
+    std::vector<std::pair<std::string, int>> loadPrusaProfile();
+};
