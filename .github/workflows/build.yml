@@ -29,6 +29,8 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
       VCPKG_BUILD_TYPE: release
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      # ★ vcpkg に Ninja を強制指定（全ポートの CMake に効く）
+      VCPKG_CMAKE_CONFIGURE_OPTIONS: "-G;Ninja;-DCMAKE_MAKE_PROGRAM=ninja"
 
     steps:
       - name: Checkout
@@ -52,19 +54,23 @@ jobs:
           subst S: $env:GITHUB_WORKSPACE
           echo "SHORT_WS=S:\\" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Setup Ninja (Windows)
+      - name: Setup MSVC Dev Environment (Windows)
         if: runner.os == 'Windows'
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # ★ Chocolatey で ninja を導入（確実に PATH に入る）
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ninja --no-progress -y
+          ninja --version
 
       - name: Setup Python (Windows)
         if: runner.os == 'Windows'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Setup MSVC Dev Environment (Windows)
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
 
       # ---------- Unix系（macOS/Ubuntu）の必須ビルドツール ----------
       - name: Install build deps (Unix)
@@ -88,12 +94,12 @@ jobs:
               ninja
           fi
 
-      # ---------- vcpkg をセットアップ（Windowsは超短パスに配置） ----------
+      # ---------- vcpkg をセットアップ（Windowsは超短パスに配置・WS配下） ----------
       - name: Setup vcpkg (manifest) [Windows short path]
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: S:\vcpkg
+          vcpkgDirectory: ${{ env.SHORT_WS }}\vcpkg
           vcpkgJsonGlob: "vcpkg.json"
 
       - name: Setup vcpkg (manifest) [Unix]
@@ -102,13 +108,13 @@ jobs:
         with:
           vcpkgJsonGlob: "vcpkg.json"
 
-      # ---------- Windows: ビルド残骸の掃除（長パス起因の壊れを除去） ----------
+      # ---------- Windows: 以前の失敗で残った長パス成果物を掃除（harfbuzz/Qt系） ----------
       - name: Clean vcpkg buildtrees (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           foreach ($p in @("qtdeclarative","qtbase","harfbuzz")) {
-            $t = "S:\vcpkg\buildtrees\$p"
+            $t = "${{ env.SHORT_WS }}\vcpkg\buildtrees\$p"
             if (Test-Path $t) { Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue }
           }
 
@@ -118,13 +124,14 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
         env:
-          VCPKG_DOWNLOADS: S:\vcpkg_downloads
+          VCPKG_DOWNLOADS: ${{ env.SHORT_WS }}\vcpkg_downloads
         run: >
           cmake -S . -B _b
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_INSTALLED_DIR=S:/vcpkg_installed
+          -DVCPKG_INSTALLED_DIR=${{ env.SHORT_WS }}/vcpkg_installed
+          -DCMAKE_MAKE_PROGRAM=ninja
 
       - name: Build [Windows short path]
         if: runner.os == 'Windows'
