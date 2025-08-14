@@ -6,7 +6,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-# 古い実行を自動キャンセル（無駄な並列を避ける）
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -22,11 +21,10 @@ jobs:
           - os: windows-latest
             triplet: x64-windows
             build_type: Release
-          - os: macos-14        # Apple Silicon
+          - os: macos-14
             triplet: arm64-osx
             build_type: Release
 
-    # vcpkg を Release のみ & GHAキャッシュ使用に
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
       VCPKG_BUILD_TYPE: release
@@ -41,32 +39,67 @@ jobs:
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # Qt は vcpkg に統一するため、install-qt-action は使わない
+      # macOS: libpq needs autoconf; Ninja is required for -G Ninja
+      - name: Install build tools (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install autoconf automake libtool pkg-config ninja
 
-      - name: Setup vcpkg (manifest)
+      # Windows: shorten workspace path to avoid MSVC C1083 on qtdeclarative
+      - name: Map short drive on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          subst S: $env:GITHUB_WORKSPACE
+          echo "SHORT_WS=S:\\" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Setup vcpkg (manifest) [Windows short path]
+        if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          # OS・triplet・vcpkg.jsonの変更でキャッシュを分ける
+          appendedCacheKey: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
+        working-directory: ${{ env.SHORT_WS }}
+
+      - name: Setup vcpkg (manifest) [Unix]
+        if: runner.os != 'Windows'
+        uses: lukka/run-vcpkg@v11
+        with:
           appendedCacheKey: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
 
-      - name: Configure (CMake + Ninja)
+      - name: Configure (CMake + Ninja) [Windows short path]
+        if: runner.os == 'Windows'
+        working-directory: ${{ env.SHORT_WS }}
+        run: >
+          cmake -S . -B _b
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Configure (CMake + Ninja) [Unix]
+        if: runner.os != 'Windows'
         run: >
           cmake -S . -B build
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
 
-      # Ninja は単一構成なので --config は不要
-      - name: Build
+      - name: Build [Windows short path]
+        if: runner.os == 'Windows'
+        working-directory: ${{ env.SHORT_WS }}
+        run: cmake --build _b
+
+      - name: Build [Unix]
+        if: runner.os != 'Windows'
         run: cmake --build build
 
-      # 成果物（任意）
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}-${{ matrix.build_type }}-binaries
           path: |
+            _b/**
             build/**
-            !build/**/CMakeFiles/**
-            !build/**/Testing/**
+            !**/CMakeFiles/**
+            !**/Testing/**
