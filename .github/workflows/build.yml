@@ -29,7 +29,7 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
       VCPKG_BUILD_TYPE: release
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-      # ★ vcpkg に Ninja を強制指定（全ポートの CMake に効く）
+      # vcpkg内部のCMakeにNinjaを強制（Ninja未検出対策）
       VCPKG_CMAKE_CONFIGURE_OPTIONS: "-G;Ninja;-DCMAKE_MAKE_PROGRAM=ninja"
 
     steps:
@@ -41,24 +41,27 @@ jobs:
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # ---------- Windows: 長パス対策 & 必須ツール ----------
+      # ---------- Windows: “実ディレクトリ”短縮。substは使わない ----------
+      - name: Prepare short workspace (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path C:\w  | Out-Null
+          robocopy $env:GITHUB_WORKSPACE C:\w /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
+          echo "SHORT_WS=C:\w" | Out-File -FilePath $env:GITHUB_ENV -Append
+          New-Item -ItemType Directory -Force -Path C:\v  | Out-Null  # vcpkg root
+          New-Item -ItemType Directory -Force -Path C:\vd | Out-Null  # downloads
+          New-Item -ItemType Directory -Force -Path C:\vi | Out-Null  # installed
+
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: git config --system core.longpaths true
 
-      - name: Map short drive on Windows
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          subst S: $env:GITHUB_WORKSPACE
-          echo "SHORT_WS=S:\\" | Out-File -FilePath $env:GITHUB_ENV -Append
-
       - name: Setup MSVC Dev Environment (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      # ★ Chocolatey で ninja を導入（確実に PATH に入る）
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -72,7 +75,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      # ---------- Unix系（macOS/Ubuntu）の必須ビルドツール ----------
+      # ---------- Unix（macOS/Ubuntu）: ビルド必須ツール ----------
       - name: Install build deps (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -94,51 +97,51 @@ jobs:
               ninja
           fi
 
-      # ---------- vcpkg をセットアップ（Windowsは超短パスに配置・WS配下） ----------
-      - name: Setup vcpkg (manifest) [Windows short path]
+      # ---------- vcpkg（Windowsは固定短パス、macはデフォルト） ----------
+      - name: Setup vcpkg (manifest) [Windows]
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: ${{ env.SHORT_WS }}\vcpkg
+          vcpkgDirectory: C:\v
           vcpkgJsonGlob: "vcpkg.json"
+          doNotUpdateVcpkg: true   # 毎回ポート更新しない（再現性重視）
 
       - name: Setup vcpkg (manifest) [Unix]
         if: runner.os != 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: "vcpkg.json"
+          doNotUpdateVcpkg: true
 
-      # ---------- Windows: 以前の失敗で残った長パス成果物を掃除（harfbuzz/Qt系） ----------
+      # ---------- Windows: 壊れた中間物を掃除（harfbuzz/Qt系） ----------
       - name: Clean vcpkg buildtrees (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           foreach ($p in @("qtdeclarative","qtbase","harfbuzz")) {
-            $t = "${{ env.SHORT_WS }}\vcpkg\buildtrees\$p"
+            $t = "C:\v\buildtrees\$p"
             if (Test-Path $t) { Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue }
           }
 
       # ---------- Configure / Build ----------
-      # Windows: 超短ディレクトリで、vcpkg の各ディレクトリも短縮
-      - name: Configure (CMake + Ninja) [Windows short path]
+      - name: Configure (CMake + Ninja) [Windows]
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
         env:
-          VCPKG_DOWNLOADS: ${{ env.SHORT_WS }}\vcpkg_downloads
+          VCPKG_DOWNLOADS: C:\vd
         run: >
           cmake -S . -B _b
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_INSTALLED_DIR=${{ env.SHORT_WS }}/vcpkg_installed
+          -DVCPKG_INSTALLED_DIR=C:/vi
           -DCMAKE_MAKE_PROGRAM=ninja
 
-      - name: Build [Windows short path]
+      - name: Build [Windows]
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
         run: cmake --build _b
 
-      # Unix系は従来どおり
       - name: Configure (CMake + Ninja) [Unix]
         if: runner.os != 'Windows'
         run: >
@@ -161,13 +164,3 @@ jobs:
             build/**
             !**/CMakeFiles/**
             !**/Testing/**
-
-        - name: Upload harfbuzz logs (on fail)
-        if: failure() && runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: harfbuzz-logs
-          path: |
-            C:/v/buildtrees/harfbuzz/*.log
-            C:/v/buildtrees/harfbuzz/*/*.log
-
