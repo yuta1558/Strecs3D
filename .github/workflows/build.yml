@@ -39,7 +39,7 @@ jobs:
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # --- Windows: 長パス対策（gitの長パス許可 + 短いドライブにマップ） ---
+      # ---------- Windows: 長パス対策 & 必須ツール ----------
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -52,7 +52,21 @@ jobs:
           subst S: $env:GITHUB_WORKSPACE
           echo "SHORT_WS=S:\\" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # --- Unix系（macOS/Ubuntu）の必須ビルドツール導入 ---
+      - name: Setup Ninja (Windows)
+        if: runner.os == 'Windows'
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Setup Python (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup MSVC Dev Environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # ---------- Unix系（macOS/Ubuntu）の必須ビルドツール ----------
       - name: Install build deps (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -74,7 +88,7 @@ jobs:
               ninja
           fi
 
-      # --- vcpkg をセットアップ（Windowsは短いパスに配置） ---
+      # ---------- vcpkg をセットアップ（Windowsは超短パスに配置） ----------
       - name: Setup vcpkg (manifest) [Windows short path]
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
@@ -88,15 +102,17 @@ jobs:
         with:
           vcpkgJsonGlob: "vcpkg.json"
 
-      # --- Windows: 以前の失敗で残った長パス成果物を掃除（特に qtdeclarative） ---
+      # ---------- Windows: ビルド残骸の掃除（長パス起因の壊れを除去） ----------
       - name: Clean vcpkg buildtrees (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          if (Test-Path S:\vcpkg\buildtrees\qtdeclarative) { Remove-Item S:\vcpkg\buildtrees\qtdeclarative -Recurse -Force -ErrorAction SilentlyContinue }
-          if (Test-Path S:\vcpkg\buildtrees\qtbase) { Remove-Item S:\vcpkg\buildtrees\qtbase -Recurse -Force -ErrorAction SilentlyContinue }
+          foreach ($p in @("qtdeclarative","qtbase","harfbuzz")) {
+            $t = "S:\vcpkg\buildtrees\$p"
+            if (Test-Path $t) { Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue }
+          }
 
-      # --- Configure / Build ---
+      # ---------- Configure / Build ----------
       # Windows: 超短ディレクトリで、vcpkg の各ディレクトリも短縮
       - name: Configure (CMake + Ninja) [Windows short path]
         if: runner.os == 'Windows'
