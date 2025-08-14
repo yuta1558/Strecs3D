@@ -1,5 +1,7 @@
 #include "ApplicationController.h"
+#include "MainWindowUIAdapter.h"
 #include "../UI/mainwindowui.h"
+#include "../UI/DensitySlider.h"
 #include "../utils/fileUtility.h"
 #include "../utils/tempPathUtility.h"
 #include "VtkProcessor.h"
@@ -8,40 +10,34 @@
 #include <iostream>
 #include <stdexcept>
 
-ApplicationController::ApplicationController(MainWindowUI* ui)
+ApplicationController::ApplicationController(IUserInterface* ui)
     : fileProcessor(std::make_unique<ProcessPipeline>())
-    , visualizationManager(std::make_unique<VisualizationManager>(ui))
+    , visualizationManager(std::make_unique<VisualizationManager>(dynamic_cast<MainWindowUIAdapter*>(ui)->getMainWindowUI()))
     , exportManager(std::make_unique<ExportManager>())
 {
 }
 
-bool ApplicationController::openVtkFile(const std::string& vtkFile, MainWindowUI* ui)
+bool ApplicationController::openVtkFile(const std::string& vtkFile, IUserInterface* ui)
 {
     if (!ui) return false;
     
     setVtkFile(vtkFile);
     
     // VTK用ObjectDisplayOptionsWidgetのファイル名を更新
-    auto vtkDisplayWidget = ui->getVtkDisplayOptionsWidget();
-    if (vtkDisplayWidget) {
-        vtkDisplayWidget->setFileName(QString::fromStdString(vtkFile));
-        vtkDisplayWidget->setOpacity(1.0); // 追加: 不透明
-    }
+    ui->setVtkFileName(QString::fromStdString(vtkFile));
+    ui->setVtkOpacity(1.0);
+    
     // --- 追加: STLを非表示にし、チェックボックスもオフ ---
-    auto stlWidget = ui->getObjectDisplayOptionsWidget();
-    if (stlWidget) {
-        stlWidget->setVisibleState(false);
-        stlWidget->setOpacity(1.0); // 追加: 不透明
-    }
+    ui->setStlVisibilityState(false);
+    ui->setStlOpacity(1.0);
     visualizationManager->hideAllStlObjects();
     // --- ここまで追加 ---
     try {
         visualizationManager->displayVtkFile(vtkFile, fileProcessor->getVtkProcessor().get());
         
         // ストレス範囲をスライダーに設定
-        auto slider = ui->getRangeSlider();
-        if (slider && fileProcessor->getVtkProcessor()) {
-            slider->setStressRange(
+        if (fileProcessor->getVtkProcessor()) {
+            ui->setStressRange(
                 fileProcessor->getVtkProcessor()->getMinStress(),
                 fileProcessor->getVtkProcessor()->getMaxStress()
             );
@@ -55,7 +51,7 @@ bool ApplicationController::openVtkFile(const std::string& vtkFile, MainWindowUI
     }
 }
 
-bool ApplicationController::openStlFile(const std::string& stlFile, MainWindowUI* ui)
+bool ApplicationController::openStlFile(const std::string& stlFile, IUserInterface* ui)
 {
     if (!ui) return false;
     
@@ -63,10 +59,7 @@ bool ApplicationController::openStlFile(const std::string& stlFile, MainWindowUI
     setCurrentStlFilename(QString::fromStdString(stlFile));
     
     // ObjectDisplayOptionsWidgetのファイル名を更新
-    auto objectDisplayWidget = ui->getObjectDisplayOptionsWidget();
-    if (objectDisplayWidget) {
-        objectDisplayWidget->setFileName(QString::fromStdString(stlFile));
-    }
+    ui->setStlFileName(QString::fromStdString(stlFile));
     
     try {
         visualizationManager->displayStlFile(stlFile, fileProcessor->getVtkProcessor().get());
@@ -78,7 +71,7 @@ bool ApplicationController::openStlFile(const std::string& stlFile, MainWindowUI
     }
 }
 
-bool ApplicationController::processFiles(MainWindowUI* ui, QWidget* parent)
+bool ApplicationController::processFiles(IUserInterface* ui, QWidget* parent)
 {
     try {
         // Step 1: Validate input files
@@ -135,7 +128,7 @@ bool ApplicationController::validateFiles(QWidget* parent)
     return true;
 }
 
-bool ApplicationController::initializeVtkProcessor(MainWindowUI* ui, QWidget* parent)
+bool ApplicationController::initializeVtkProcessor(IUserInterface* ui, QWidget* parent)
 {
     auto thresholds = getStressThresholds(ui);
     if (!fileProcessor->initializeVtkProcessor(vtkFile, stlFile, thresholds, parent)) {
@@ -161,7 +154,7 @@ bool ApplicationController::processMeshDivision(QWidget* parent)
     return true;
 }
 
-bool ApplicationController::process3mfGeneration(MainWindowUI* ui, QWidget* parent)
+bool ApplicationController::process3mfGeneration(IUserInterface* ui, QWidget* parent)
 {
     auto mappings = getStressDensityMappings(ui);
     auto currentMode = getCurrentMode(ui);
@@ -176,7 +169,7 @@ bool ApplicationController::process3mfGeneration(MainWindowUI* ui, QWidget* pare
     return true;
 }
 
-void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget* parent)
+void ApplicationController::loadAndDisplayTempStlFiles(IUserInterface* ui, QWidget* parent)
 {
     if (!ui || !fileProcessor->getVtkProcessor()) return;
     
@@ -186,21 +179,18 @@ void ApplicationController::loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget
     resetDividedMeshWidgets(ui);
     
     // --- 追加: VTKを非表示にし、チェックボックスもオフ ---
-    auto vtkWidget = ui->getVtkDisplayOptionsWidget();
-    if (vtkWidget) {
-        vtkWidget->setVisibleState(false);
-        vtkWidget->setOpacity(1.0); // 追加: 不透明
-    }
+    ui->setVtkVisibilityState(false);
+    ui->setVtkOpacity(1.0);
     visualizationManager->hideVtkObject();
     // 分割STLウィジェットのチェックボックスをオン
-    auto d1 = ui->getDividedMeshWidget1();
-    auto d2 = ui->getDividedMeshWidget2();
-    auto d3 = ui->getDividedMeshWidget3();
-    auto d4 = ui->getDividedMeshWidget4();
-    if (d1) { d1->setVisibleState(true); d1->setOpacity(1.0); }
-    if (d2) { d2->setVisibleState(true); d2->setOpacity(1.0); }
-    if (d3) { d3->setVisibleState(true); d3->setOpacity(1.0); }
-    if (d4) { d4->setVisibleState(true); d4->setOpacity(1.0); }
+    ui->setDividedMeshVisibility(0, true);
+    ui->setDividedMeshOpacity(0, 1.0);
+    ui->setDividedMeshVisibility(1, true);
+    ui->setDividedMeshOpacity(1, 1.0);
+    ui->setDividedMeshVisibility(2, true);
+    ui->setDividedMeshOpacity(2, 1.0);
+    ui->setDividedMeshVisibility(3, true);
+    ui->setDividedMeshOpacity(3, 1.0);
     // --- ここまで追加 ---
     visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), parent);
 }
@@ -231,51 +221,38 @@ bool ApplicationController::export3mfFile(QWidget* parent)
     return exportManager->export3mfFile(stlFile, parent);
 }
 
-std::vector<double> ApplicationController::getStressThresholds(MainWindowUI* ui)
+std::vector<double> ApplicationController::getStressThresholds(IUserInterface* ui)
 {
     if (!ui) return {};
     
-    auto slider = ui->getRangeSlider();
-    if (slider) {
-        return slider->stressThresholds();
-    }
-    return {};
+    return ui->getStressThresholds();
 }
 
-std::vector<StressDensityMapping> ApplicationController::getStressDensityMappings(MainWindowUI* ui)
+std::vector<StressDensityMapping> ApplicationController::getStressDensityMappings(IUserInterface* ui)
 {
     if (!ui) return {};
     
-    auto slider = ui->getRangeSlider();
-    if (slider) {
-        return slider->stressDensityMappings();
-    }
-    return {};
+    return ui->getStressDensityMappings();
 }
 
-QString ApplicationController::getCurrentMode(MainWindowUI* ui)
+QString ApplicationController::getCurrentMode(IUserInterface* ui)
 {
     if (!ui) return "cura";
     
-    auto comboBox = ui->getModeComboBox();
-    if (comboBox) {
-        return comboBox->currentText();
-    }
-    return "cura";
+    return ui->getCurrentMode();
 }
 
-void ApplicationController::resetDividedMeshWidgets(MainWindowUI* ui)
+void ApplicationController::resetDividedMeshWidgets(IUserInterface* ui)
 {
     if (!ui) return;
     
     // 分割されたメッシュウィジェットをリセット
-    auto widget1 = ui->getDividedMeshWidget1();
-    auto widget2 = ui->getDividedMeshWidget2();
-    auto widget3 = ui->getDividedMeshWidget3();
-    auto widget4 = ui->getDividedMeshWidget4();
-    
-    if (widget1) { widget1->setFileName("Divided Mesh 1"); widget1->setOpacity(1.0); }
-    if (widget2) { widget2->setFileName("Divided Mesh 2"); widget2->setOpacity(1.0); }
-    if (widget3) { widget3->setFileName("Divided Mesh 3"); widget3->setOpacity(1.0); }
-    if (widget4) { widget4->setFileName("Divided Mesh 4"); widget4->setOpacity(1.0); }
+    ui->setDividedMeshFileName(0, "Divided Mesh 1");
+    ui->setDividedMeshOpacity(0, 1.0);
+    ui->setDividedMeshFileName(1, "Divided Mesh 2");
+    ui->setDividedMeshOpacity(1, 1.0);
+    ui->setDividedMeshFileName(2, "Divided Mesh 3");
+    ui->setDividedMeshOpacity(2, 1.0);
+    ui->setDividedMeshFileName(3, "Divided Mesh 4");
+    ui->setDividedMeshOpacity(3, 1.0);
 } 

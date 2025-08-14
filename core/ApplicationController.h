@@ -10,27 +10,27 @@
 #include "ProcessPipeline.h"
 #include "VisualizationManager.h"
 #include "ExportManager.h"
-#include "../UI/DensitySlider.h"
+#include "IUserInterface.h"
 
 class MainWindowUI;
 
 class ApplicationController {
 public:
-    ApplicationController(MainWindowUI* ui);
+    ApplicationController(IUserInterface* ui);
     ~ApplicationController() = default;
 
     // ファイル操作
-    bool openVtkFile(const std::string& vtkFile, MainWindowUI* ui);
-    bool openStlFile(const std::string& stlFile, MainWindowUI* ui);
+    bool openVtkFile(const std::string& vtkFile, IUserInterface* ui);
+    bool openStlFile(const std::string& stlFile, IUserInterface* ui);
     
     // メイン処理
-    bool processFiles(MainWindowUI* ui, QWidget* parent);
+    bool processFiles(IUserInterface* ui, QWidget* parent);
     
     // エクスポート
     bool export3mfFile(QWidget* parent);
     
     // 可視化
-    void loadAndDisplayTempStlFiles(MainWindowUI* ui, QWidget* parent);
+    void loadAndDisplayTempStlFiles(IUserInterface* ui, QWidget* parent);
     
     // 状態管理
     void setVtkFile(const std::string& vtkFile) { this->vtkFile = vtkFile; }
@@ -56,16 +56,16 @@ private:
     
     // ヘルパーメソッド
     bool validateFiles(QWidget* parent);
-    std::vector<double> getStressThresholds(MainWindowUI* ui);
-    std::vector<StressDensityMapping> getStressDensityMappings(MainWindowUI* ui);
-    QString getCurrentMode(MainWindowUI* ui);
+    std::vector<double> getStressThresholds(IUserInterface* ui);
+    std::vector<StressDensityMapping> getStressDensityMappings(IUserInterface* ui);
+    QString getCurrentMode(IUserInterface* ui);
     
     // ファイル処理のヘルパーメソッド
-    bool initializeVtkProcessor(MainWindowUI* ui, QWidget* parent);
+    bool initializeVtkProcessor(IUserInterface* ui, QWidget* parent);
     bool processMeshDivision(QWidget* parent);
-    bool process3mfGeneration(MainWindowUI* ui, QWidget* parent);
+    bool process3mfGeneration(IUserInterface* ui, QWidget* parent);
     void cleanupTempFiles();
     void showSuccessMessage(QWidget* parent);
     void handleProcessingError(const std::exception& e, QWidget* parent);
-    void resetDividedMeshWidgets(MainWindowUI* ui);
+    void resetDividedMeshWidgets(IUserInterface* ui);
 }; 

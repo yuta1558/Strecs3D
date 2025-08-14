@@ -110,6 +110,7 @@ add_executable(Strecs3D
   utils/tempPathUtility.cpp
   utils/xmlConverter.cpp
   core/ApplicationController.cpp
+  core/MainWindowUIAdapter.cpp
   core/ProcessPipeline.cpp
   core/VisualizationManager.cpp
   core/SceneDataController.cpp

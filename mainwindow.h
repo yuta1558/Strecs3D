@@ -9,6 +9,7 @@
 #include <vtkRenderer.h>
 #include <vtkPolyData.h>
 #include "core/ApplicationController.h"
+#include "core/MainWindowUIAdapter.h"
 #include "UI/mainwindowui.h"
 #include "UI/MessageConsole.h"
 #include <QString>
@@ -37,6 +38,7 @@ public slots:
 private:
     std::unique_ptr<ApplicationController> appController;
     std::unique_ptr<MainWindowUI> ui;
+    std::unique_ptr<MainWindowUIAdapter> uiAdapter;
 };
 
 #endif // MAINWINDOW_H

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "core/MainWindowUIAdapter.h"
 #include <QPushButton>
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -12,7 +13,8 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setWindowTitle("Strecs3D");
     ui = std::make_unique<MainWindowUI>(this);
-    appController = std::make_unique<ApplicationController>(ui.get());
+    uiAdapter = std::make_unique<MainWindowUIAdapter>(ui.get());
+    appController = std::make_unique<ApplicationController>(uiAdapter.get());
     setCentralWidget(ui->getCentralWidget());
     resize(1600, 900);
 
@@ -62,7 +64,7 @@ void MainWindow::openVTKFile()
     std::string vtkFile = fileName.toStdString();
     logMessage("Open VTK File: " + fileName);
     
-    if (appController->openVtkFile(vtkFile, ui.get())) {
+    if (appController->openVtkFile(vtkFile, uiAdapter.get())) {
         logMessage("VTK file loaded successfully");
     } else {
         logMessage("Failed to load VTK file");
@@ -82,7 +84,7 @@ void MainWindow::openSTLFile()
     std::string stlFile = filename.toStdString();
     logMessage("Open STL File: " + filename);
     
-    if (appController->openStlFile(stlFile, ui.get())) {
+    if (appController->openStlFile(stlFile, uiAdapter.get())) {
         logMessage("STL file loaded successfully");
     } else {
         logMessage("Failed to load STL file");
@@ -93,7 +95,7 @@ void MainWindow::processFiles()
 {
     logMessage("Starting file processing...");
     
-    if (appController->processFiles(ui.get(), this)) {
+    if (appController->processFiles(uiAdapter.get(), this)) {
         logMessage("File processing completed successfully");
     } else {
         logMessage("File processing failed");
