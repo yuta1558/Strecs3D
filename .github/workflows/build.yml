@@ -39,7 +39,20 @@ jobs:
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # Unix系（macOS/Ubuntu）の必須ビルドツール
+      # --- Windows: 長パス対策（gitの長パス許可 + 短いドライブにマップ） ---
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: git config --system core.longpaths true
+
+      - name: Map short drive on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          subst S: $env:GITHUB_WORKSPACE
+          echo "SHORT_WS=S:\\" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # --- Unix系（macOS/Ubuntu）の必須ビルドツール導入 ---
       - name: Install build deps (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -61,29 +74,41 @@ jobs:
               ninja
           fi
 
-      # Windows: 長パス対策で短いドライブ文字にマウント
-      - name: Map short drive on Windows
+      # --- vcpkg をセットアップ（Windowsは短いパスに配置） ---
+      - name: Setup vcpkg (manifest) [Windows short path]
         if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          subst S: $env:GITHUB_WORKSPACE
-          echo "SHORT_WS=S:\\" | Out-File -FilePath $env:GITHUB_ENV -Append
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: S:\vcpkg
+          vcpkgJsonGlob: "vcpkg.json"
 
-      # vcpkg（manifest）
-      - name: Setup vcpkg (manifest)
+      - name: Setup vcpkg (manifest) [Unix]
+        if: runner.os != 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: "vcpkg.json"
 
-      # Configure / Build は Windows のみ短い作業ディレクトリで実行
+      # --- Windows: 以前の失敗で残った長パス成果物を掃除（特に qtdeclarative） ---
+      - name: Clean vcpkg buildtrees (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path S:\vcpkg\buildtrees\qtdeclarative) { Remove-Item S:\vcpkg\buildtrees\qtdeclarative -Recurse -Force -ErrorAction SilentlyContinue }
+          if (Test-Path S:\vcpkg\buildtrees\qtbase) { Remove-Item S:\vcpkg\buildtrees\qtbase -Recurse -Force -ErrorAction SilentlyContinue }
+
+      # --- Configure / Build ---
+      # Windows: 超短ディレクトリで、vcpkg の各ディレクトリも短縮
       - name: Configure (CMake + Ninja) [Windows short path]
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
+        env:
+          VCPKG_DOWNLOADS: S:\vcpkg_downloads
         run: >
           cmake -S . -B _b
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_INSTALLED_DIR=S:/vcpkg_installed
 
       - name: Build [Windows short path]
         if: runner.os == 'Windows'
