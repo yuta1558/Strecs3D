@@ -59,6 +59,7 @@ jobs:
               libtool \
               pkg-config \
               ninja
+          if
 
       # Windows: 長パス対策で短いドライブ文字にマウント
       - name: Map short drive on Windows
