@@ -1,5 +1,5 @@
 #include "MainWindowUIAdapter.h"
-#include "../../UI/DensitySlider.h"
+#include "../../UI/widgets/DensitySlider.h"
 
 MainWindowUIAdapter::MainWindowUIAdapter(MainWindowUI* ui) : ui(ui)
 {

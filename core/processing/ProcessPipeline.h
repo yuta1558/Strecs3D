@@ -7,7 +7,7 @@
 #include <QWidget>
 #include <QMessageBox>
 #include <vtkSmartPointer.h>
-#include "../../UI/DensitySlider.h"
+#include "../../UI/widgets/DensitySlider.h"
 
 class VtkProcessor;
 class Lib3mfProcessor;

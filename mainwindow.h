@@ -11,7 +11,7 @@
 #include "core/application/ApplicationController.h"
 #include "core/application/MainWindowUIAdapter.h"
 #include "UI/mainwindowui.h"
-#include "UI/MessageConsole.h"
+#include "UI/widgets/MessageConsole.h"
 #include <QString>
 
 class MainWindow : public QMainWindow

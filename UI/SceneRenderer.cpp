@@ -2,7 +2,7 @@
 #include "../core/visualization/SceneDataController.h"
 #include "../core/processing/VtkProcessor.h"
 #include "mainwindowui.h"
-#include "ObjectDisplayOptionsWidget.h"
+#include "widgets/ObjectDisplayOptionsWidget.h"
 #include <QMessageBox>
 #include <QString>
 #include <vtkScalarBarActor.h>

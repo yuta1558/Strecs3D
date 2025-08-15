@@ -6,7 +6,7 @@ using namespace Lib3MF;
 
 #include "../../utils/xmlConverter.h"
 #include <vector>
-#include "../../UI/DensitySlider.h" // For StressDensityMapping
+#include "../../UI/widgets/DensitySlider.h" // For StressDensityMapping
 
 struct FileInfo {
     int id;

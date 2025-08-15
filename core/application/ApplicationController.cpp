@@ -1,7 +1,7 @@
 #include "ApplicationController.h"
 #include "MainWindowUIAdapter.h"
 #include "../../UI/mainwindowui.h"
-#include "../../UI/DensitySlider.h"
+#include "../../UI/widgets/DensitySlider.h"
 #include "../../utils/fileUtility.h"
 #include "../../utils/tempPathUtility.h"
 #include "../processing/VtkProcessor.h"

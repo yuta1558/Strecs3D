@@ -95,14 +95,14 @@ add_executable(Strecs3D
   main.cpp
   mainwindow.cpp
   UI/mainwindowui.cpp
-  UI/MessageConsole.cpp
-  UI/DensitySlider.cpp
+  UI/widgets/MessageConsole.cpp
+  UI/widgets/DensitySlider.cpp
   UI/ColorManager.cpp
-  UI/Button.cpp
-  UI/ModeComboBox.cpp
-  UI/ObjectDisplayOptionsWidget.cpp
-  UI/DisplayOptionsContainer.cpp
-  UI/CustomCheckBox.cpp
+  UI/widgets/Button.cpp
+  UI/widgets/ModeComboBox.cpp
+  UI/widgets/ObjectDisplayOptionsWidget.cpp
+  UI/widgets/DisplayOptionsContainer.cpp
+  UI/widgets/CustomCheckBox.cpp
   UI/SceneRenderer.cpp
   core/processing/VtkProcessor.cpp
   core/processing/lib3mfProcessor.cpp

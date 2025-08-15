@@ -7,10 +7,10 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QFrame>
-#include "Button.h"
+#include "widgets/Button.h"
 #include "ColorManager.h"
-#include "ObjectDisplayOptionsWidget.h"
-#include "DisplayOptionsContainer.h"
+#include "widgets/ObjectDisplayOptionsWidget.h"
+#include "widgets/DisplayOptionsContainer.h"
 
 MainWindowUI::MainWindowUI(MainWindow* mainWindow)
     : mainWindow(mainWindow)
