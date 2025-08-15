@@ -12,8 +12,7 @@ concurrency:
 
 jobs:
   cmake:
-    name: "${{ matrix.os }} | ${{
-      matrix.build_type }}"
+    name: "${{ matrix.os }} | ${{ matrix.build_type }}"
     runs-on: "${{ matrix.os }}"
     strategy:
       fail-fast: false
@@ -51,9 +50,8 @@ jobs:
           New-Item -ItemType Directory -Force -Path 'C:\w' | Out-Null
           Copy-Item "$env:GITHUB_WORKSPACE\*" 'C:\w' -Recurse -Force
           'SHORT_WS=C:\w' | Out-File -FilePath $env:GITHUB_ENV -Append
-          New-Item -ItemType Directory -Force -Path 'C:\v'  | Out-Null  # vcpkg root
-          New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null  # downloads
-          New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null  # installed
+          New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null  # vcpkg downloads
+          New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null  # vcpkg installed
 
       - name: "Enable long paths (Windows)"
         if: runner.os == 'Windows'
@@ -77,6 +75,24 @@ jobs:
         with:
           python-version: "3.12"
 
+      # ---------- Windows: vcpkg をワークスペース内にクローン＆ブートストラップ ----------
+      - name: "Clone vcpkg (Windows)"
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:SHORT_WS\vcpkg\.git")) {
+            git clone https://github.com/microsoft/vcpkg.git "$env:SHORT_WS\vcpkg"
+          } else {
+            Write-Host "vcpkg repo already exists at $env:SHORT_WS\vcpkg"
+          }
+
+      - name: "Bootstrap vcpkg (Windows)"
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & "$env:SHORT_WS\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+          if ($LASTEXITCODE -ne 0) { throw "bootstrap-vcpkg failed with code $LASTEXITCODE" }
+
       # ---------- Unix（macOS/Ubuntu）: ビルド必須ツール ----------
       - name: "Install build deps (Unix)"
         if: runner.os != 'Windows'
@@ -99,12 +115,12 @@ jobs:
               ninja
           fi
 
-      # ---------- vcpkg（Windowsは固定短パス、macはデフォルト） ----------
+      # ---------- vcpkg（Windowsは C:\w\vcpkg を使用、mac はデフォルト） ----------
       - name: "Setup vcpkg (manifest) [Windows]"
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: "C:\\v"
+          vcpkgDirectory: "${{ env.SHORT_WS }}\\vcpkg"
           vcpkgJsonGlob: "vcpkg.json"
           doNotUpdateVcpkg: true
 
@@ -121,7 +137,7 @@ jobs:
         shell: pwsh
         run: |
           foreach ($p in @('qtdeclarative','qtbase','harfbuzz')) {
-            $t = "C:\v\buildtrees\$p"
+            $t = "$env:SHORT_WS\vcpkg\buildtrees\$p"
             if (Test-Path $t) { Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue }
           }
 
@@ -132,7 +148,8 @@ jobs:
         run: |
           Write-Host 'CMake:'; cmake --version
           Write-Host 'Ninja:'; ninja --version
-          Write-Host 'Toolchain exists?'; Test-Path 'C:/v/scripts/buildsystems/vcpkg.cmake' | Out-Host
+          $tc = "$env:SHORT_WS\vcpkg\scripts\buildsystems\vcpkg.cmake"
+          Write-Host "Toolchain exists? $tc"; Test-Path $tc | Out-Host
           Write-Host 'MSVC cl:'; & "$env:VCToolsInstallDir\bin\Hostx64\x64\cl.exe" /? | Out-Null; if ($LASTEXITCODE -ne 0) { Write-Error 'MSVC cl not found' }
 
       # ---------- Configure / Build ----------
@@ -145,7 +162,7 @@ jobs:
           cmake -S . -B _b
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_TOOLCHAIN_FILE="C:/v/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_TOOLCHAIN_FILE="${{ env.SHORT_WS }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
           -DVCPKG_INSTALLED_DIR=C:/vi
           -DCMAKE_MAKE_PROGRAM=ninja
           -DCMAKE_VERBOSE_MAKEFILE=ON
@@ -175,8 +192,8 @@ jobs:
         with:
           name: "vcpkg-logs-windows"
           path: |
-            C:/v/buildtrees/**/*.log
-            C:/v/buildtrees/**/*-out.log
+            ${{ env.SHORT_WS }}/vcpkg/buildtrees/**/*.log
+            ${{ env.SHORT_WS }}/vcpkg/buildtrees/**/*-out.log
 
       - name: "Upload CMake logs (on fail, Unix)"
         if: failure() && runner.os != 'Windows'
