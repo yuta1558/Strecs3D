@@ -42,18 +42,17 @@ jobs:
 
       # ---------- Windows: 実ディレクトリ短縮（substは使わない） ----------
       - name: Prepare short workspace (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          New-Item -ItemType Directory -Force -Path "C:\w"  | Out-Null
-          robocopy "$env:GITHUB_WORKSPACE" "C:\w" /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
-          $code = $LASTEXITCODE
-          if ($code -ge 8) { Write-Error "robocopy failed with exit code $code"; exit $code }
-          "SHORT_WS=C:\w" | Out-File -FilePath $env:GITHUB_ENV -Append
-          New-Item -ItemType Directory -Force -Path "C:\v"  | Out-Null  # vcpkg root
-          New-Item -ItemType Directory -Force -Path "C:\vd" | Out-Null  # downloads
-          New-Item -ItemType Directory -Force -Path "C:\vi" | Out-Null  # installed
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+      $ErrorActionPreference = 'Stop'
+      if (Test-Path 'C:\w') { Remove-Item 'C:\w' -Recurse -Force }
+      New-Item -ItemType Directory -Force -Path 'C:\w' | Out-Null
+      Copy-Item "$env:GITHUB_WORKSPACE\*" 'C:\w' -Recurse -Force
+      'SHORT_WS=C:\w' | Out-File -FilePath $env:GITHUB_ENV -Append
+      New-Item -ItemType Directory -Force -Path 'C:\v'  | Out-Null  # vcpkg root
+      New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null  # downloads
+      New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null  # installed
 
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
