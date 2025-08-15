@@ -36,6 +36,8 @@ public slots:
     void onVtkObjectOpacityChanged(double opacity);
 
 private:
+    void setupSignalSlotConnections();
+    
     std::unique_ptr<ApplicationController> appController;
     std::unique_ptr<MainWindowUI> ui;
     std::unique_ptr<MainWindowUIAdapter> uiAdapter;

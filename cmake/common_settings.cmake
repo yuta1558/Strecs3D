@@ -111,6 +111,7 @@ add_executable(Strecs3D
   utils/xmlConverter.cpp
   core/application/ApplicationController.cpp
   core/application/MainWindowUIAdapter.cpp
+  core/interfaces/IUserInterface.cpp
   core/processing/ProcessPipeline.cpp
   core/visualization/VisualizationManager.cpp
   core/visualization/SceneDataController.cpp

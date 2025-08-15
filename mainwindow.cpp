@@ -13,10 +13,17 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setWindowTitle("Strecs3D");
     ui = std::make_unique<MainWindowUI>(this);
-    uiAdapter = std::make_unique<MainWindowUIAdapter>(ui.get());
-    appController = std::make_unique<ApplicationController>(uiAdapter.get());
+    uiAdapter = std::make_unique<MainWindowUIAdapter>(ui.get(), this);
+    appController = std::make_unique<ApplicationController>(this);
+    
+    // VisualizationManagerを初期化
+    appController->initializeVisualizationManager(ui.get());
+    
     setCentralWidget(ui->getCentralWidget());
     resize(1600, 900);
+    
+    // ApplicationControllerとMainWindowUIAdapterのシグナル・スロット接続を設定
+    setupSignalSlotConnections();
 
     // ボタン接続
     connect(ui->getOpenStlButton(), &QPushButton::clicked, this, &MainWindow::openSTLFile);
@@ -169,4 +176,48 @@ void MainWindow::onVtkObjectOpacityChanged(double opacity)
             visualizationManager->setObjectOpacity(fileName.toStdString(), opacity);
         }
     }
+}
+
+void MainWindow::setupSignalSlotConnections()
+{
+    // ApplicationControllerからIUserInterface(MainWindowUIAdapter)へのシグナル・スロット接続
+    // IUserInterfaceに定義されたスロットを使用
+    connect(appController.get(), &ApplicationController::vtkFileNameChanged,
+            uiAdapter.get(), &IUserInterface::onVtkFileNameChanged);
+    
+    connect(appController.get(), &ApplicationController::stlFileNameChanged,
+            uiAdapter.get(), &IUserInterface::onStlFileNameChanged);
+    
+    connect(appController.get(), &ApplicationController::dividedMeshFileNameChanged,
+            uiAdapter.get(), &IUserInterface::onDividedMeshFileNameChanged);
+    
+    connect(appController.get(), &ApplicationController::vtkVisibilityChanged,
+            uiAdapter.get(), &IUserInterface::onVtkVisibilityChanged);
+    
+    connect(appController.get(), &ApplicationController::stlVisibilityChanged,
+            uiAdapter.get(), &IUserInterface::onStlVisibilityChanged);
+    
+    connect(appController.get(), &ApplicationController::dividedMeshVisibilityChanged,
+            uiAdapter.get(), &IUserInterface::onDividedMeshVisibilityChanged);
+    
+    connect(appController.get(), &ApplicationController::vtkOpacityChanged,
+            uiAdapter.get(), &IUserInterface::onVtkOpacityChanged);
+    
+    connect(appController.get(), &ApplicationController::stlOpacityChanged,
+            uiAdapter.get(), &IUserInterface::onStlOpacityChanged);
+    
+    connect(appController.get(), &ApplicationController::dividedMeshOpacityChanged,
+            uiAdapter.get(), &IUserInterface::onDividedMeshOpacityChanged);
+    
+    connect(appController.get(), &ApplicationController::stressRangeChanged,
+            uiAdapter.get(), &IUserInterface::onStressRangeChanged);
+    
+    connect(appController.get(), &ApplicationController::showWarningMessage,
+            uiAdapter.get(), &IUserInterface::onShowWarningMessage);
+    
+    connect(appController.get(), &ApplicationController::showCriticalMessage,
+            uiAdapter.get(), &IUserInterface::onShowCriticalMessage);
+    
+    connect(appController.get(), &ApplicationController::showInfoMessage,
+            uiAdapter.get(), &IUserInterface::onShowInfoMessage);
 }

@@ -10,11 +10,17 @@
 #include <iostream>
 #include <stdexcept>
 
-ApplicationController::ApplicationController(IUserInterface* ui)
-    : fileProcessor(std::make_unique<ProcessPipeline>())
-    , visualizationManager(std::make_unique<VisualizationManager>(dynamic_cast<MainWindowUIAdapter*>(ui)->getMainWindowUI()))
+ApplicationController::ApplicationController(QObject* parent)
+    : QObject(parent)
+    , fileProcessor(std::make_unique<ProcessPipeline>())
+    , visualizationManager(nullptr)
     , exportManager(std::make_unique<ExportManager>())
 {
+}
+
+void ApplicationController::initializeVisualizationManager(MainWindowUI* mainWindowUI)
+{
+    visualizationManager = std::make_unique<VisualizationManager>(mainWindowUI);
 }
 
 bool ApplicationController::openVtkFile(const std::string& vtkFile, IUserInterface* ui)
@@ -24,20 +30,24 @@ bool ApplicationController::openVtkFile(const std::string& vtkFile, IUserInterfa
     setVtkFile(vtkFile);
     
     // VTK用ObjectDisplayOptionsWidgetのファイル名を更新
-    ui->setVtkFileName(QString::fromStdString(vtkFile));
-    ui->setVtkOpacity(1.0);
+    emit vtkFileNameChanged(QString::fromStdString(vtkFile));
+    emit vtkOpacityChanged(1.0);
     
     // --- 追加: STLを非表示にし、チェックボックスもオフ ---
-    ui->setStlVisibilityState(false);
-    ui->setStlOpacity(1.0);
-    visualizationManager->hideAllStlObjects();
+    emit stlVisibilityChanged(false);
+    emit stlOpacityChanged(1.0);
+    if (visualizationManager) {
+        visualizationManager->hideAllStlObjects();
+    }
     // --- ここまで追加 ---
     try {
-        visualizationManager->displayVtkFile(vtkFile, fileProcessor->getVtkProcessor().get());
+        if (visualizationManager) {
+            visualizationManager->displayVtkFile(vtkFile, fileProcessor->getVtkProcessor().get());
+        }
         
         // ストレス範囲をスライダーに設定
         if (fileProcessor->getVtkProcessor()) {
-            ui->setStressRange(
+            emit stressRangeChanged(
                 fileProcessor->getVtkProcessor()->getMinStress(),
                 fileProcessor->getVtkProcessor()->getMaxStress()
             );
@@ -59,10 +69,12 @@ bool ApplicationController::openStlFile(const std::string& stlFile, IUserInterfa
     setCurrentStlFilename(QString::fromStdString(stlFile));
     
     // ObjectDisplayOptionsWidgetのファイル名を更新
-    ui->setStlFileName(QString::fromStdString(stlFile));
+    emit stlFileNameChanged(QString::fromStdString(stlFile));
     
     try {
-        visualizationManager->displayStlFile(stlFile, fileProcessor->getVtkProcessor().get());
+        if (visualizationManager) {
+            visualizationManager->displayStlFile(stlFile, fileProcessor->getVtkProcessor().get());
+        }
         return true;
     }
     catch (const std::exception& e) {
@@ -114,15 +126,11 @@ bool ApplicationController::processFiles(IUserInterface* ui, QWidget* parent)
 bool ApplicationController::validateFiles(QWidget* parent)
 {
     if (vtkFile.empty()) {
-        if (parent) {
-            QMessageBox::warning(parent, "Warning", "No VTK file selected");
-        }
+        emit showWarningMessage("Warning", "No VTK file selected");
         return false;
     }
     if (stlFile.empty()) {
-        if (parent) {
-            QMessageBox::warning(parent, "Warning", "No STL file selected");
-        }
+        emit showWarningMessage("Warning", "No STL file selected");
         return false;
     }
     return true;
@@ -132,9 +140,7 @@ bool ApplicationController::initializeVtkProcessor(IUserInterface* ui, QWidget* 
 {
     auto thresholds = getStressThresholds(ui);
     if (!fileProcessor->initializeVtkProcessor(vtkFile, stlFile, thresholds, parent)) {
-        if (parent) {
-            QMessageBox::critical(parent, "Error", "Failed to initialize VTK processor");
-        }
+        emit showCriticalMessage("Error", "Failed to initialize VTK processor");
         return false;
     }
     return true;
@@ -144,9 +150,7 @@ bool ApplicationController::processMeshDivision(QWidget* parent)
 {
     auto dividedMeshes = fileProcessor->processMeshDivision();
     if (dividedMeshes.empty()) {
-        if (parent) {
-            QMessageBox::critical(parent, "Error", "No meshes generated during division");
-        }
+        emit showCriticalMessage("Error", "No meshes generated during division");
         return false;
     }
     
@@ -161,9 +165,7 @@ bool ApplicationController::process3mfGeneration(IUserInterface* ui, QWidget* pa
     double maxStress = fileProcessor->getMaxStress();
     
     if (!fileProcessor->process3mfFile(currentMode.toStdString(), mappings, maxStress, parent)) {
-        if (parent) {
-            QMessageBox::critical(parent, "Error", "Failed to process 3MF file");
-        }
+        emit showCriticalMessage("Error", "Failed to process 3MF file");
         return false;
     }
     return true;
@@ -174,25 +176,31 @@ void ApplicationController::loadAndDisplayTempStlFiles(IUserInterface* ui, QWidg
     if (!ui || !fileProcessor->getVtkProcessor()) return;
     
     // 分割STL Actorを削除
-    visualizationManager->removeDividedStlActors();
+    if (visualizationManager) {
+        visualizationManager->removeDividedStlActors();
+    }
     // 分割されたメッシュウィジェットをリセット
     resetDividedMeshWidgets(ui);
     
     // --- 追加: VTKを非表示にし、チェックボックスもオフ ---
-    ui->setVtkVisibilityState(false);
-    ui->setVtkOpacity(1.0);
-    visualizationManager->hideVtkObject();
+    emit vtkVisibilityChanged(false);
+    emit vtkOpacityChanged(1.0);
+    if (visualizationManager) {
+        visualizationManager->hideVtkObject();
+    }
     // 分割STLウィジェットのチェックボックスをオン
-    ui->setDividedMeshVisibility(0, true);
-    ui->setDividedMeshOpacity(0, 1.0);
-    ui->setDividedMeshVisibility(1, true);
-    ui->setDividedMeshOpacity(1, 1.0);
-    ui->setDividedMeshVisibility(2, true);
-    ui->setDividedMeshOpacity(2, 1.0);
-    ui->setDividedMeshVisibility(3, true);
-    ui->setDividedMeshOpacity(3, 1.0);
+    emit dividedMeshVisibilityChanged(0, true);
+    emit dividedMeshOpacityChanged(0, 1.0);
+    emit dividedMeshVisibilityChanged(1, true);
+    emit dividedMeshOpacityChanged(1, 1.0);
+    emit dividedMeshVisibilityChanged(2, true);
+    emit dividedMeshOpacityChanged(2, 1.0);
+    emit dividedMeshVisibilityChanged(3, true);
+    emit dividedMeshOpacityChanged(3, 1.0);
     // --- ここまで追加 ---
-    visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), parent);
+    if (visualizationManager) {
+        visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), parent);
+    }
 }
 
 void ApplicationController::cleanupTempFiles()
@@ -203,17 +211,13 @@ void ApplicationController::cleanupTempFiles()
 
 void ApplicationController::showSuccessMessage(QWidget* parent)
 {
-    if (parent) {
-        QMessageBox::information(parent, "Success", "Files processed successfully");
-    }
+    emit showInfoMessage("Success", "Files processed successfully");
 }
 
 void ApplicationController::handleProcessingError(const std::exception& e, QWidget* parent)
 {
     std::cerr << "Error processing files: " << e.what() << std::endl;
-    if (parent) {
-        QMessageBox::critical(parent, "Error", QString("Failed to process files: ") + e.what());
-    }
+    emit showCriticalMessage("Error", QString("Failed to process files: ") + e.what());
 }
 
 bool ApplicationController::export3mfFile(QWidget* parent)
@@ -247,12 +251,12 @@ void ApplicationController::resetDividedMeshWidgets(IUserInterface* ui)
     if (!ui) return;
     
     // 分割されたメッシュウィジェットをリセット
-    ui->setDividedMeshFileName(0, "Divided Mesh 1");
-    ui->setDividedMeshOpacity(0, 1.0);
-    ui->setDividedMeshFileName(1, "Divided Mesh 2");
-    ui->setDividedMeshOpacity(1, 1.0);
-    ui->setDividedMeshFileName(2, "Divided Mesh 3");
-    ui->setDividedMeshOpacity(2, 1.0);
-    ui->setDividedMeshFileName(3, "Divided Mesh 4");
-    ui->setDividedMeshOpacity(3, 1.0);
+    emit dividedMeshFileNameChanged(0, "Divided Mesh 1");
+    emit dividedMeshOpacityChanged(0, 1.0);
+    emit dividedMeshFileNameChanged(1, "Divided Mesh 2");
+    emit dividedMeshOpacityChanged(1, 1.0);
+    emit dividedMeshFileNameChanged(2, "Divided Mesh 3");
+    emit dividedMeshOpacityChanged(2, 1.0);
+    emit dividedMeshFileNameChanged(3, "Divided Mesh 4");
+    emit dividedMeshOpacityChanged(3, 1.0);
 } 

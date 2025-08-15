@@ -5,6 +5,7 @@
 #include <QString>
 #include <QWidget>
 #include <QMessageBox>
+#include <QObject>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
 #include "../processing/ProcessPipeline.h"
@@ -14,10 +15,14 @@
 
 class MainWindowUI;
 
-class ApplicationController {
+class ApplicationController : public QObject {
+    Q_OBJECT
 public:
-    ApplicationController(IUserInterface* ui);
+    ApplicationController(QObject* parent = nullptr);
     ~ApplicationController() = default;
+    
+    // 初期化
+    void initializeVisualizationManager(MainWindowUI* mainWindowUI);
 
     // ファイル操作
     bool openVtkFile(const std::string& vtkFile, IUserInterface* ui);
@@ -68,4 +73,28 @@ private:
     void showSuccessMessage(QWidget* parent);
     void handleProcessingError(const std::exception& e, QWidget* parent);
     void resetDividedMeshWidgets(IUserInterface* ui);
+
+signals:
+    // ファイル名設定シグナル
+    void vtkFileNameChanged(const QString& fileName);
+    void stlFileNameChanged(const QString& fileName);
+    void dividedMeshFileNameChanged(int meshIndex, const QString& fileName);
+    
+    // 表示状態制御シグナル
+    void vtkVisibilityChanged(bool visible);
+    void stlVisibilityChanged(bool visible);
+    void dividedMeshVisibilityChanged(int meshIndex, bool visible);
+    
+    // 不透明度制御シグナル
+    void vtkOpacityChanged(double opacity);
+    void stlOpacityChanged(double opacity);
+    void dividedMeshOpacityChanged(int meshIndex, double opacity);
+    
+    // ストレス範囲設定シグナル
+    void stressRangeChanged(double minStress, double maxStress);
+    
+    // メッセージ表示シグナル
+    void showWarningMessage(const QString& title, const QString& message);
+    void showCriticalMessage(const QString& title, const QString& message);
+    void showInfoMessage(const QString& title, const QString& message);
 }; 

@@ -1,7 +1,8 @@
 #include "MainWindowUIAdapter.h"
 #include "../../UI/widgets/DensitySlider.h"
 
-MainWindowUIAdapter::MainWindowUIAdapter(MainWindowUI* ui) : ui(ui)
+MainWindowUIAdapter::MainWindowUIAdapter(MainWindowUI* ui, QObject* parent) 
+    : IUserInterface(parent), ui(ui)
 {
 }
 
@@ -143,5 +144,26 @@ void MainWindowUIAdapter::setStressRange(double minStress, double maxStress)
     auto slider = ui->getRangeSlider();
     if (slider) {
         slider->setStressRange(minStress, maxStress);
+    }
+}
+
+void MainWindowUIAdapter::showWarningMessage(const QString& title, const QString& message)
+{
+    if (ui) {
+        QMessageBox::warning(qobject_cast<QWidget*>(ui), title, message);
+    }
+}
+
+void MainWindowUIAdapter::showCriticalMessage(const QString& title, const QString& message)
+{
+    if (ui) {
+        QMessageBox::critical(qobject_cast<QWidget*>(ui), title, message);
+    }
+}
+
+void MainWindowUIAdapter::showInfoMessage(const QString& title, const QString& message)
+{
+    if (ui) {
+        QMessageBox::information(qobject_cast<QWidget*>(ui), title, message);
     }
 }

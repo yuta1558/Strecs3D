@@ -1,11 +1,14 @@
 #pragma once
 
+#include <QObject>
+#include <QMessageBox>
 #include "../interfaces/IUserInterface.h"
 #include "../../UI/mainwindowui.h"
 
 class MainWindowUIAdapter : public IUserInterface {
+    Q_OBJECT
 public:
-    explicit MainWindowUIAdapter(MainWindowUI* ui);
+    explicit MainWindowUIAdapter(MainWindowUI* ui, QObject* parent = nullptr);
     ~MainWindowUIAdapter() = default;
     
     // IUserInterface implementation
@@ -22,6 +25,11 @@ public:
     std::vector<StressDensityMapping> getStressDensityMappings() const override;
     QString getCurrentMode() const override;
     void setStressRange(double minStress, double maxStress) override;
+    
+    // メッセージ表示
+    void showWarningMessage(const QString& title, const QString& message) override;
+    void showCriticalMessage(const QString& title, const QString& message) override;
+    void showInfoMessage(const QString& title, const QString& message) override;
     
     // Adapter specific method
     MainWindowUI* getMainWindowUI() const { return ui; }
