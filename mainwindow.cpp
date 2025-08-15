@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "core/MainWindowUIAdapter.h"
+#include "core/application/MainWindowUIAdapter.h"
 #include <QPushButton>
 #include <QFileDialog>
 #include <QVBoxLayout>

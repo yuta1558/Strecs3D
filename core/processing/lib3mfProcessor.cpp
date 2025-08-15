@@ -1,6 +1,6 @@
 #include "lib3mfProcessor.h"
-#include "../utils/xmlConverter.h"
-#include "../utils/tempPathUtility.h"
+#include "../../utils/xmlConverter.h"
+#include "../../utils/tempPathUtility.h"
 
 #include <iostream>
 #include <filesystem>

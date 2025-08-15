@@ -7,10 +7,10 @@
 #include <QMessageBox>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
-#include "ProcessPipeline.h"
-#include "VisualizationManager.h"
-#include "ExportManager.h"
-#include "IUserInterface.h"
+#include "../processing/ProcessPipeline.h"
+#include "../visualization/VisualizationManager.h"
+#include "../export/ExportManager.h"
+#include "../interfaces/IUserInterface.h"
 
 class MainWindowUI;
 

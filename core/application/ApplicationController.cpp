@@ -1,10 +1,10 @@
 #include "ApplicationController.h"
 #include "MainWindowUIAdapter.h"
-#include "../UI/mainwindowui.h"
-#include "../UI/DensitySlider.h"
-#include "../utils/fileUtility.h"
-#include "../utils/tempPathUtility.h"
-#include "VtkProcessor.h"
+#include "../../UI/mainwindowui.h"
+#include "../../UI/DensitySlider.h"
+#include "../../utils/fileUtility.h"
+#include "../../utils/tempPathUtility.h"
+#include "../processing/VtkProcessor.h"
 #include <QDir>
 #include <QFileInfo>
 #include <iostream>

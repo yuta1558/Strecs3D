@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IUserInterface.h"
-#include "../UI/mainwindowui.h"
+#include "../interfaces/IUserInterface.h"
+#include "../../UI/mainwindowui.h"
 
 class MainWindowUIAdapter : public IUserInterface {
 public:

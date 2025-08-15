@@ -8,8 +8,8 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkPolyData.h>
-#include "core/ApplicationController.h"
-#include "core/MainWindowUIAdapter.h"
+#include "core/application/ApplicationController.h"
+#include "core/application/MainWindowUIAdapter.h"
 #include "UI/mainwindowui.h"
 #include "UI/MessageConsole.h"
 #include <QString>

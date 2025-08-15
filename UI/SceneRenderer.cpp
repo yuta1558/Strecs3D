@@ -1,6 +1,6 @@
 #include "SceneRenderer.h"
-#include "../core/SceneDataController.h"
-#include "../core/VtkProcessor.h"
+#include "../core/visualization/SceneDataController.h"
+#include "../core/processing/VtkProcessor.h"
 #include "mainwindowui.h"
 #include "ObjectDisplayOptionsWidget.h"
 #include <QMessageBox>

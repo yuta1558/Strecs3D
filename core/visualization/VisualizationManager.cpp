@@ -1,8 +1,8 @@
 #include "VisualizationManager.h"
 #include "SceneDataController.h"
-#include "../UI/SceneRenderer.h"
-#include "VtkProcessor.h"
-#include "../UI/mainwindowui.h"
+#include "../../UI/SceneRenderer.h"
+#include "../processing/VtkProcessor.h"
+#include "../../UI/mainwindowui.h"
 
 VisualizationManager::VisualizationManager(MainWindowUI* ui) : QObject() {
     initializeComponents(ui);
