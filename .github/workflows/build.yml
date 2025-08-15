@@ -29,7 +29,6 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
       VCPKG_BUILD_TYPE: release
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-      # vcpkg内部のCMakeにNinjaを強制（Ninja未検出対策）
       VCPKG_CMAKE_CONFIGURE_OPTIONS: "-G;Ninja;-DCMAKE_MAKE_PROGRAM=ninja"
 
     steps:
@@ -41,23 +40,20 @@ jobs:
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # ---------- Windows: “実ディレクトリ”短縮。substは使わない ----------
-          - name: Prepare short workspace (Windows)
+      # ---------- Windows: 実ディレクトリ短縮（substは使わない） ----------
+      - name: Prepare short workspace (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          New-Item -ItemType Directory -Force -Path C:\w  | Out-Null
-          robocopy $env:GITHUB_WORKSPACE C:\w /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
+          New-Item -ItemType Directory -Force -Path "C:\w"  | Out-Null
+          robocopy "$env:GITHUB_WORKSPACE" "C:\w" /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
           $code = $LASTEXITCODE
-          if ($code -ge 8) {
-            Write-Error "robocopy failed with exit code $code"
-            exit $code
-          }
-          echo "SHORT_WS=C:\w" | Out-File -FilePath $env:GITHUB_ENV -Append
-          New-Item -ItemType Directory -Force -Path C:\v  | Out-Null  # vcpkg root
-          New-Item -ItemType Directory -Force -Path C:\vd | Out-Null  # downloads
-          New-Item -ItemType Directory -Force -Path C:\vi | Out-Null  # installed
+          if ($code -ge 8) { Write-Error "robocopy failed with exit code $code"; exit $code }
+          "SHORT_WS=C:\w" | Out-File -FilePath $env:GITHUB_ENV -Append
+          New-Item -ItemType Directory -Force -Path "C:\v"  | Out-Null  # vcpkg root
+          New-Item -ItemType Directory -Force -Path "C:\vd" | Out-Null  # downloads
+          New-Item -ItemType Directory -Force -Path "C:\vi" | Out-Null  # installed
 
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
@@ -79,7 +75,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       # ---------- Unix（macOS/Ubuntu）: ビルド必須ツール ----------
       - name: Install build deps (Unix)
@@ -108,7 +104,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: C:\v
+          vcpkgDirectory: "C:\v"
           vcpkgJsonGlob: "vcpkg.json"
           doNotUpdateVcpkg: true
 
@@ -144,7 +140,7 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
         env:
-          VCPKG_DOWNLOADS: C:\vd
+          VCPKG_DOWNLOADS: "C:\vd"
         run: >
           cmake -S . -B _b
           -G Ninja
