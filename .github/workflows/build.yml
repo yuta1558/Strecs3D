@@ -2,82 +2,83 @@ name: build
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-  workflow_dispatch:
+    branches: [ "main" ]
+  pull_request: {}
+  workflow_dispatch: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
   cmake:
-    name: ${{ matrix.os }} | ${{ matrix.build_type }}
-    runs-on: ${{ matrix.os }}
+    name: "${{ matrix.os }} | ${{
+      matrix.build_type }}"
+    runs-on: "${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            triplet: x64-windows
-            build_type: Release
-          - os: macos-14
-            triplet: arm64-osx
-            build_type: Release
+          - os: "windows-latest"
+            triplet: "x64-windows"
+            build_type: "Release"
+          - os: "macos-14"
+            triplet: "arm64-osx"
+            build_type: "Release"
 
     env:
-      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
-      VCPKG_BUILD_TYPE: release
+      VCPKG_DEFAULT_TRIPLET: "${{ matrix.triplet }}"
+      VCPKG_BUILD_TYPE: "release"
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
       VCPKG_CMAKE_CONFIGURE_OPTIONS: "-G;Ninja;-DCMAKE_MAKE_PROGRAM=ninja"
 
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: "recursive"
 
-      - name: Get CMake + Ninja
+      - name: "Get CMake + Ninja"
         uses: lukka/get-cmake@latest
 
       # ---------- Windows: 実ディレクトリ短縮（substは使わない） ----------
-      - name: Prepare short workspace (Windows)
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-      $ErrorActionPreference = 'Stop'
-      if (Test-Path 'C:\w') { Remove-Item 'C:\w' -Recurse -Force }
-      New-Item -ItemType Directory -Force -Path 'C:\w' | Out-Null
-      Copy-Item "$env:GITHUB_WORKSPACE\*" 'C:\w' -Recurse -Force
-      'SHORT_WS=C:\w' | Out-File -FilePath $env:GITHUB_ENV -Append
-      New-Item -ItemType Directory -Force -Path 'C:\v'  | Out-Null  # vcpkg root
-      New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null  # downloads
-      New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null  # installed
+      - name: "Prepare short workspace (Windows)"
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (Test-Path 'C:\w') { Remove-Item 'C:\w' -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path 'C:\w' | Out-Null
+          Copy-Item "$env:GITHUB_WORKSPACE\*" 'C:\w' -Recurse -Force
+          'SHORT_WS=C:\w' | Out-File -FilePath $env:GITHUB_ENV -Append
+          New-Item -ItemType Directory -Force -Path 'C:\v'  | Out-Null  # vcpkg root
+          New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null  # downloads
+          New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null  # installed
 
-      - name: Enable long paths (Windows)
+      - name: "Enable long paths (Windows)"
         if: runner.os == 'Windows'
         shell: pwsh
         run: git config --system core.longpaths true
 
-      - name: Setup MSVC Dev Environment (Windows)
+      - name: "Setup MSVC Dev Environment (Windows)"
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install Ninja (Windows)
+      - name: "Install Ninja (Windows)"
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           choco install ninja --no-progress -y
           ninja --version
 
-      - name: Setup Python (Windows)
+      - name: "Setup Python (Windows)"
         if: runner.os == 'Windows'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       # ---------- Unix（macOS/Ubuntu）: ビルド必須ツール ----------
-      - name: Install build deps (Unix)
+      - name: "Install build deps (Unix)"
         if: runner.os != 'Windows'
         shell: bash
         run: |
@@ -99,15 +100,15 @@ jobs:
           fi
 
       # ---------- vcpkg（Windowsは固定短パス、macはデフォルト） ----------
-      - name: Setup vcpkg (manifest) [Windows]
+      - name: "Setup vcpkg (manifest) [Windows]"
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: "C:\v"
+          vcpkgDirectory: "C:\\v"
           vcpkgJsonGlob: "vcpkg.json"
           doNotUpdateVcpkg: true
 
-      - name: Setup vcpkg (manifest) [Unix]
+      - name: "Setup vcpkg (manifest) [Unix]"
         if: runner.os != 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
@@ -115,31 +116,31 @@ jobs:
           doNotUpdateVcpkg: true
 
       # ---------- Windows: 壊れた中間物を掃除（harfbuzz/Qt系） ----------
-      - name: Clean vcpkg buildtrees (Windows)
+      - name: "Clean vcpkg buildtrees (Windows)"
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          foreach ($p in @("qtdeclarative","qtbase","harfbuzz")) {
+          foreach ($p in @('qtdeclarative','qtbase','harfbuzz')) {
             $t = "C:\v\buildtrees\$p"
             if (Test-Path $t) { Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue }
           }
 
       # ---------- Preflight（原因の切り分けを最短化） ----------
-      - name: Preflight check (Windows)
+      - name: "Preflight check (Windows)"
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "CMake:"; cmake --version
-          Write-Host "Ninja:"; ninja --version
-          Write-Host "Toolchain exists?"; Test-Path "C:/v/scripts/buildsystems/vcpkg.cmake" | Out-Host
-          Write-Host "MSVC cl:"; & "$env:VCToolsInstallDir\bin\Hostx64\x64\cl.exe" /? | Out-Null; if ($LASTEXITCODE -ne 0) { Write-Error "MSVC cl not found" }
+          Write-Host 'CMake:'; cmake --version
+          Write-Host 'Ninja:'; ninja --version
+          Write-Host 'Toolchain exists?'; Test-Path 'C:/v/scripts/buildsystems/vcpkg.cmake' | Out-Host
+          Write-Host 'MSVC cl:'; & "$env:VCToolsInstallDir\bin\Hostx64\x64\cl.exe" /? | Out-Null; if ($LASTEXITCODE -ne 0) { Write-Error 'MSVC cl not found' }
 
       # ---------- Configure / Build ----------
-      - name: Configure (CMake + Ninja) [Windows]
+      - name: "Configure (CMake + Ninja) [Windows]"
         if: runner.os == 'Windows'
-        working-directory: ${{ env.SHORT_WS }}
+        working-directory: "${{ env.SHORT_WS }}"
         env:
-          VCPKG_DOWNLOADS: "C:\vd"
+          VCPKG_DOWNLOADS: "C:\\vd"
         run: >
           cmake -S . -B _b
           -G Ninja
@@ -149,12 +150,12 @@ jobs:
           -DCMAKE_MAKE_PROGRAM=ninja
           -DCMAKE_VERBOSE_MAKEFILE=ON
 
-      - name: Build [Windows]
+      - name: "Build [Windows]"
         if: runner.os == 'Windows'
-        working-directory: ${{ env.SHORT_WS }}
+        working-directory: "${{ env.SHORT_WS }}"
         run: cmake --build _b
 
-      - name: Configure (CMake + Ninja) [Unix]
+      - name: "Configure (CMake + Ninja) [Unix]"
         if: runner.os != 'Windows'
         run: >
           cmake -S . -B build
@@ -163,43 +164,43 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
           -DCMAKE_VERBOSE_MAKEFILE=ON
 
-      - name: Build [Unix]
+      - name: "Build [Unix]"
         if: runner.os != 'Windows'
         run: cmake --build build
 
       # ---------- 失敗時ログ回収 ----------
-      - name: Upload vcpkg logs (on fail, Windows)
+      - name: "Upload vcpkg logs (on fail, Windows)"
         if: failure() && runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: vcpkg-logs-windows
+          name: "vcpkg-logs-windows"
           path: |
             C:/v/buildtrees/**/*.log
             C:/v/buildtrees/**/*-out.log
 
-      - name: Upload CMake logs (on fail, Unix)
+      - name: "Upload CMake logs (on fail, Unix)"
         if: failure() && runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: cmake-logs-unix
+          name: "cmake-logs-unix"
           path: |
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log
 
-      - name: Upload build logs (on fail, Unix)
+      - name: "Upload build logs (on fail, Unix)"
         if: failure() && runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-unix
+          name: "build-logs-unix"
           path: |
             build/**/*.log
             build/**/Testing/**/*.log
 
-      - name: Upload build artifacts
+      - name: "Upload build artifacts"
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}-${{ matrix.build_type }}-binaries
+          name: "${{ runner.os }}-${{ matrix.build_type }}-binaries"
           path: |
             _b/**
             build/**
