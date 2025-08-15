@@ -164,7 +164,7 @@ jobs:
         if: runner.os != 'Windows'
         run: cmake --build build
 
-      # ---------- 失敗時に vcpkg の詳細ログを回収 ----------
+      # ---------- 失敗時ログ回収 ----------
       - name: Upload vcpkg logs (on fail, Windows)
         if: failure() && runner.os == 'Windows'
         uses: actions/upload-artifact@v4
@@ -173,6 +173,24 @@ jobs:
           path: |
             C:/v/buildtrees/**/*.log
             C:/v/buildtrees/**/*-out.log
+
+      - name: Upload CMake logs (on fail, Unix)
+        if: failure() && runner.os != 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmake-logs-unix
+          path: |
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+
+      - name: Upload build logs (on fail, Unix)
+        if: failure() && runner.os != 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-unix
+          path: |
+            build/**/*.log
+            build/**/Testing/**/*.log
 
       - name: Upload build artifacts
         if: always()
