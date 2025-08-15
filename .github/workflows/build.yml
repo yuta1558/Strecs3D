@@ -146,6 +146,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="C:/v/scripts/buildsystems/vcpkg.cmake"
           -DVCPKG_INSTALLED_DIR=C:/vi
           -DCMAKE_MAKE_PROGRAM=ninja
+          -DCMAKE_VERBOSE_MAKEFILE=ON
 
       - name: Build [Windows]
         if: runner.os == 'Windows'
@@ -159,6 +160,7 @@ jobs:
           -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_VERBOSE_MAKEFILE=ON
 
       - name: Build [Unix]
         if: runner.os != 'Windows'
