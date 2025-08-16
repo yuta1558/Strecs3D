@@ -3,8 +3,6 @@
 #include <memory>
 #include <string>
 #include <QString>
-#include <QWidget>
-#include <QMessageBox>
 #include <QObject>
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
@@ -29,13 +27,13 @@ public:
     bool openStlFile(const std::string& stlFile, IUserInterface* ui);
     
     // メイン処理
-    bool processFiles(IUserInterface* ui, QWidget* parent);
+    bool processFiles(IUserInterface* ui);
     
     // エクスポート
-    bool export3mfFile(QWidget* parent);
+    bool export3mfFile(IUserInterface* ui);
     
     // 可視化
-    void loadAndDisplayTempStlFiles(IUserInterface* ui, QWidget* parent);
+    void loadAndDisplayTempStlFiles(IUserInterface* ui);
     
     // 状態管理
     void setVtkFile(const std::string& vtkFile) { this->vtkFile = vtkFile; }
@@ -60,18 +58,18 @@ private:
     std::unique_ptr<ExportManager> exportManager;
     
     // ヘルパーメソッド
-    bool validateFiles(QWidget* parent);
+    bool validateFiles(IUserInterface* ui);
     std::vector<double> getStressThresholds(IUserInterface* ui);
     std::vector<StressDensityMapping> getStressDensityMappings(IUserInterface* ui);
     QString getCurrentMode(IUserInterface* ui);
     
     // ファイル処理のヘルパーメソッド
-    bool initializeVtkProcessor(IUserInterface* ui, QWidget* parent);
-    bool processMeshDivision(QWidget* parent);
-    bool process3mfGeneration(IUserInterface* ui, QWidget* parent);
+    bool initializeVtkProcessor(IUserInterface* ui);
+    bool processMeshDivision(IUserInterface* ui);
+    bool process3mfGeneration(IUserInterface* ui);
     void cleanupTempFiles();
-    void showSuccessMessage(QWidget* parent);
-    void handleProcessingError(const std::exception& e, QWidget* parent);
+    void showSuccessMessage(IUserInterface* ui);
+    void handleProcessingError(const std::exception& e, IUserInterface* ui);
     void resetDividedMeshWidgets(IUserInterface* ui);
 
 signals:

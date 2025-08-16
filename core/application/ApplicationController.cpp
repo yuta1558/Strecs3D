@@ -1,12 +1,9 @@
 #include "ApplicationController.h"
 #include "MainWindowUIAdapter.h"
 #include "../../UI/mainwindowui.h"
-#include "../../UI/widgets/DensitySlider.h"
 #include "../../utils/fileUtility.h"
 #include "../../utils/tempPathUtility.h"
 #include "../processing/VtkProcessor.h"
-#include <QDir>
-#include <QFileInfo>
 #include <iostream>
 #include <stdexcept>
 
@@ -83,48 +80,50 @@ bool ApplicationController::openStlFile(const std::string& stlFile, IUserInterfa
     }
 }
 
-bool ApplicationController::processFiles(IUserInterface* ui, QWidget* parent)
+bool ApplicationController::processFiles(IUserInterface* ui)
 {
     try {
         // Step 1: Validate input files
-        if (!validateFiles(parent)) {
+        if (!validateFiles(ui)) {
             return false;
         }
         
         // Step 2: Initialize VTK processor with stress thresholds
-        if (!initializeVtkProcessor(ui, parent)) {
+        if (!initializeVtkProcessor(ui)) {
             return false;
         }
         
         // Step 3: Process mesh division
-        if (!processMeshDivision(parent)) {
+        if (!processMeshDivision(ui)) {
             return false;
         }
         
         // Step 4: Process 3MF file generation
-        if (!process3mfGeneration(ui, parent)) {
+        if (!process3mfGeneration(ui)) {
             return false;
         }
         
         // Step 5: Load and display temporary STL files
-        loadAndDisplayTempStlFiles(ui, parent);
+        loadAndDisplayTempStlFiles(ui);
         
         // Step 6: Cleanup temporary files
         cleanupTempFiles();
         
         // Step 7: Show success message
-        showSuccessMessage(parent);
+        showSuccessMessage(ui);
         
         return true;
     }
     catch (const std::exception& e) {
-        handleProcessingError(e, parent);
+        handleProcessingError(e, ui);
         return false;
     }
 }
 
-bool ApplicationController::validateFiles(QWidget* parent)
+bool ApplicationController::validateFiles(IUserInterface* ui)
 {
+    if (!ui) return false;
+    
     if (vtkFile.empty()) {
         emit showWarningMessage("Warning", "No VTK file selected");
         return false;
@@ -136,18 +135,22 @@ bool ApplicationController::validateFiles(QWidget* parent)
     return true;
 }
 
-bool ApplicationController::initializeVtkProcessor(IUserInterface* ui, QWidget* parent)
+bool ApplicationController::initializeVtkProcessor(IUserInterface* ui)
 {
+    if (!ui) return false;
+    
     auto thresholds = getStressThresholds(ui);
-    if (!fileProcessor->initializeVtkProcessor(vtkFile, stlFile, thresholds, parent)) {
+    if (!fileProcessor->initializeVtkProcessor(vtkFile, stlFile, thresholds, nullptr)) {
         emit showCriticalMessage("Error", "Failed to initialize VTK processor");
         return false;
     }
     return true;
 }
 
-bool ApplicationController::processMeshDivision(QWidget* parent)
+bool ApplicationController::processMeshDivision(IUserInterface* ui)
 {
+    if (!ui) return false;
+    
     auto dividedMeshes = fileProcessor->processMeshDivision();
     if (dividedMeshes.empty()) {
         emit showCriticalMessage("Error", "No meshes generated during division");
@@ -158,20 +161,22 @@ bool ApplicationController::processMeshDivision(QWidget* parent)
     return true;
 }
 
-bool ApplicationController::process3mfGeneration(IUserInterface* ui, QWidget* parent)
+bool ApplicationController::process3mfGeneration(IUserInterface* ui)
 {
+    if (!ui) return false;
+    
     auto mappings = getStressDensityMappings(ui);
     auto currentMode = getCurrentMode(ui);
     double maxStress = fileProcessor->getMaxStress();
     
-    if (!fileProcessor->process3mfFile(currentMode.toStdString(), mappings, maxStress, parent)) {
+    if (!fileProcessor->process3mfFile(currentMode.toStdString(), mappings, maxStress, nullptr)) {
         emit showCriticalMessage("Error", "Failed to process 3MF file");
         return false;
     }
     return true;
 }
 
-void ApplicationController::loadAndDisplayTempStlFiles(IUserInterface* ui, QWidget* parent)
+void ApplicationController::loadAndDisplayTempStlFiles(IUserInterface* ui)
 {
     if (!ui || !fileProcessor->getVtkProcessor()) return;
     
@@ -199,7 +204,7 @@ void ApplicationController::loadAndDisplayTempStlFiles(IUserInterface* ui, QWidg
     emit dividedMeshOpacityChanged(3, 1.0);
     // --- ここまで追加 ---
     if (visualizationManager) {
-        visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), parent);
+        visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), nullptr);
     }
 }
 
@@ -209,20 +214,23 @@ void ApplicationController::cleanupTempFiles()
     FileUtility::clearDirectoryContents(tempFiledir);
 }
 
-void ApplicationController::showSuccessMessage(QWidget* parent)
+void ApplicationController::showSuccessMessage(IUserInterface* ui)
 {
+    if (!ui) return;
     emit showInfoMessage("Success", "Files processed successfully");
 }
 
-void ApplicationController::handleProcessingError(const std::exception& e, QWidget* parent)
+void ApplicationController::handleProcessingError(const std::exception& e, IUserInterface* ui)
 {
+    if (!ui) return;
     std::cerr << "Error processing files: " << e.what() << std::endl;
     emit showCriticalMessage("Error", QString("Failed to process files: ") + e.what());
 }
 
-bool ApplicationController::export3mfFile(QWidget* parent)
+bool ApplicationController::export3mfFile(IUserInterface* ui)
 {
-    return exportManager->export3mfFile(stlFile, parent);
+    if (!ui) return false;
+    return exportManager->export3mfFile(stlFile, nullptr);
 }
 
 std::vector<double> ApplicationController::getStressThresholds(IUserInterface* ui)

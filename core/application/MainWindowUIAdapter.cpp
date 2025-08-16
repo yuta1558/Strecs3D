@@ -167,3 +167,28 @@ void MainWindowUIAdapter::showInfoMessage(const QString& title, const QString& m
         QMessageBox::information(qobject_cast<QWidget*>(ui), title, message);
     }
 }
+
+bool MainWindowUIAdapter::showFileValidationError()
+{
+    if (ui) {
+        QMessageBox::warning(qobject_cast<QWidget*>(ui), "Validation Error", "File validation failed");
+        return false;
+    }
+    return false;
+}
+
+bool MainWindowUIAdapter::showProcessingError(const QString& errorMessage)
+{
+    if (ui) {
+        QMessageBox::critical(qobject_cast<QWidget*>(ui), "Processing Error", errorMessage);
+        return false;
+    }
+    return false;
+}
+
+void MainWindowUIAdapter::showProcessingSuccess()
+{
+    if (ui) {
+        QMessageBox::information(qobject_cast<QWidget*>(ui), "Success", "Processing completed successfully");
+    }
+}

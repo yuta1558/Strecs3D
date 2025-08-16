@@ -31,6 +31,11 @@ public:
     void showCriticalMessage(const QString& title, const QString& message) override;
     void showInfoMessage(const QString& title, const QString& message) override;
     
+    // ファイル選択・保存ダイアログ
+    bool showFileValidationError() override;
+    bool showProcessingError(const QString& errorMessage) override;
+    void showProcessingSuccess() override;
+    
     // Adapter specific method
     MainWindowUI* getMainWindowUI() const { return ui; }
 

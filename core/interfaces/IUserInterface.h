@@ -39,6 +39,11 @@ public:
     virtual void showWarningMessage(const QString& title, const QString& message) = 0;
     virtual void showCriticalMessage(const QString& title, const QString& message) = 0;
     virtual void showInfoMessage(const QString& title, const QString& message) = 0;
+    
+    // ファイル選択・保存ダイアログ
+    virtual bool showFileValidationError() = 0;
+    virtual bool showProcessingError(const QString& errorMessage) = 0;
+    virtual void showProcessingSuccess() = 0;
 
 public slots:
     // ApplicationControllerからのシグナルを受信するスロット

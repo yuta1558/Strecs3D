@@ -102,7 +102,7 @@ void MainWindow::processFiles()
 {
     logMessage("Starting file processing...");
     
-    if (appController->processFiles(uiAdapter.get(), this)) {
+    if (appController->processFiles(uiAdapter.get())) {
         logMessage("File processing completed successfully");
     } else {
         logMessage("File processing failed");
@@ -113,7 +113,7 @@ void MainWindow::export3mfFile()
 {
     logMessage("Starting 3MF export...");
     
-    if (appController->export3mfFile(this)) {
+    if (appController->export3mfFile(uiAdapter.get())) {
         logMessage("3MF export completed successfully");
     } else {
         logMessage("3MF export failed");
