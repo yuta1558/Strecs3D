@@ -1,4 +1,5 @@
 #include "MainWindowUIAdapter.h"
+#include "ApplicationController.h"
 #include "../../UI/widgets/DensitySlider.h"
 
 MainWindowUIAdapter::MainWindowUIAdapter(MainWindowUI* ui, QObject* parent) 
@@ -62,15 +63,7 @@ void MainWindowUIAdapter::setStlOpacity(double opacity)
 
 void MainWindowUIAdapter::setDividedMeshVisibility(int meshIndex, bool visible)
 {
-    if (!ui) return;
-    ObjectDisplayOptionsWidget* widget = nullptr;
-    switch (meshIndex) {
-        case 0: widget = ui->getDividedMeshWidget1(); break;
-        case 1: widget = ui->getDividedMeshWidget2(); break;
-        case 2: widget = ui->getDividedMeshWidget3(); break;
-        case 3: widget = ui->getDividedMeshWidget4(); break;
-        default: return;
-    }
+    auto widget = getDividedMeshWidget(meshIndex);
     if (widget) {
         widget->setVisibleState(visible);
     }
@@ -78,15 +71,7 @@ void MainWindowUIAdapter::setDividedMeshVisibility(int meshIndex, bool visible)
 
 void MainWindowUIAdapter::setDividedMeshOpacity(int meshIndex, double opacity)
 {
-    if (!ui) return;
-    ObjectDisplayOptionsWidget* widget = nullptr;
-    switch (meshIndex) {
-        case 0: widget = ui->getDividedMeshWidget1(); break;
-        case 1: widget = ui->getDividedMeshWidget2(); break;
-        case 2: widget = ui->getDividedMeshWidget3(); break;
-        case 3: widget = ui->getDividedMeshWidget4(); break;
-        default: return;
-    }
+    auto widget = getDividedMeshWidget(meshIndex);
     if (widget) {
         widget->setOpacity(opacity);
     }
@@ -94,15 +79,7 @@ void MainWindowUIAdapter::setDividedMeshOpacity(int meshIndex, double opacity)
 
 void MainWindowUIAdapter::setDividedMeshFileName(int meshIndex, const QString& fileName)
 {
-    if (!ui) return;
-    ObjectDisplayOptionsWidget* widget = nullptr;
-    switch (meshIndex) {
-        case 0: widget = ui->getDividedMeshWidget1(); break;
-        case 1: widget = ui->getDividedMeshWidget2(); break;
-        case 2: widget = ui->getDividedMeshWidget3(); break;
-        case 3: widget = ui->getDividedMeshWidget4(); break;
-        default: return;
-    }
+    auto widget = getDividedMeshWidget(meshIndex);
     if (widget) {
         widget->setFileName(fileName);
     }
@@ -190,5 +167,18 @@ void MainWindowUIAdapter::showProcessingSuccess()
 {
     if (ui) {
         QMessageBox::information(qobject_cast<QWidget*>(ui), "Success", "Processing completed successfully");
+    }
+}
+
+ObjectDisplayOptionsWidget* MainWindowUIAdapter::getDividedMeshWidget(int meshIndex) const
+{
+    if (!ui || meshIndex < 0 || meshIndex >= ApplicationController::DIVIDED_MESH_COUNT) return nullptr;
+    
+    switch (meshIndex) {
+        case 0: return ui->getDividedMeshWidget1();
+        case 1: return ui->getDividedMeshWidget2();
+        case 2: return ui->getDividedMeshWidget3();
+        case 3: return ui->getDividedMeshWidget4();
+        default: return nullptr;
     }
 }

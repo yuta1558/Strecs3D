@@ -15,9 +15,11 @@ ApplicationController::ApplicationController(QObject* parent)
 {
 }
 
-void ApplicationController::initializeVisualizationManager(MainWindowUI* mainWindowUI)
+void ApplicationController::initializeVisualizationManager(IUserInterface* ui)
 {
-    visualizationManager = std::make_unique<VisualizationManager>(mainWindowUI);
+    if (auto adapter = dynamic_cast<MainWindowUIAdapter*>(ui)) {
+        visualizationManager = std::make_unique<VisualizationManager>(adapter->getMainWindowUI());
+    }
 }
 
 bool ApplicationController::openVtkFile(const std::string& vtkFile, IUserInterface* ui)
@@ -194,14 +196,10 @@ void ApplicationController::loadAndDisplayTempStlFiles(IUserInterface* ui)
         visualizationManager->hideVtkObject();
     }
     // 分割STLウィジェットのチェックボックスをオン
-    emit dividedMeshVisibilityChanged(0, true);
-    emit dividedMeshOpacityChanged(0, 1.0);
-    emit dividedMeshVisibilityChanged(1, true);
-    emit dividedMeshOpacityChanged(1, 1.0);
-    emit dividedMeshVisibilityChanged(2, true);
-    emit dividedMeshOpacityChanged(2, 1.0);
-    emit dividedMeshVisibilityChanged(3, true);
-    emit dividedMeshOpacityChanged(3, 1.0);
+    for (int i = 0; i < DIVIDED_MESH_COUNT; ++i) {
+        emit dividedMeshVisibilityChanged(i, true);
+        emit dividedMeshOpacityChanged(i, 1.0);
+    }
     // --- ここまで追加 ---
     if (visualizationManager) {
         visualizationManager->showTempDividedStl(fileProcessor->getVtkProcessor().get(), nullptr);
@@ -259,12 +257,8 @@ void ApplicationController::resetDividedMeshWidgets(IUserInterface* ui)
     if (!ui) return;
     
     // 分割されたメッシュウィジェットをリセット
-    emit dividedMeshFileNameChanged(0, "Divided Mesh 1");
-    emit dividedMeshOpacityChanged(0, 1.0);
-    emit dividedMeshFileNameChanged(1, "Divided Mesh 2");
-    emit dividedMeshOpacityChanged(1, 1.0);
-    emit dividedMeshFileNameChanged(2, "Divided Mesh 3");
-    emit dividedMeshOpacityChanged(2, 1.0);
-    emit dividedMeshFileNameChanged(3, "Divided Mesh 4");
-    emit dividedMeshOpacityChanged(3, 1.0);
+    for (int i = 0; i < DIVIDED_MESH_COUNT; ++i) {
+        emit dividedMeshFileNameChanged(i, QString("Divided Mesh %1").arg(i + 1));
+        emit dividedMeshOpacityChanged(i, 1.0);
+    }
 } 

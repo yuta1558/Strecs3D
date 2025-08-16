@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget* parent)
     appController = std::make_unique<ApplicationController>(this);
     
     // VisualizationManagerを初期化
-    appController->initializeVisualizationManager(ui.get());
+    appController->initializeVisualizationManager(uiAdapter.get());
     
     setCentralWidget(ui->getCentralWidget());
     resize(1600, 900);

@@ -11,16 +11,15 @@
 #include "../export/ExportManager.h"
 #include "../interfaces/IUserInterface.h"
 
-class MainWindowUI;
-
 class ApplicationController : public QObject {
     Q_OBJECT
 public:
+    static constexpr int DIVIDED_MESH_COUNT = 4;
     ApplicationController(QObject* parent = nullptr);
     ~ApplicationController() = default;
     
     // 初期化
-    void initializeVisualizationManager(MainWindowUI* mainWindowUI);
+    void initializeVisualizationManager(IUserInterface* ui);
 
     // ファイル操作
     bool openVtkFile(const std::string& vtkFile, IUserInterface* ui);

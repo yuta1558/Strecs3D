@@ -5,6 +5,8 @@
 #include "../interfaces/IUserInterface.h"
 #include "../../UI/mainwindowui.h"
 
+class ObjectDisplayOptionsWidget;
+
 class MainWindowUIAdapter : public IUserInterface {
     Q_OBJECT
 public:
@@ -40,5 +42,6 @@ public:
     MainWindowUI* getMainWindowUI() const { return ui; }
 
 private:
+    ObjectDisplayOptionsWidget* getDividedMeshWidget(int meshIndex) const;
     MainWindowUI* ui;
 };
