@@ -41,3 +41,5 @@ result/
 
 .DS_Store
 .md
+
+.claude/
