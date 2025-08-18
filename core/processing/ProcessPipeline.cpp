@@ -1,8 +1,8 @@
 #include "ProcessPipeline.h"
 #include "VtkProcessor.h"
 #include "lib3mfProcessor.h"
-#include "../utils/fileUtility.h"
-#include "../utils/tempPathUtility.h"
+#include "../../utils/fileUtility.h"
+#include "../../utils/tempPathUtility.h"
 #include <QMessageBox>
 #include <iostream>
 #include <stdexcept>

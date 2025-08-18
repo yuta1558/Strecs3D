@@ -5,7 +5,7 @@
 #include <QMouseEvent>
 #include <QPropertyAnimation>
 #include <QGraphicsOpacityEffect>
-#include "ColorManager.h"
+#include "../ColorManager.h"
 
 Button::Button(const QString& text, QWidget* parent)
     : QPushButton(text, parent)

@@ -6,15 +6,15 @@
 #include <QComboBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include "DensitySlider.h"
-#include "MessageConsole.h"
-#include "Button.h"
+#include "widgets/DensitySlider.h"
+#include "widgets/MessageConsole.h"
+#include "widgets/Button.h"
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
-#include "ModeComboBox.h"
-#include "ObjectDisplayOptionsWidget.h"
-#include "DisplayOptionsContainer.h"
+#include "widgets/ModeComboBox.h"
+#include "widgets/ObjectDisplayOptionsWidget.h"
+#include "widgets/DisplayOptionsContainer.h"
 #include <QObject>
 
 class MainWindow;

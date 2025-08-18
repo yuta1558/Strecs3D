@@ -8,9 +8,10 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkPolyData.h>
-#include "core/ApplicationController.h"
+#include "core/application/ApplicationController.h"
+#include "core/application/MainWindowUIAdapter.h"
 #include "UI/mainwindowui.h"
-#include "UI/MessageConsole.h"
+#include "UI/widgets/MessageConsole.h"
 #include <QString>
 
 class MainWindow : public QMainWindow
@@ -35,8 +36,11 @@ public slots:
     void onVtkObjectOpacityChanged(double opacity);
 
 private:
+    void setupSignalSlotConnections();
+    
     std::unique_ptr<ApplicationController> appController;
     std::unique_ptr<MainWindowUI> ui;
+    std::unique_ptr<MainWindowUIAdapter> uiAdapter;
 };
 
 #endif // MAINWINDOW_H

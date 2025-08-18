@@ -1,5 +1,5 @@
 #include "DensitySlider.h"
-#include "ColorManager.h"
+#include "../ColorManager.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <algorithm>

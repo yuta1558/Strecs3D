@@ -1,5 +1,5 @@
 #include "ModeComboBox.h"
-#include "ColorManager.h"
+#include "../ColorManager.h"
 #include <QPainter>
 #include <QStyleOptionComboBox>
 #include <QEnterEvent>

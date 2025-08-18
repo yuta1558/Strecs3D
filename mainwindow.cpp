@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "core/application/MainWindowUIAdapter.h"
 #include <QPushButton>
 #include <QFileDialog>
 #include <QVBoxLayout>
@@ -12,9 +13,17 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setWindowTitle("Strecs3D");
     ui = std::make_unique<MainWindowUI>(this);
-    appController = std::make_unique<ApplicationController>(ui.get());
+    uiAdapter = std::make_unique<MainWindowUIAdapter>(ui.get(), this);
+    appController = std::make_unique<ApplicationController>(this);
+    
+    // VisualizationManagerを初期化
+    appController->initializeVisualizationManager(uiAdapter.get());
+    
     setCentralWidget(ui->getCentralWidget());
     resize(1600, 900);
+    
+    // ApplicationControllerとMainWindowUIAdapterのシグナル・スロット接続を設定
+    setupSignalSlotConnections();
 
     // ボタン接続
     connect(ui->getOpenStlButton(), &QPushButton::clicked, this, &MainWindow::openSTLFile);
@@ -62,7 +71,7 @@ void MainWindow::openVTKFile()
     std::string vtkFile = fileName.toStdString();
     logMessage("Open VTK File: " + fileName);
     
-    if (appController->openVtkFile(vtkFile, ui.get())) {
+    if (appController->openVtkFile(vtkFile, uiAdapter.get())) {
         logMessage("VTK file loaded successfully");
     } else {
         logMessage("Failed to load VTK file");
@@ -82,7 +91,7 @@ void MainWindow::openSTLFile()
     std::string stlFile = filename.toStdString();
     logMessage("Open STL File: " + filename);
     
-    if (appController->openStlFile(stlFile, ui.get())) {
+    if (appController->openStlFile(stlFile, uiAdapter.get())) {
         logMessage("STL file loaded successfully");
     } else {
         logMessage("Failed to load STL file");
@@ -93,7 +102,7 @@ void MainWindow::processFiles()
 {
     logMessage("Starting file processing...");
     
-    if (appController->processFiles(ui.get(), this)) {
+    if (appController->processFiles(uiAdapter.get())) {
         logMessage("File processing completed successfully");
     } else {
         logMessage("File processing failed");
@@ -104,7 +113,7 @@ void MainWindow::export3mfFile()
 {
     logMessage("Starting 3MF export...");
     
-    if (appController->export3mfFile(this)) {
+    if (appController->export3mfFile(uiAdapter.get())) {
         logMessage("3MF export completed successfully");
     } else {
         logMessage("3MF export failed");
@@ -167,4 +176,48 @@ void MainWindow::onVtkObjectOpacityChanged(double opacity)
             visualizationManager->setObjectOpacity(fileName.toStdString(), opacity);
         }
     }
+}
+
+void MainWindow::setupSignalSlotConnections()
+{
+    // ApplicationControllerからIUserInterface(MainWindowUIAdapter)へのシグナル・スロット接続
+    // IUserInterfaceに定義されたスロットを使用
+    connect(appController.get(), &ApplicationController::vtkFileNameChanged,
+            uiAdapter.get(), &IUserInterface::onVtkFileNameChanged);
+    
+    connect(appController.get(), &ApplicationController::stlFileNameChanged,
+            uiAdapter.get(), &IUserInterface::onStlFileNameChanged);
+    
+    connect(appController.get(), &ApplicationController::dividedMeshFileNameChanged,
+            uiAdapter.get(), &IUserInterface::onDividedMeshFileNameChanged);
+    
+    connect(appController.get(), &ApplicationController::vtkVisibilityChanged,
+            uiAdapter.get(), &IUserInterface::onVtkVisibilityChanged);
+    
+    connect(appController.get(), &ApplicationController::stlVisibilityChanged,
+            uiAdapter.get(), &IUserInterface::onStlVisibilityChanged);
+    
+    connect(appController.get(), &ApplicationController::dividedMeshVisibilityChanged,
+            uiAdapter.get(), &IUserInterface::onDividedMeshVisibilityChanged);
+    
+    connect(appController.get(), &ApplicationController::vtkOpacityChanged,
+            uiAdapter.get(), &IUserInterface::onVtkOpacityChanged);
+    
+    connect(appController.get(), &ApplicationController::stlOpacityChanged,
+            uiAdapter.get(), &IUserInterface::onStlOpacityChanged);
+    
+    connect(appController.get(), &ApplicationController::dividedMeshOpacityChanged,
+            uiAdapter.get(), &IUserInterface::onDividedMeshOpacityChanged);
+    
+    connect(appController.get(), &ApplicationController::stressRangeChanged,
+            uiAdapter.get(), &IUserInterface::onStressRangeChanged);
+    
+    connect(appController.get(), &ApplicationController::showWarningMessage,
+            uiAdapter.get(), &IUserInterface::onShowWarningMessage);
+    
+    connect(appController.get(), &ApplicationController::showCriticalMessage,
+            uiAdapter.get(), &IUserInterface::onShowCriticalMessage);
+    
+    connect(appController.get(), &ApplicationController::showInfoMessage,
+            uiAdapter.get(), &IUserInterface::onShowInfoMessage);
 }
