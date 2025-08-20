@@ -44,18 +44,23 @@ jobs:
         with:
           submodules: recursive
 
-      # まずディスク状況を確認（情報目的）
-      - name: Ensure sufficient disk space
+      # --- ディスク状況確認（OS別に安全化） ---
+      - name: Ensure sufficient disk space (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $d = Get-PSDrive -Name C
+          "{0:N2} GB free / {1:N2} GB total" -f ($d.Free/1GB), (($d.Used+$d.Free)/1GB) | Write-Host
+          Write-Host "⚠️ If free space < ~15GB, VTK+Qt builds may fail."
+
+      - name: Ensure sufficient disk space (macOS)
+        if: runner.os == 'macOS'
         shell: bash
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            powershell 'Get-CimInstance Win32_LogicalDisk -Filter "DeviceID = ''C:''" | % { "{0:N2} GB free" -f ($_.FreeSpace/1GB) }'
-          else
-            df -h /
-          fi
+          df -h /
           echo "⚠️ If free space < ~15GB, VTK+Qt builds may fail."
 
-      # vcpkg ローカルキャッシュ（キーを過敏にしすぎない最適化）
+      # vcpkg ローカルキャッシュ（キー最適化）
       - name: Cache vcpkg (local binary cache)
         uses: actions/cache@v4
         with:
@@ -421,13 +426,13 @@ jobs:
             fi
           fi
 
-      # --- 成果物アップロード（最後） ---
+      # --- 成果物アップロード（Windowsは絶対パスで確実化） ---
       - name: Upload artifacts (Windows)
         if: always() && runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: windows-${{ matrix.build_type }}
-          path: ${{ env.SHORT_WS }}\dist\**
+          path: C:\w\dist\**
           if-no-files-found: error
 
       - name: Upload artifacts (macOS)
