@@ -32,16 +32,16 @@ jobs:
       VCPKG_CMAKE_CONFIGURE_OPTIONS: "-G;Ninja;-DCMAKE_MAKE_PROGRAM=ninja"
 
     steps:
-      - name: "Checkout"
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: "recursive"
+          submodules: recursive
 
-      - name: "Get CMake + Ninja"
+      - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # ---------- Windows: 実ディレクトリ短縮（substは使わない） ----------
-      - name: "Prepare short workspace (Windows)"
+      # ---------- Windows: 短いワークスペースにコピー ----------
+      - name: Prepare short workspace (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -50,73 +50,49 @@ jobs:
           New-Item -ItemType Directory -Force -Path 'C:\w' | Out-Null
           Copy-Item "$env:GITHUB_WORKSPACE\*" 'C:\w' -Recurse -Force
           'SHORT_WS=C:\w' | Out-File -FilePath $env:GITHUB_ENV -Append
-          New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null  # vcpkg downloads
-          New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null  # vcpkg installed
+          New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null
+          New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null
 
-      - name: "Enable long paths (Windows)"
+      - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: git config --system core.longpaths true
 
-      - name: "Setup MSVC Dev Environment (Windows)"
+      - name: Setup MSVC Dev Environment (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: "Install Ninja (Windows)"
+      - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           choco install ninja --no-progress -y
           ninja --version
 
-      - name: "Setup Python (Windows)"
-        if: runner.os == 'Windows'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      # ---------- Unix (macOS) 依存ツール ----------
+      - name: Install build deps (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          brew update
+          brew install autoconf-archive automake libtool pkg-config ninja
 
-      # ---------- Windows: vcpkg をワークスペース内にクローン＆ブートストラップ ----------
-      - name: "Clone vcpkg (Windows)"
+      # ---------- vcpkg（manifest） ----------
+      - name: Clone vcpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if (-not (Test-Path "$env:SHORT_WS\vcpkg\.git")) {
             git clone https://github.com/microsoft/vcpkg.git "$env:SHORT_WS\vcpkg"
-          } else {
-            Write-Host "vcpkg repo already exists at $env:SHORT_WS\vcpkg"
           }
 
-      - name: "Bootstrap vcpkg (Windows)"
+      - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           & "$env:SHORT_WS\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
-          if ($LASTEXITCODE -ne 0) { throw "bootstrap-vcpkg failed with code $LASTEXITCODE" }
 
-      # ---------- Unix（macOS/Ubuntu）: ビルド必須ツール ----------
-      - name: "Install build deps (Unix)"
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          if command -v apt-get >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y \
-              build-essential \
-              ninja-build \
-              autoconf-archive \
-              pkg-config
-          else
-            brew update
-            brew install \
-              autoconf-archive \
-              automake \
-              libtool \
-              pkg-config \
-              ninja
-          fi
-
-      # ---------- vcpkg（Windowsは C:\w\vcpkg を使用、mac はデフォルト） ----------
-      - name: "Setup vcpkg (manifest) [Windows]"
+      - name: Setup vcpkg (manifest) [Windows]
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
@@ -124,25 +100,15 @@ jobs:
           vcpkgJsonGlob: "vcpkg.json"
           doNotUpdateVcpkg: true
 
-      - name: "Setup vcpkg (manifest) [Unix]"
+      - name: Setup vcpkg (manifest) [Unix]
         if: runner.os != 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: "vcpkg.json"
           doNotUpdateVcpkg: true
 
-      # ---------- Windows: 壊れた中間物を掃除（harfbuzz/Qt系） ----------
-      - name: "Clean vcpkg buildtrees (Windows)"
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          foreach ($p in @('qtdeclarative','qtbase','harfbuzz')) {
-            $t = "$env:SHORT_WS\vcpkg\buildtrees\$p"
-            if (Test-Path $t) { Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue }
-          }
-
-      # ---------- Preflight（原因の切り分けを最短化） ----------
-      - name: "Preflight check (Windows)"
+      # ---------- Preflight ----------
+      - name: Preflight check (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -150,10 +116,9 @@ jobs:
           Write-Host 'Ninja:'; ninja --version
           $tc = "$env:SHORT_WS\vcpkg\scripts\buildsystems\vcpkg.cmake"
           Write-Host "Toolchain exists? $tc"; Test-Path $tc | Out-Host
-          Write-Host 'MSVC cl:'; & "$env:VCToolsInstallDir\bin\Hostx64\x64\cl.exe" /? | Out-Null; if ($LASTEXITCODE -ne 0) { Write-Error 'MSVC cl not found' }
 
       # ---------- Configure / Build ----------
-      - name: "Configure (CMake + Ninja) [Windows]"
+      - name: Configure (CMake + Ninja) [Windows]
         if: runner.os == 'Windows'
         working-directory: "${{ env.SHORT_WS }}"
         env:
@@ -167,12 +132,12 @@ jobs:
           -DCMAKE_MAKE_PROGRAM=ninja
           -DCMAKE_VERBOSE_MAKEFILE=ON
 
-      - name: "Build [Windows]"
+      - name: Build [Windows]
         if: runner.os == 'Windows'
         working-directory: "${{ env.SHORT_WS }}"
-        run: cmake --build _b
+        run: cmake --build _b --config ${{ matrix.build_type }}
 
-      - name: "Configure (CMake + Ninja) [Unix]"
+      - name: Configure (CMake + Ninja) [Unix]
         if: runner.os != 'Windows'
         run: >
           cmake -S . -B build
@@ -181,45 +146,94 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
           -DCMAKE_VERBOSE_MAKEFILE=ON
 
-      - name: "Build [Unix]"
+      - name: Build [Unix]
         if: runner.os != 'Windows'
-        run: cmake --build build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      # ---------- Install → dist に集約 ----------
+      - name: Install [Windows]
+        if: runner.os == 'Windows'
+        working-directory: "${{ env.SHORT_WS }}"
+        run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\\dist"
+
+      - name: Install [Unix]
+        if: runner.os != 'Windows'
+        run: cmake --install build --config ${{ matrix.build_type }} --prefix dist
+
+      # ---------- Qt Deploy（存在すれば実行・無ければスキップ） ----------
+      - name: Qt deploy [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "${{ env.SHORT_WS }}\dist\bin\*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($exe) {
+            $tool = Get-ChildItem "${{ env.SHORT_WS }}\vcpkg\installed\${{ matrix.triplet }}\tools" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'qt*' } | Select-Object -First 1
+            if ($tool -and (Test-Path "$($tool.FullName)\bin\windeployqt.exe")) {
+              & "$($tool.FullName)\bin\windeployqt.exe" "$($exe.FullName)"
+            } else {
+              Write-Host "windeployqt not found. Skip."
+            }
+          } else {
+            Write-Host "No exe under dist\\bin. Skip Qt deploy."
+          }
+
+      - name: Qt deploy [macOS]
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP="$(ls dist/*.app 2>/dev/null | head -n1 || true)"
+          if [ -n "$APP" ]; then
+            if command -v macdeployqt >/dev/null 2>&1; then
+              macdeployqt "$APP" -always-overwrite || true
+            else
+              TOOL="$(ls "${VCPKG_ROOT}/installed/${{ matrix.triplet }}/tools"/qt*/bin/macdeployqt 2>/dev/null | head -n1 || true)"
+              if [ -n "$TOOL" ]; then "$TOOL" "$APP" -always-overwrite || true; else echo "macdeployqt not found. Skip."; fi
+            fi
+          else
+            echo "No .app in dist. Skip Qt deploy."
+          fi
 
       # ---------- 失敗時ログ回収 ----------
-      - name: "Upload vcpkg logs (on fail, Windows)"
+      - name: Upload vcpkg logs (on fail, Windows)
         if: failure() && runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: "vcpkg-logs-windows"
+          name: vcpkg-logs-windows
           path: |
             ${{ env.SHORT_WS }}/vcpkg/buildtrees/**/*.log
             ${{ env.SHORT_WS }}/vcpkg/buildtrees/**/*-out.log
 
-      - name: "Upload CMake logs (on fail, Unix)"
+      - name: Upload CMake logs (on fail, Unix)
         if: failure() && runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: "cmake-logs-unix"
+          name: cmake-logs-unix
           path: |
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log
 
-      - name: "Upload build logs (on fail, Unix)"
+      - name: Upload build logs (on fail, Unix)
         if: failure() && runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: "build-logs-unix"
+          name: build-logs-unix
           path: |
             build/**/*.log
             build/**/Testing/**/*.log
 
-      - name: "Upload build artifacts"
-        if: always()
+      # ---------- 成果物アップロード ----------
+      - name: Upload build artifacts (Windows)
+        if: always() && runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: "${{ runner.os }}-${{ matrix.build_type }}-binaries"
-          path: |
-            _b/**
-            build/**
-            !**/CMakeFiles/**
-            !**/Testing/**
+          name: "windows-${{ matrix.build_type }}"
+          path: ${{ env.SHORT_WS }}\dist\**
+          if-no-files-found: error
+
+      - name: Upload build artifacts (macOS)
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: "macos-${{ matrix.build_type }}"
+          path: dist/**
+          if-no-files-found: error
