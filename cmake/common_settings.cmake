@@ -132,9 +132,11 @@ if(VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
     TARGETS Strecs3D
     MODULES ${VTK_LIBRARIES}
   )
-endif() 
+endif()
 
-# --- ここから追記 ---
+# -----------------------
+# ここからインストール設定
+# -----------------------
 include(GNUInstallDirs)
 
 # 配置場所の規約
@@ -148,4 +150,7 @@ install(TARGETS Strecs3D
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-# --- ここまで追記 ---
+
+# 追加のリソースがあれば必要に応じて（例）
+# install(DIRECTORY assets/ DESTINATION ${CMAKE_INSTALL_BINDIR}/assets)
+# install(FILES config/app.ini DESTINATION ${CMAKE_INSTALL_BINDIR})
