@@ -133,3 +133,19 @@ if(VTK_VERSION VERSION_GREATER_EQUAL "8.90.0")
     MODULES ${VTK_LIBRARIES}
   )
 endif() 
+
+# --- ここから追記 ---
+include(GNUInstallDirs)
+
+# 配置場所の規約
+set(CMAKE_INSTALL_BINDIR bin)
+set(CMAKE_INSTALL_LIBDIR lib)
+
+# Strecs3D バイナリをインストール
+install(TARGETS Strecs3D
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # Windows .exe
+  BUNDLE  DESTINATION .                        # macOS .app
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+# --- ここまで追記 ---
