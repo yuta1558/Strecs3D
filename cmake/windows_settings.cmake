@@ -12,9 +12,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+  # /MD 系に統一（/MT 系は使わない）
+  add_compile_options(/W4)
 endif()
 
 # MinGW環境でのQt6設定
@@ -38,7 +37,7 @@ else()
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(LIBZIP REQUIRED libzip)
   message(STATUS "Found libzip version: ${LIBZIP_VERSION}")
-  
+
   if(LIBZIP_LIBRARY_DIRS)
     link_directories(${LIBZIP_LIBRARY_DIRS})
   endif()
@@ -46,8 +45,7 @@ endif()
 
 # Windows用の設定を適用する関数
 function(apply_windows_settings TARGET_NAME)
-  # Windows用のインクルードパス設定
-  # lib3mfはcommon_settings.cmakeで検索済みのため、vcpkgの設定を使用
+  # libzip のフォールバック時のみ include を追加
   if(NOT libzip_FOUND)
     target_include_directories(${TARGET_NAME} PRIVATE
       ${LIBZIP_INCLUDE_DIRS}
@@ -63,15 +61,12 @@ function(apply_windows_settings TARGET_NAME)
     ${LIBZIP_LIBRARIES}
   )
 
-  # MinGW環境での追加設定
+  # MinGW 環境の追加設定
   if(MINGW)
-    # MinGW用のQt6ライブラリパス設定
     if(Qt6Core_DIR)
       get_filename_component(QT_LIB_DIR "${Qt6Core_DIR}/../" ABSOLUTE)
       message(STATUS "Qt6 library directory: ${QT_LIB_DIR}")
     endif()
-    
-    # MinGW用のリンクフラグ
     set_target_properties(${TARGET_NAME} PROPERTIES
       LINK_FLAGS "-static-libgcc -static-libstdc++"
     )
@@ -84,9 +79,9 @@ function(apply_windows_settings TARGET_NAME)
   )
 endfunction()
 
-# Qtプラグインパスの設定
+# Qtプラグインパスの設定（情報ログ用）
 if(Qt6_DIR)
   get_filename_component(QT_ROOT "${Qt6_DIR}/../../../" ABSOLUTE)
   set(QT_PLUGIN_PATH "${QT_ROOT}/plugins")
   message(STATUS "Qt plugins path: ${QT_PLUGIN_PATH}")
-endif() 
+endif()
