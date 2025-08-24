@@ -114,6 +114,7 @@ jobs:
       # --- macOS toolchain ---
       - name: Install build deps (macOS)
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           brew update
           brew install autoconf-archive automake libtool pkg-config ninja jq
@@ -218,7 +219,7 @@ jobs:
         working-directory: ${{ env.SHORT_WS }}
         env:
           CL: /MP2
-        shell: bash
+        shell: pwsh
         run: cmake --build _b --config ${{ matrix.build_type }} --parallel 2
 
       - name: Build (macOS)
@@ -230,9 +231,8 @@ jobs:
       - name: Install (Windows)
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
-        shell: bash
-        run: |
-          cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\\dist"
+        shell: pwsh
+        run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\\dist"
 
       - name: "Debug: list install outputs (Windows)"
         if: runner.os == 'Windows'
@@ -332,16 +332,14 @@ jobs:
         if: always()
         shell: bash
         run: |
-          cat > build-metrics.json <<EOF
-{
-  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "runner_os": "${{ runner.os }}",
-  "build_type": "${{ matrix.build_type }}",
-  "build_time_seconds": "${BUILD_TIME:-0}",
-  "git_sha": "${{ github.sha }}",
-  "workflow_run_id": "${{ github.run_id }}"
-}
-EOF
+          printf '%s\n' "{" \
+            "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"," \
+            "  \"runner_os\": \"${{ runner.os }}\"," \
+            "  \"build_type\": \"${{ matrix.build_type }}\"," \
+            "  \"build_time_seconds\": \"${BUILD_TIME:-0}\"," \
+            "  \"git_sha\": \"${{ github.sha }}\"," \
+            "  \"workflow_run_id\": \"${{ github.run_id }}\"" \
+          "}" > build-metrics.json
 
       - name: Upload build metrics
         if: always()
