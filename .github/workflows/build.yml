@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request: {}
   workflow_dispatch: {}
 
@@ -13,29 +13,29 @@ permissions:
   checks: write
 
 concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   cmake:
-    name: "${{ matrix.os }} | ${{ matrix.build_type }}"
-    runs-on: "${{ matrix.os }}"
+    name: ${{ matrix.os }} | ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 300
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: "windows-latest"
-            triplet: "x64-windows"
-            build_type: "Release"
-          - os: "macos-14"
-            triplet: "arm64-osx"
-            build_type: "Release"
+          - os: windows-latest
+            triplet: x64-windows
+            build_type: Release
+          - os: macos-14
+            triplet: arm64-osx
+            build_type: Release
 
     env:
-      VCPKG_DEFAULT_TRIPLET: "${{ matrix.triplet }}"
-      VCPKG_BUILD_TYPE: "release"
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_BUILD_TYPE: release
+      VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
 
     steps:
@@ -65,7 +65,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/vcpkg-cache
-          key: vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}-${{ hashFiles('cmake/common_settings.cmake', 'cmake/windows_settings.cmake', 'cmake/macos_settings.cmake') }}
+          key: vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}-${{ hashFiles('cmake/common_settings.cmake','cmake/windows_settings.cmake','cmake/macos_settings.cmake') }}
           restore-keys: |
             vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}-
             vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-
@@ -95,7 +95,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        working-directory: "${{ env.SHORT_WS }}"
+        working-directory: ${{ env.SHORT_WS }}
         run: |
           git config --global core.longpaths true
           git config core.longpaths true
@@ -137,15 +137,15 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: "${{ env.SHORT_WS }}\\vcpkg"
-          vcpkgJsonGlob: "vcpkg.json"
+          vcpkgDirectory: ${{ env.SHORT_WS }}\vcpkg
+          vcpkgJsonGlob: vcpkg.json
           doNotUpdateVcpkg: true
 
       - name: Setup vcpkg (manifest) [macOS]
         if: runner.os == 'macOS'
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgJsonGlob: "vcpkg.json"
+          vcpkgJsonGlob: vcpkg.json
           doNotUpdateVcpkg: true
 
       # baseline 整合性チェック（jq があれば利用）
@@ -177,9 +177,9 @@ jobs:
       # --- Configure / Build ---
       - name: Configure (Windows)
         if: runner.os == 'Windows'
-        working-directory: "${{ env.SHORT_WS }}"
+        working-directory: ${{ env.SHORT_WS }}
         env:
-          VCPKG_DOWNLOADS: "C:\\vd"
+          VCPKG_DOWNLOADS: C:\vd
           CL: /MP2
         run: >
           cmake -S . -B _b
@@ -223,7 +223,7 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        working-directory: "${{ env.SHORT_WS }}"
+        working-directory: ${{ env.SHORT_WS }}
         env:
           CL: /MP2
         run: cmake --build _b --config ${{ matrix.build_type }} --parallel 2
@@ -233,24 +233,24 @@ jobs:
         run: cmake --build build --config ${{ matrix.build_type }}
 
       # --- Install → dist に集約 ---
-     - name: Install (Windows)
+      - name: Install (Windows)
         if: runner.os == 'Windows'
-        working-directory: "${{ env.SHORT_WS }}"
-        run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\\dist"
+        working-directory: ${{ env.SHORT_WS }}
+        run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\dist"
 
-        - name: Debug: list install outputs (Windows)
-     if: runner.os == 'Windows'
-     shell: pwsh
-     run: |
-       Write-Host "== DIR dist =="
-       if (Test-Path "${{ env.SHORT_WS }}\dist") {
-         Get-ChildItem -Recurse "${{ env.SHORT_WS }}\dist" | Select-Object FullName,Length | Format-Table -AutoSize
-       } else {
-         Write-Host "dist folder does not exist."
-       }
-       Write-Host "== Find EXEs/DLLs in build tree =="
-       Get-ChildItem -Recurse "${{ env.SHORT_WS }}\_b" -Include *.exe,*.dll -ErrorAction SilentlyContinue |
-         Select-Object FullName,Length | Format-Table -AutoSize
+      - name: Debug: list install outputs (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "== DIR dist =="
+          if (Test-Path "${{ env.SHORT_WS }}\dist") {
+            Get-ChildItem -Recurse "${{ env.SHORT_WS }}\dist" | Select-Object FullName,Length | Format-Table -AutoSize
+          } else {
+            Write-Host "dist folder does not exist."
+          }
+          Write-Host "== Find EXEs/DLLs in build tree =="
+          Get-ChildItem -Recurse "${{ env.SHORT_WS }}\_b" -Include *.exe,*.dll -ErrorAction SilentlyContinue |
+            Select-Object FullName,Length | Format-Table -AutoSize
 
       - name: Install (macOS)
         if: runner.os == 'macOS'
@@ -259,7 +259,7 @@ jobs:
       # --- 成果物の即時検証 ---
       - name: Verify build artifacts (Windows)
         if: runner.os == 'Windows'
-        working-directory: "${{ env.SHORT_WS }}"
+        working-directory: ${{ env.SHORT_WS }}
         shell: pwsh
         run: |
           $exe = "${{ env.SHORT_WS }}\dist\bin\Strecs3D.exe"
@@ -323,7 +323,7 @@ jobs:
             echo "ℹ️ No .app in dist. Skip."
           fi
 
-      # 計測終了 & メトリクス保存（EOFはクォート無しで展開を有効化）
+      # 計測終了 & メトリクス保存
       - name: Calculate build time
         shell: bash
         run: |
@@ -442,17 +442,16 @@ jobs:
 
       # --- 成果物アップロード（Windowsは絶対パスで確実化） ---
       - name: Upload artifacts (Windows)
-     if: always() && runner.os == 'Windows'
-     uses: actions/upload-artifact@v4
-     with:
-       name: windows-${{ matrix.build_type }}
-       path: |
-         ${{ env.SHORT_WS }}\dist\**           # 本来はこちら（install 成功時）
-         ${{ env.SHORT_WS }}\_b\*.exe          # フォールバック: 直下の exe
-         ${{ env.SHORT_WS }}\_b\**\*.exe       # サブディレクトリの exe
-         ${{ env.SHORT_WS }}\_b\**\*.dll       # DLL も回収
-       if-no-files-found: warn
-
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.build_type }}
+          path: |
+            ${{ env.SHORT_WS }}\dist\**           # 本来はこちら（install 成功時）
+            ${{ env.SHORT_WS }}\_b\*.exe          # フォールバック: 直下の exe
+            ${{ env.SHORT_WS }}\_b\**\*.exe       # サブディレクトリの exe
+            ${{ env.SHORT_WS }}\_b\**\*.dll       # DLL も回収
+          if-no-files-found: warn
 
       - name: Upload artifacts (macOS)
         if: always() && runner.os == 'macOS'
