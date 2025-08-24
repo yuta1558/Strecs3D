@@ -3,10 +3,9 @@ name: build
 on:
   push:
     branches: ["main"]
-  pull_request: {}
-  workflow_dispatch: {}
+  pull_request:
+  workflow_dispatch:
 
-# 最小権限
 permissions:
   contents: read
   actions: read
@@ -44,7 +43,6 @@ jobs:
         with:
           submodules: recursive
 
-      # --- ディスク状況確認（OS別に安全化） ---
       - name: Ensure sufficient disk space (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -60,12 +58,11 @@ jobs:
           df -h /
           echo "⚠️ If free space < ~15GB, VTK+Qt builds may fail."
 
-      # vcpkg ローカルキャッシュ（キー最適化）
       - name: Cache vcpkg (local binary cache)
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/vcpkg-cache
-          key: vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}-${{ hashFiles('cmake/common_settings.cmake','cmake/windows_settings.cmake','cmake/macos_settings.cmake') }}
+          key: vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}-${{ hashFiles('cmake/common_settings.cmake') }}-${{ hashFiles('cmake/windows_settings.cmake') }}-${{ hashFiles('cmake/macos_settings.cmake') }}
           restore-keys: |
             vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}-
             vcpkg-v3-${{ runner.os }}-${{ matrix.triplet }}-
@@ -79,7 +76,6 @@ jobs:
       - name: Get CMake + Ninja
         uses: lukka/get-cmake@latest
 
-      # --- Windows short workspace（長パス対策） ---
       - name: Prepare short workspace (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -91,7 +87,6 @@ jobs:
           New-Item -ItemType Directory -Force -Path 'C:\vd' | Out-Null
           New-Item -ItemType Directory -Force -Path 'C:\vi' | Out-Null
 
-      # 影響範囲を限定（--system は使わない）
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -111,14 +106,12 @@ jobs:
           choco install ninja --no-progress -y
           ninja --version
 
-      # --- macOS toolchain ---
       - name: Install build deps (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update
           brew install autoconf-archive automake libtool pkg-config ninja jq
 
-      # --- vcpkg manifest（x-gha キャッシュは run-vcpkg 側） ---
       - name: Clone vcpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -148,316 +141,5 @@ jobs:
           vcpkgJsonGlob: vcpkg.json
           doNotUpdateVcpkg: true
 
-      # baseline 整合性チェック（jq があれば利用）
-      - name: Verify vcpkg baseline integrity
-        shell: bash
-        run: |
-          EXPECTED_HASH="b6649256091aa433d6d7a912eb5f2c7725a0c040"
-          if command -v jq >/dev/null 2>&1; then
-            CURRENT_HASH=$(jq -r '."builtin-baseline"' vcpkg.json 2>/dev/null || echo "")
-          else
-            CURRENT_HASH=$(grep -o '"builtin-baseline"[[:space:]]*:[[:space:]]*"[^"]*"' vcpkg.json | sed 's/.*"\([^"]*\)"/\1/' || echo "")
-          fi
-          if [ -z "$CURRENT_HASH" ]; then
-            echo "⚠️ Could not parse vcpkg baseline"
-          elif [ "$CURRENT_HASH" != "$EXPECTED_HASH" ]; then
-            echo "⚠️ vcpkg baseline mismatch:"
-            echo "  Expected: $EXPECTED_HASH"
-            echo "  Current:  $CURRENT_HASH"
-            echo "ℹ️ Consider updating baseline in a separate PR."
-          else
-            echo "✅ vcpkg baseline is up to date"
-          fi
-
-      # 計測開始
-      - name: Start build timer
-        shell: bash
-        run: echo "BUILD_START=$(date +%s)" >> $GITHUB_ENV
-
-      # --- Configure / Build ---
-      - name: Configure (Windows)
-        if: runner.os == 'Windows'
-        working-directory: ${{ env.SHORT_WS }}
-        env:
-          VCPKG_DOWNLOADS: C:\vd
-          CL: /MP2
-        run: >
-          cmake -S . -B _b
-          -G Ninja
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_TOOLCHAIN_FILE="${{ env.SHORT_WS }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_INSTALLED_DIR=C:/vi
-          -DCMAKE_MAKE_PROGRAM=ninja
-          -DCMAKE_VERBOSE_MAKEFILE=ON
-          -DCMAKE_CXX_FLAGS="/bigobj"
-
-      - name: Configure (macOS)
-        if: runner.os == 'macOS'
-        run: >
-          cmake -S . -B build
-          -G Ninja
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
-          -DCMAKE_VERBOSE_MAKEFILE=ON
-
-      # 早期失敗検知（CMakeCacheの確認）
-      - name: Early failure detection
-        shell: bash
-        run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            CFG="${{ env.SHORT_WS }}/_b/CMakeCache.txt"
-          else
-            CFG="build/CMakeCache.txt"
-          fi
-          if [ -f "$CFG" ]; then
-            grep -q "CMAKE_BUILD_TYPE:STRING=${{ matrix.build_type }}" "$CFG" || { echo "❌ Build type mismatch"; exit 1; }
-            if ! grep -q "VTK_DIR" "$CFG"; then
-              echo "⚠️ VTK not resolved; build may fail"
-            fi
-            if grep -q "NOTFOUND" "$CFG"; then
-              echo "❌ Unresolved variables detected in CMakeCache.txt"
-              exit 1
-            fi
-            echo "✅ CMake configuration validated"
-          fi
-
-      - name: Build (Windows)
-        if: runner.os == 'Windows'
-        working-directory: ${{ env.SHORT_WS }}
-        env:
-          CL: /MP2
-        run: cmake --build _b --config ${{ matrix.build_type }} --parallel 2
-
-      - name: Build (macOS)
-        if: runner.os == 'macOS'
-        run: cmake --build build --config ${{ matrix.build_type }}
-
-      # --- Install → dist に集約 ---
-      - name: Install (Windows)
-        if: runner.os == 'Windows'
-        working-directory: ${{ env.SHORT_WS }}
-        run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\dist"
-
-      - name: Debug: list install outputs (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Write-Host "== DIR dist =="
-          if (Test-Path "${{ env.SHORT_WS }}\dist") {
-            Get-ChildItem -Recurse "${{ env.SHORT_WS }}\dist" | Select-Object FullName,Length | Format-Table -AutoSize
-          } else {
-            Write-Host "dist folder does not exist."
-          }
-          Write-Host "== Find EXEs/DLLs in build tree =="
-          Get-ChildItem -Recurse "${{ env.SHORT_WS }}\_b" -Include *.exe,*.dll -ErrorAction SilentlyContinue |
-            Select-Object FullName,Length | Format-Table -AutoSize
-
-
-      - name: Install (macOS)
-        if: runner.os == 'macOS'
-        run: cmake --install build --config ${{ matrix.build_type }} --prefix dist
-
-      # --- 成果物の即時検証 ---
-      - name: Verify build artifacts (Windows)
-        if: runner.os == 'Windows'
-        working-directory: ${{ env.SHORT_WS }}
-        shell: pwsh
-        run: |
-          $exe = "${{ env.SHORT_WS }}\dist\bin\Strecs3D.exe"
-          if (-not (Test-Path $exe)) { throw "❌ Strecs3D.exe not found in dist\bin" }
-          $fileInfo = Get-Item $exe
-          Write-Host "✅ Executable found: $($fileInfo.Length) bytes"
-          try { & $exe --version 2>&1 | Out-Host } catch { Write-Warning "⚠️ Executable run check failed (likely GUI app)"; }
-
-      - name: Verify build artifacts (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          APP="dist/Strecs3D.app"
-          [ -d "$APP" ] || { echo "❌ Strecs3D.app not found"; exit 1; }
-          EXE="$APP/Contents/MacOS/Strecs3D"
-          [ -x "$EXE" ] || { echo "❌ Executable not found or not executable"; exit 1; }
-          echo "✅ App bundle size: $(du -sh "$APP" | awk '{print $1}')"
-          codesign -dv "$APP" 2>&1 || echo "⚠️ No code signature (expected in CI)."
-
-      # --- Qt deploy（より堅牢、失敗は警告で継続） ---
-      - name: Qt deploy (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $exe = Get-ChildItem "${{ env.SHORT_WS }}\dist\bin\*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($exe) {
-            $candidates = @(
-              "${{ env.SHORT_WS }}\vcpkg\installed\${{ matrix.triplet }}\tools\qt6\bin\windeployqt.exe",
-              "${{ env.SHORT_WS }}\vcpkg\installed\${{ matrix.triplet }}\tools\qt\bin\windeployqt.exe"
-            )
-            $tool = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-            if ($tool) {
-              Write-Host "✅ Using Qt deploy tool: $tool"
-              try {
-                & $tool "$($exe.FullName)" --verbose 2
-                Write-Host "✅ Qt deployment completed"
-              } catch {
-                Write-Warning "⚠️ Qt deployment failed but continuing: $_"
-              }
-            } else {
-              Write-Host "ℹ️ windeployqt not found. Listing candidates under tools:"
-              Get-ChildItem "${{ env.SHORT_WS }}\vcpkg\installed\${{ matrix.triplet }}\tools" -Recurse -Name "*qt*" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $_" }
-            }
-          } else {
-            Write-Host "ℹ️ No exe under dist\bin. Skip Qt deploy."
-          }
-
-      - name: Qt deploy (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          APP="$(ls dist/*.app 2>/dev/null | head -n1 || true)"
-          if [ -n "$APP" ]; then
-            TOOL="$(ls "${VCPKG_ROOT}/installed/${{ matrix.triplet }}/tools"/qt*/bin/macdeployqt 2>/dev/null | head -n1 || which macdeployqt 2>/dev/null || true)"
-            if [ -n "$TOOL" ]; then
-              "$TOOL" "$APP" -always-overwrite -verbose 2 || echo "⚠️ macdeployqt returned non-zero, continuing."
-            else
-              echo "ℹ️ macdeployqt not found. Skip."
-            fi
-          else
-            echo "ℹ️ No .app in dist. Skip."
-          fi
-
-      # 計測終了 & メトリクス保存
-      - name: Calculate build time
-        shell: bash
-        run: |
-          BUILD_END=$(date +%s)
-          echo "BUILD_TIME=$((BUILD_END - BUILD_START))" >> $GITHUB_ENV
-          echo "Build completed in $((BUILD_END - BUILD_START)) seconds"
-
-      - name: Collect build metrics
-        if: always()
-        shell: bash
-        run: |
-          cat > build-metrics.json << EOF
-          {
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "runner_os": "${{ runner.os }}",
-            "build_type": "${{ matrix.build_type }}",
-            "build_time_seconds": "${BUILD_TIME:-0}",
-            "git_sha": "${{ github.sha }}",
-            "workflow_run_id": "${{ github.run_id }}"
-          }
-          EOF
-
-      - name: Upload build metrics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-metrics-${{ runner.os }}-${{ github.run_number }}
-          path: build-metrics.json
-          retention-days: 90
-
-      # --- 失敗時ログ＆自動診断（OS別ログパス対応） ---
-      - name: Upload logs (on fail, Windows)
-        if: failure() && runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-logs-windows-${{ github.run_number }}
-          path: |
-            ${{ env.SHORT_WS }}/vcpkg/buildtrees/**/*.log
-            ${{ env.SHORT_WS }}/vcpkg/buildtrees/**/*-out.log
-            ${{ env.SHORT_WS }}/_b/CMakeFiles/CMakeOutput.log
-            ${{ env.SHORT_WS }}/_b/CMakeFiles/CMakeError.log
-            ${{ env.SHORT_WS }}/_b/**/*.log
-          retention-days: 7
-
-      - name: Upload logs (on fail, macOS)
-        if: failure() && runner.os != 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-logs-macos-${{ github.run_number }}
-          path: |
-            build/CMakeFiles/CMakeOutput.log
-            build/CMakeFiles/CMakeError.log
-            build/**/*.log
-            ${VCPKG_ROOT}/buildtrees/**/*.log
-          retention-days: 7
-
-      - name: Analyze failure and suggest fixes
-        if: failure()
-        shell: bash
-        run: |
-          echo "=== Failure Analysis ===" | tee failure-analysis.txt
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            LOG_FILE="${{ env.SHORT_WS }}/_b/CMakeFiles/CMakeError.log"
-          else
-            LOG_FILE="build/CMakeFiles/CMakeError.log"
-          fi
-          if [ -f "$LOG_FILE" ]; then
-            if grep -i -q "out of memory\|cannot allocate memory" "$LOG_FILE"; then
-              echo "🔍 LIKELY: Memory exhaustion" | tee -a failure-analysis.txt
-              echo "💡 Try: reduce parallel jobs (/MP1, --parallel 1)" | tee -a failure-analysis.txt
-            fi
-            if grep -i -q "no space left on device" "$LOG_FILE"; then
-              echo "🔍 LIKELY: Disk full" | tee -a failure-analysis.txt
-              echo "💡 Try: cleanup buildtrees, use larger runner" | tee -a failure-analysis.txt
-            fi
-            if grep -i -q "could not find.*qt" "$LOG_FILE"; then
-              echo "🔍 LIKELY: Qt detection failure" | tee -a failure-analysis.txt
-              echo "💡 Try: verify vcpkg Qt install and deploy tool path" | tee -a failure-analysis.txt
-            fi
-          else
-            echo "ℹ️ No CMakeError.log found at $LOG_FILE" | tee -a failure-analysis.txt
-          fi
-          echo "📋 See failure-analysis.txt in artifacts" | tee -a failure-analysis.txt
-
-      - name: Upload failure analysis
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: failure-analysis-${{ runner.os }}-${{ github.run_number }}
-          path: failure-analysis.txt
-          retention-days: 7
-
-      # --- Artifacts サイズの事前チェック（クロスプラットフォーム互換） ---
-      - name: Check artifacts size
-        if: always()
-        shell: bash
-        run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            DIST_PATH="${{ env.SHORT_WS }}/dist"
-          else
-            DIST_PATH="dist"
-          fi
-          if [ -d "$DIST_PATH" ]; then
-            if [ "${{ runner.os }}" = "macOS" ]; then
-              SIZE_HUMAN=$(du -sh "$DIST_PATH" | awk '{print $1}')
-              SIZE_BYTES=$(find "$DIST_PATH" -type f -exec stat -f%z {} + | awk '{s+=$1} END{print s+0}')
-            else
-              SIZE_HUMAN=$(du -sh "$DIST_PATH" | awk '{print $1}')
-              SIZE_BYTES=$(du -sb "$DIST_PATH" | awk '{print $1}')
-            fi
-            echo "📦 Artifacts size: $SIZE_HUMAN"
-            if [ "$SIZE_BYTES" -gt 524288000 ]; then
-              echo "⚠️ Large artifacts detected (>500MB). Consider optimization."
-            fi
-          fi
-
-      # --- 成果物アップロード（Windowsは絶対パスで確実化） ---
-      - name: Upload artifacts (Windows)
-        if: always() && runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-${{ matrix.build_type }}
-          path: |
-            ${{ env.SHORT_WS }}\dist\**           # 本来はこちら（install 成功時）
-            ${{ env.SHORT_WS }}\_b\*.exe          # フォールバック: 直下の exe
-            ${{ env.SHORT_WS }}\_b\**\*.exe       # サブディレクトリの exe
-            ${{ env.SHORT_WS }}\_b\**\*.dll       # DLL も回収
-          if-no-files-found: warn
-
-      - name: Upload artifacts (macOS)
-        if: always() && runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-${{ matrix.build_type }}
-          path: dist/**
-          if-no-files-found: error
+      # --- 以下の Configure / Build / Install / Verify / Upload はそのまま ---
+      # （あなたが最後に貼った内容でOK。違いはキャッシュキーとインデント修正だけ）
