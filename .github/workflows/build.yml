@@ -233,10 +233,24 @@ jobs:
         run: cmake --build build --config ${{ matrix.build_type }}
 
       # --- Install → dist に集約 ---
-      - name: Install (Windows)
+     - name: Install (Windows)
         if: runner.os == 'Windows'
         working-directory: "${{ env.SHORT_WS }}"
         run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\\dist"
+
+        - name: Debug: list install outputs (Windows)
+     if: runner.os == 'Windows'
+     shell: pwsh
+     run: |
+       Write-Host "== DIR dist =="
+       if (Test-Path "${{ env.SHORT_WS }}\dist") {
+         Get-ChildItem -Recurse "${{ env.SHORT_WS }}\dist" | Select-Object FullName,Length | Format-Table -AutoSize
+       } else {
+         Write-Host "dist folder does not exist."
+       }
+       Write-Host "== Find EXEs/DLLs in build tree =="
+       Get-ChildItem -Recurse "${{ env.SHORT_WS }}\_b" -Include *.exe,*.dll -ErrorAction SilentlyContinue |
+         Select-Object FullName,Length | Format-Table -AutoSize
 
       - name: Install (macOS)
         if: runner.os == 'macOS'
@@ -428,12 +442,17 @@ jobs:
 
       # --- 成果物アップロード（Windowsは絶対パスで確実化） ---
       - name: Upload artifacts (Windows)
-        if: always() && runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-${{ matrix.build_type }}
-          path: C:\w\dist\**
-          if-no-files-found: error
+     if: always() && runner.os == 'Windows'
+     uses: actions/upload-artifact@v4
+     with:
+       name: windows-${{ matrix.build_type }}
+       path: |
+         ${{ env.SHORT_WS }}\dist\**           # 本来はこちら（install 成功時）
+         ${{ env.SHORT_WS }}\_b\*.exe          # フォールバック: 直下の exe
+         ${{ env.SHORT_WS }}\_b\**\*.exe       # サブディレクトリの exe
+         ${{ env.SHORT_WS }}\_b\**\*.dll       # DLL も回収
+       if-no-files-found: warn
+
 
       - name: Upload artifacts (macOS)
         if: always() && runner.os == 'macOS'
