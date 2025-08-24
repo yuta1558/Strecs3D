@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   cmake:
-    name: ${{ matrix.os }} | ${{ matrix.build_type }}
+    name: "${{ matrix.os }} | ${{ matrix.build_type }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
     strategy:
@@ -181,24 +181,15 @@ jobs:
         env:
           VCPKG_DOWNLOADS: C:\vd
           CL: /MP2
-        run: >
-          cmake -S . -B _b
-          -G Ninja
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_TOOLCHAIN_FILE="${{ env.SHORT_WS }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-          -DVCPKG_INSTALLED_DIR=C:/vi
-          -DCMAKE_MAKE_PROGRAM=ninja
-          -DCMAKE_VERBOSE_MAKEFILE=ON
-          -DCMAKE_CXX_FLAGS="/bigobj"
+        shell: pwsh
+        run: |
+          cmake -S . -B _b -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE="${{ env.SHORT_WS }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_INSTALLED_DIR=C:/vi -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="/bigobj"
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
-        run: >
-          cmake -S . -B build
-          -G Ninja
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
-          -DCMAKE_VERBOSE_MAKEFILE=ON
+        shell: bash
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_VERBOSE_MAKEFILE=ON
 
       # --- 早期失敗検知 ---
       - name: Early failure detection
@@ -227,19 +218,23 @@ jobs:
         working-directory: ${{ env.SHORT_WS }}
         env:
           CL: /MP2
+        shell: bash
         run: cmake --build _b --config ${{ matrix.build_type }} --parallel 2
 
       - name: Build (macOS)
         if: runner.os == 'macOS'
+        shell: bash
         run: cmake --build build --config ${{ matrix.build_type }}
 
       # --- Install ---
       - name: Install (Windows)
         if: runner.os == 'Windows'
         working-directory: ${{ env.SHORT_WS }}
-        run: cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\dist"
+        shell: bash
+        run: |
+          cmake --install _b --config ${{ matrix.build_type }} --prefix "${{ env.SHORT_WS }}\\dist"
 
-      - name: Debug: list install outputs (Windows)
+      - name: "Debug: list install outputs (Windows)"
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -255,6 +250,7 @@ jobs:
 
       - name: Install (macOS)
         if: runner.os == 'macOS'
+        shell: bash
         run: cmake --install build --config ${{ matrix.build_type }} --prefix dist
 
       # --- Verify ---
@@ -336,16 +332,16 @@ jobs:
         if: always()
         shell: bash
         run: |
-          cat > build-metrics.json << EOF
-          {
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "runner_os": "${{ runner.os }}",
-            "build_type": "${{ matrix.build_type }}",
-            "build_time_seconds": "${BUILD_TIME:-0}",
-            "git_sha": "${{ github.sha }}",
-            "workflow_run_id": "${{ github.run_id }}"
-          }
-          EOF
+          cat > build-metrics.json <<EOF
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "runner_os": "${{ runner.os }}",
+  "build_type": "${{ matrix.build_type }}",
+  "build_time_seconds": "${BUILD_TIME:-0}",
+  "git_sha": "${{ github.sha }}",
+  "workflow_run_id": "${{ github.run_id }}"
+}
+EOF
 
       - name: Upload build metrics
         if: always()
@@ -385,13 +381,57 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          echo "=== Failure Analysis ===" | tee failure-analysis.txt
+          echo "=== Failure Analysis ===" > failure-analysis.txt
           if [ "${{ runner.os }}" = "Windows" ]; then
             LOG_FILE="${{ env.SHORT_WS }}/_b/CMakeFiles/CMakeError.log"
           else
             LOG_FILE="build/CMakeFiles/CMakeError.log"
           fi
+
+          echo "Log file: $LOG_FILE" >> failure-analysis.txt
+
           if [ -f "$LOG_FILE" ]; then
+            echo "" >> failure-analysis.txt
+            echo "---- Last 200 lines of error log ----" >> failure-analysis.txt
+            tail -n 200 "$LOG_FILE" >> failure-analysis.txt || true
+            echo "" >> failure-analysis.txt
+
             if grep -i -q "out of memory\|cannot allocate memory" "$LOG_FILE"; then
-              echo "🔍 LIKELY: Memory exhaustion" | tee -a failure-analysis.txt
-              echo "💡 Try
+              echo "🔍 LIKELY: Memory exhaustion detected." >> failure-analysis.txt
+              echo "💡 Suggestion: reduce parallelism, choose a larger runner, or split build." >> failure-analysis.txt
+            fi
+
+            if grep -i -q "NOTFOUND" "$LOG_FILE"; then
+              echo "🔍 LIKELY: Missing dependency or CMake NOTFOUND entries." >> failure-analysis.txt
+              echo "💡 Suggestion: check vcpkg installation and VCPKG_INSTALLED_DIR." >> failure-analysis.txt
+            fi
+
+            if grep -i -q "error: '.*' file not found" "$LOG_FILE"; then
+              echo "🔍 LIKELY: Missing include/header." >> failure-analysis.txt
+              echo "💡 Suggestion: verify include paths and installed packages." >> failure-analysis.txt
+            fi
+
+            if grep -i -q "error: linking with '.*' failed" "$LOG_FILE"; then
+              echo "🔍 LIKELY: Linker errors." >> failure-analysis.txt
+              echo "💡 Suggestion: check library paths and runtime dependencies." >> failure-analysis.txt
+            fi
+
+          else
+            echo "⚠️ No CMake error log found at expected location." >> failure-analysis.txt
+            echo "💡 Suggestion: ensure CMake produced logs or adjust paths in workflow." >> failure-analysis.txt
+          fi
+
+          echo "" >> failure-analysis.txt
+          echo "Full environment summary:" >> failure-analysis.txt
+          echo "RUNNER_OS=${{ runner.os }}" >> failure-analysis.txt
+          echo "MATRIX_BUILD_TYPE=${{ matrix.build_type }}" >> failure-analysis.txt
+          echo "WORKSPACE=${{ github.workspace }}" >> failure-analysis.txt
+          echo "SHORT_WS=${{ env.SHORT_WS }}" >> failure-analysis.txt
+
+      - name: Upload failure analysis (on fail)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-analysis-${{ github.run_number }}-${{ runner.os }}
+          path: failure-analysis.txt
+          retention-days: 7
