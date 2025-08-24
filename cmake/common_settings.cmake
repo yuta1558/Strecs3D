@@ -151,6 +151,10 @@ install(TARGETS Strecs3D
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-# 追加のリソースがあれば必要に応じて（例）
-# install(DIRECTORY assets/ DESTINATION ${CMAKE_INSTALL_BINDIR}/assets)
-# install(FILES config/app.ini DESTINATION ${CMAKE_INSTALL_BINDIR})
+# 念のためターゲットファイルを直接コピー（GUIアプリでも確実に拾う保険）
+install(
+  FILES
+    $<TARGET_FILE:Strecs3D>
+  DESTINATION
+    ${CMAKE_INSTALL_BINDIR}
+)
